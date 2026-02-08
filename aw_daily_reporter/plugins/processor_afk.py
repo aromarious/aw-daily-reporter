@@ -99,13 +99,17 @@ class AFKProcessor(ProcessorPlugin):
 
         # Flatten active timeline: Overlaps are resolved by trimming the start of the later event
         if not df_active.empty:
-            # ベクトル化されたオーバーラップ解消（pandas Timestamp系列で処理）
-            for i in range(1, len(df_active)):
-                prev_end = df_active.at[i - 1, "end"]
-                curr_start = df_active.at[i, "timestamp"]
-                if curr_start < prev_end:
-                    df_active.at[i, "timestamp"] = prev_end
+            # NumPy配列で直接操作（pandas .at[]より高速）
+            # datetime64[ns, UTC]型のままvaluesを取得
+            timestamps = df_active["timestamp"].values.copy()
+            ends = df_active["end"].values
 
+            for i in range(1, len(timestamps)):
+                if timestamps[i] < ends[i - 1]:
+                    timestamps[i] = ends[i - 1]
+
+            # タイムゾーン情報を保持したままSeriesに戻す
+            df_active["timestamp"] = pd.Series(timestamps, index=df_active.index, dtype=df_active["timestamp"].dtype)
             df_active["duration"] = (df_active["end"] - df_active["timestamp"]).dt.total_seconds()
             # 有効なdurationのみ保持
             df_active = df_active[df_active["duration"] > 0]
