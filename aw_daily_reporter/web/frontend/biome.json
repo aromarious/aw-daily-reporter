@@ -1,6 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
-  "extends": ["ultracite/biome/react"],
+  "extends": [
+    "ultracite/biome/react"
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -15,13 +17,22 @@
       "!.out",
       "!out",
       "!build",
+      "!coverage",
       "!next-env.d.ts"
     ]
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": {
+            "maxAllowedComplexity": 20
+          }
+        }
+      }
     }
   },
   "javascript": {

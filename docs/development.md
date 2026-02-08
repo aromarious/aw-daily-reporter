@@ -24,6 +24,17 @@ poetry run mypy .
 poetry run black .
 ```
 
+# フロントエンド (React/Next.js)
+cd aw_daily_reporter/web/frontend
+npm run test    # テスト実行
+npm run type-check # 型チェック
+npm run lint    # Linter (Biome)
+npm run audit   # 品質監査 (Biome + Custom Rules)
+```
+
+詳細なテスト方針については、[frontend-testing-strategy.md](frontend-testing-strategy.md) を参照してください。
+品質監査ルールの詳細は、[frontend-audit.md](frontend-audit.md) を参照してください。
+
 ## 開発環境のセットアップ
 
 ```bash
