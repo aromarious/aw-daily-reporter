@@ -77,6 +77,7 @@ class TestProjectExtractionProcessor(unittest.TestCase):
         result = self.processor.process(df, self.base_config)
         # パターンにマッチすれば抽出される
         assert result.iloc[0]["project"] == "MyProject"
+
     def test_no_match_leaves_project_none(self):
         """パターンにマッチしなければprojectはNoneのまま"""
         item = {"app": "VS Code", "title": "No pipe in this title", "project": None}
