@@ -239,6 +239,76 @@ class TestCmdReport(unittest.TestCase):
         # Should fallback to manual setting
         mock_date_range.assert_called_with(None, offset="07:00")
 
+    @patch("aw_daily_reporter.core.get_logger")
+    @patch("subprocess.Popen")
+    @patch("waitress.serve")
+    @patch("aw_daily_reporter.web.backend.app.create_app")
+    @patch("os.path.exists")
+    def test_serve_no_debug_in_dev(self, mock_exists, mock_create_app, mock_waitress, mock_popen, mock_logger):
+        """開発環境で--no-debugを指定するとデバッグモードが無効になること"""
+        from aw_daily_reporter.core import cmd_serve
+
+        # 開発環境と判定させる
+        mock_exists.return_value = True
+
+        mock_app = MagicMock()
+        mock_create_app.return_value = mock_app
+
+        args = Namespace(
+            port=None,
+            host="127.0.0.1",
+            no_open=True,
+            no_frontend=False,
+            no_debug=True,  # デバッグ無効化
+        )
+
+        cmd_serve(args)
+
+        assert args.debug is False
+        # app.run が debug=False で呼ばれている、もしくは waitress が呼ばれていることを確認
+        # デバッグモード無効時は waitress.serve を呼ぶロジックなのでそれを確認
+        import importlib.util
+
+        if importlib.util.find_spec("waitress"):
+            mock_waitress.assert_called_with(mock_app, host="127.0.0.1", port=5602)
+        else:
+            # waitress がインストールされていない場合は app.run(debug=False) になる
+            mock_app.run.assert_called_with(host="127.0.0.1", port=5602, debug=False)
+
+
+class TestCmdServe(unittest.TestCase):
+    """cmd_serve 関数のテストケース"""
+
+    @patch("aw_daily_reporter.core.get_logger")
+    @patch("subprocess.Popen")
+    @patch("aw_daily_reporter.web.backend.app.create_app")
+    @patch("os.path.exists")
+    def test_serve_default_debug_in_dev(self, mock_exists, mock_create_app, mock_popen, mock_logger):
+        """開発環境ではデフォルトでデバッグモードが有効になること"""
+        from aw_daily_reporter.core import cmd_serve
+
+        # 開発環境と判定させる (package.json が存在する)
+        mock_exists.return_value = True
+
+        # モックの設定
+        mock_app = MagicMock()
+        mock_create_app.return_value = mock_app
+
+        args = Namespace(
+            port=None,
+            host="127.0.0.1",
+            no_open=True,
+            no_frontend=False,
+            no_debug=False,  # デフォルト
+        )
+
+        cmd_serve(args)
+
+        # args.debug が True (dev env default) になっていること
+        assert args.debug is True
+        # app.run が debug=True で呼ばれていること
+        mock_app.run.assert_called_with(host="127.0.0.1", port=5602, debug=True)
+
 
 class TestCmdPluginList(unittest.TestCase):
     """cmd_plugin_list 関数のテストケース"""

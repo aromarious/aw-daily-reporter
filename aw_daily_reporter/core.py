@@ -148,6 +148,13 @@ def cmd_serve(args) -> None:
     # フロントエンドの起動 (開発環境かつ--no-frontendが指定されていない場合)
     # Flaskのデバッグモード(リローダー)使用時は、親プロセスではなく子プロセスでのみフロントエンドを起動する
     should_start_frontend = is_dev_env and not args.no_frontend
+
+    # デバッグモードの判定
+    # 開発環境ならデフォルトTrue, --no-debugならFalse
+    args.debug = is_dev_env
+    if args.no_debug:
+        args.debug = False
+
     if args.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         should_start_frontend = False
 
@@ -210,7 +217,7 @@ def cmd_serve(args) -> None:
         def open_browser():
             webbrowser.open(open_url)
 
-        Timer(1.5, open_browser).start()
+        Timer(3, open_browser).start()
 
     args_debug = getattr(args, "debug", False)
 
@@ -360,7 +367,7 @@ def main() -> None:
         action="store_true",
         help=_("Do not start frontend automatically."),
     )
-    serve_parser.add_argument("--debug", action="store_true", help=_("Enable Flask debug mode (hot reload)."))
+    serve_parser.add_argument("--no-debug", action="store_true", help=_("Disable Flask debug mode (hot reload)."))
     serve_parser.set_defaults(func=cmd_serve)
 
     # plugin コマンド
@@ -388,7 +395,7 @@ def main() -> None:
         args.host = "127.0.0.1"
         args.no_open = False
         args.no_frontend = False
-        args.debug = False
+        args.no_debug = False
         cmd_serve(args)
     elif hasattr(args, "func"):
         args.func(args)
