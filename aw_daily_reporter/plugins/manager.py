@@ -434,7 +434,10 @@ class PluginManager:
         """
         import copy
 
-        current_timeline = timeline
+        import pandas as pd
+
+        # List[dict] → DataFrame に変換（最初のみ）
+        current_df = pd.DataFrame(timeline) if timeline else pd.DataFrame()
         snapshots = []
         scan_summary = []
 
@@ -443,7 +446,7 @@ class PluginManager:
             snapshots.append(
                 {
                     "name": "Raw Data",
-                    "timeline": copy.deepcopy(current_timeline),
+                    "timeline": copy.deepcopy(timeline),
                     "plugin": "Context Merger",
                 }
             )
@@ -452,18 +455,15 @@ class PluginManager:
         all_plugins = self._get_ordered_plugins(self.processors + self.scanners)
 
         for plugin in all_plugins:
-            # check type
-            # logger.debug(msg)
-
             if isinstance(plugin, ScannerPlugin):
+                # ScannerはList[dict]を必要とする
+                current_list = current_df.to_dict("records") if not current_df.empty else []
                 try:
-                    scan_result = plugin.scan(current_timeline, start_time, end_time, config)
-                    if not scan_result:
-                        # Snapshot even if no change? Yes, to show flow.
-                        pass
-                    else:
+                    scan_result = plugin.scan(current_list, start_time, end_time, config)
+                    if scan_result:
                         # 戻り値の型によって振り分け (Mixed types supported)
                         scanner_summary_added = False
+                        new_items = []
                         for item in scan_result:
                             if isinstance(item, str):
                                 if not scanner_summary_added:
@@ -471,33 +471,49 @@ class PluginManager:
                                     scanner_summary_added = True
                                 scan_summary.append(item)
                             elif isinstance(item, dict):
-                                current_timeline.append(item)
+                                new_items.append(item)
 
-                        # 時系列順序の保証 (Scanner追加後は必ずソート)
-                        # 変更があった場合のみソート (items added)
-                        if any(isinstance(i, dict) for i in scan_result):
-                            current_timeline.sort(key=lambda x: x["timestamp"])
+                        # 新しいアイテムがあればDataFrameに追加
+                        if new_items:
+                            new_df = pd.DataFrame(new_items)
+                            current_df = pd.concat([current_df, new_df], ignore_index=True)
+                            # 時系列順序の保証
+                            if "timestamp" in current_df.columns:
+                                current_df = current_df.sort_values("timestamp").reset_index(drop=True)
                 except Exception as e:
                     logger.error(f"Plugin {plugin.name} failed during scan: {e}")
                     scan_summary.append(f"\n# {plugin.name} (Failed): {e}")
 
             elif isinstance(plugin, ProcessorPlugin):
+                # ProcessorはDataFrameを直接処理
                 try:
-                    current_timeline = plugin.process(current_timeline, config)
+                    current_df = plugin.process(current_df, config)
                 except Exception as e:
                     logger.error(f"Plugin {plugin.name} failed during process: {e}")
-                    # Keep previous timeline if failed
+                    # Keep previous DataFrame if failed
 
             if include_snapshots:
+                snapshot_list = current_df.to_dict("records") if not current_df.empty else []
                 snapshots.append(
                     {
                         "name": f"After {plugin.name}",
-                        "timeline": copy.deepcopy(current_timeline),
+                        "timeline": copy.deepcopy(snapshot_list),
                         "plugin": plugin.name,
                     }
                 )
 
-        return current_timeline, snapshots, scan_summary
+        # DataFrame → List[dict] に変換（最後のみ）
+        if current_df.empty:
+            final_timeline = []
+        else:
+            # timestampカラムをpython datetimeに変換（numpy/pandas Timestampから）
+            if "timestamp" in current_df.columns:
+                current_df = current_df.copy()
+                current_df["timestamp"] = current_df["timestamp"].apply(
+                    lambda x: x.to_pydatetime() if hasattr(x, "to_pydatetime") else x
+                )
+            final_timeline = current_df.to_dict("records")
+        return final_timeline, snapshots, scan_summary
 
     def run_renderers(
         self,

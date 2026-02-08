@@ -17,7 +17,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 aw-client = "^0.5.15"
 pandas = "*"
 tabulate = "*"
@@ -25,6 +25,7 @@ toml = "*"
 flask = "<3.0.0"
 waitress = "*"
 importlib-resources = {version = "*", python = "<3.9"}
+pandera = "^0.29.0"
 
 [tool.poetry.scripts]
 aw-daily-reporter = "aw_daily_reporter.__main__:main"

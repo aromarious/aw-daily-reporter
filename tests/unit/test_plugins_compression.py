@@ -1,6 +1,8 @@
 import unittest
 from datetime import datetime, timedelta
 
+import pandas as pd
+
 from aw_daily_reporter.plugins.processor_compression import CompressionProcessor
 from aw_daily_reporter.timeline.models import TimelineItem
 
@@ -24,6 +26,12 @@ class TestCompressionProcessor(unittest.TestCase):
                 "meetings": ["zoom", "teams"],
             }
         }
+
+    def _to_df(self, items: list) -> pd.DataFrame:
+        """TimelineItemのリストをDataFrameに変換"""
+        if not items:
+            return pd.DataFrame()
+        return pd.DataFrame(items)
 
     def test_compress_editor_items(self):
         now = datetime.now()
@@ -50,13 +58,14 @@ class TestCompressionProcessor(unittest.TestCase):
             },
         ]
 
-        compressed = self.processor.process(timeline, self.config)
+        df = self._to_df(timeline)
+        compressed = self.processor.process(df, self.config)
 
         assert len(compressed) == 1
-        assert compressed[0]["duration"] == 180
-        assert compressed[0]["project"] == "my-project"
+        assert compressed.iloc[0]["duration"] == 180
+        assert compressed.iloc[0]["project"] == "my-project"
         # Check if files info is in context
-        context_str = str(compressed[0]["context"])
+        context_str = str(compressed.iloc[0]["context"])
         assert "file1.py" in context_str
         assert "file2.py" in context_str
 
@@ -83,5 +92,6 @@ class TestCompressionProcessor(unittest.TestCase):
             },
         ]
 
-        compressed = self.processor.process(timeline, self.config)
+        df = self._to_df(timeline)
+        compressed = self.processor.process(df, self.config)
         assert len(compressed) == 2

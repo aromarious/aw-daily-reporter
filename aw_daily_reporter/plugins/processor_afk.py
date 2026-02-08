@@ -6,13 +6,14 @@ ActivityWatchのAFK（離席）イベントを処理し、
 """
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Tuple
 
 import pandas as pd
+from pandera.typing import DataFrame
 
 from ..shared.i18n import _
-from ..timeline.models import TimelineItem
 from .base import ProcessorPlugin
+from .schemas import TimelineSchema
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +22,9 @@ class AFKProcessor(ProcessorPlugin):
     """
     AFK（離席）処理を行うプロセッサプラグイン。
 
-    入力: merger.pyで作成されたタイムラインイベント
+    入力: merger.pyで作成されたタイムラインDataFrame
         （Windowイベントを軸にVSCodeとWebをマージしたタイムライン＋AFK watcherイベント）
-    出力: AFK期間を除去した、アクティブなイベントのみのタイムライン
+    出力: AFK期間を除去した、アクティブなイベントのみのタイムラインDataFrame
 
     処理フロー:
     1. タイムラインをAFKイベントと非AFKイベントに分離
@@ -42,10 +43,10 @@ class AFKProcessor(ProcessorPlugin):
     def description(self) -> str:
         return _("Filters and processes AFK items to determine active time.")
 
-    def process(self, timeline: List[TimelineItem], config: Dict[str, Any]) -> List[TimelineItem]:
+    def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
-        if not timeline:
-            return []
+        if df.empty:
+            return df
 
         # Get system apps from config or use default
         system_apps = set(self.SYSTEM_APPS)
@@ -53,14 +54,10 @@ class AFKProcessor(ProcessorPlugin):
         if configured_apps:
             system_apps = {a.lower() for a in configured_apps}
 
-        # ========================================
-        # Step 1: DataFrameへ変換と前処理
-        # ========================================
-        df = pd.DataFrame(timeline)
-        if df.empty:
-            return []
+        logger.info(f"[AFK] Input: {len(df)} items")
 
-        logger.info(f"[AFK] Input: {len(timeline)} items")
+        # 最初に1回だけコピーを作成（以降は直接変更）
+        df = df.copy()
 
         # タイムスタンプの型変換
         if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
@@ -81,57 +78,47 @@ class AFKProcessor(ProcessorPlugin):
         # ========================================
 
         # Sourceが "AFK" (aw-watcher-afk 由来) かどうか
-        is_from_afk_source: pd.Series[bool] = pd.Series([False] * len(df), index=df.index)
+        is_from_afk_source: pd.Series = pd.Series([False] * len(df), index=df.index)
         if "source" in df.columns:
             is_from_afk_source = df["source"] == "AFK"
 
         # Source=AFK で status=not-afk の場合は「ユーザーがアクティブ」と判定
-        is_status_not_afk: pd.Series[bool] = pd.Series([False] * len(df), index=df.index)
+        is_status_not_afk: pd.Series = pd.Series([False] * len(df), index=df.index)
         if "status" in df.columns:
             is_status_not_afk = df["status"] == "not-afk"
-        is_active_from_afk_source: pd.Series[bool] = is_from_afk_source & is_status_not_afk
+        is_active_from_afk_source: pd.Series = is_from_afk_source & is_status_not_afk
 
         # df_active: AFKソース由来のイベントを除外（app 情報がないため）
+        # すでにdfがコピー済みなのでここはコピー不要だが、サブセットなのでコピーが必要
         df_active: pd.DataFrame = df[~is_from_afk_source].copy()
 
         # ========================================
         # Step 3: タイムラインの再構成
         # ========================================
-        df_active = df_active.sort_values("timestamp")
+        df_active = df_active.sort_values("timestamp").reset_index(drop=True)
 
         # Flatten active timeline: Overlaps are resolved by trimming the start of the later event
         if not df_active.empty:
-            flat_items = []
-            last_end = None
+            # ベクトル化されたオーバーラップ解消（pandas Timestamp系列で処理）
+            for i in range(1, len(df_active)):
+                prev_end = df_active.at[i - 1, "end"]
+                curr_start = df_active.at[i, "timestamp"]
+                if curr_start < prev_end:
+                    df_active.at[i, "timestamp"] = prev_end
 
-            for _, row in df_active.iterrows():
-                start = row["timestamp"]
-                end = row["end"]
-
-                # If start is earlier than the end of the previous item, push it forward
-                if last_end and start < last_end:
-                    start = last_end
-
-                # Add only if there is remaining duration
-                if start < end:
-                    active_row_dict = row.to_dict()
-                    active_row_dict["timestamp"] = start
-                    active_row_dict["duration"] = (end - start).total_seconds()
-                    active_row_dict["end"] = end
-                    flat_items.append(active_row_dict)
-                    last_end = end
-
-            df_active = pd.DataFrame(flat_items)
+            df_active["duration"] = (df_active["end"] - df_active["timestamp"]).dt.total_seconds()
+            # 有効なdurationのみ保持
+            df_active = df_active[df_active["duration"] > 0]
 
         # not-afk イベントからアクティブ範囲を作成
-        df_not_afk_events = df[is_active_from_afk_source].copy()
-        active_ranges: List[Tuple[pd.Timestamp, pd.Timestamp]] = []
+        df_not_afk_events = df[is_active_from_afk_source]
+        active_ranges: list[Tuple[pd.Timestamp, pd.Timestamp]] = []
 
         if not df_not_afk_events.empty:
             df_not_afk_events = df_not_afk_events.sort_values("timestamp")
-            for _, row in df_not_afk_events.iterrows():
-                start = row["timestamp"]
-                end = row["end"]
+            for row in df_not_afk_events.itertuples():
+                start = row.timestamp
+                end = row.end
                 if active_ranges and start <= active_ranges[-1][1]:
                     active_ranges[-1] = (
                         active_ranges[-1][0],
@@ -148,9 +135,9 @@ class AFKProcessor(ProcessorPlugin):
 
         # 分割点を収集（全てpd.Timestampで統一）
         split_points = set()
-        for _, row in df_active.iterrows():
-            split_points.add(row["timestamp"])
-            split_points.add(row["end"])
+        for row in df_active.itertuples():
+            split_points.add(row.timestamp)
+            split_points.add(row.end)
 
         for start, end in active_ranges:
             split_points.add(start)
@@ -158,23 +145,12 @@ class AFKProcessor(ProcessorPlugin):
 
         sorted_points = sorted(split_points)
 
-        active_list = []
-        for _, row in df_active.iterrows():
-            active_row_dict = row.to_dict()
-            # NaN処理
-            for k, v in list(active_row_dict.items()):
-                if isinstance(v, (list, tuple, dict)):
-                    continue
-                if pd.isna(v):
-                    active_row_dict[k] = None
-            active_list.append(active_row_dict)
-
         # アクティブ範囲内かチェックするヘルパー関数
         def is_in_active(t: pd.Timestamp) -> bool:
             return any(s <= t < e for s, e in active_ranges)
 
         # セグメントごとに処理
-        final_items: List[Dict] = []
+        final_rows = []
 
         for i in range(len(sorted_points) - 1):
             seg_start = sorted_points[i]
@@ -190,52 +166,41 @@ class AFKProcessor(ProcessorPlugin):
                 continue
 
             # Activeイベントを検索（重なっているもの全てを取得）
-            for act in active_list:
-                act_start = act["timestamp"]
-                act_end = act["end"]
-                if act_start <= seg_mid < act_end:
-                    new_item = act.copy()
-                    new_item["timestamp"] = seg_start
-                    new_item["duration"] = dur
-                    if "end" in new_item:
-                        del new_item["end"]
-                    final_items.append(new_item)
+            for row in df_active.itertuples():
+                if row.timestamp <= seg_mid < row.end:
+                    row_dict = row._asdict()
+                    del row_dict["Index"]
+                    row_dict["timestamp"] = seg_start
+                    row_dict["duration"] = dur
+                    row_dict.pop("end", None)
+                    final_rows.append(row_dict)
 
         # ========================================
         # Step 5: 最終クリーンアップ
         # ========================================
-        valid_items = []
-        system_app_count = 0
-        for active_row_dict in final_items:
-            # システムアプリ（loginwindowなど）のイベントを除外
-            app_name = str(active_row_dict.get("app", "")).lower()
-            if app_name in system_apps:
-                system_app_count += 1
-                continue
+        if not final_rows:
+            return pd.DataFrame(columns=df.columns)
 
-            # pd.Timestamp -> datetime
-            if hasattr(active_row_dict["timestamp"], "to_pydatetime"):
-                active_row_dict["timestamp"] = active_row_dict["timestamp"].to_pydatetime()
+        result_df = pd.DataFrame(final_rows)
 
-            if "end" in active_row_dict:
-                del active_row_dict["end"]
+        # システムアプリを除外
+        if "app" in result_df.columns:
+            app_lower = result_df["app"].str.lower()
+            mask = ~app_lower.isin(system_apps)
+            system_app_count = (~mask).sum()
+            if system_app_count > 0:
+                logger.info(f"[AFK] Filtered out {system_app_count} system app events")
+            result_df = result_df[mask]
 
-            for key in [
-                "project",
-                "file",
-                "language",
-                "url",
-                "title",
-                "status",
-                "category",
-            ]:
-                if key in active_row_dict and pd.isna(active_row_dict[key]):
-                    active_row_dict[key] = None
+        # NaN値をNoneに変換（オプションフィールド用）
+        optional_cols = ["project", "file", "language", "url", "title", "status", "category"]
+        for col in optional_cols:
+            if col in result_df.columns:
+                result_df[col] = result_df[col].where(pd.notna(result_df[col]), None)
 
-            valid_items.append(active_row_dict)
+        # end列を削除（最終出力には不要）
+        if "end" in result_df.columns:
+            result_df = result_df.drop(columns=["end"])
 
-        if system_app_count > 0:
-            logger.info(f"[AFK] Filtered out {system_app_count} system app events")
-
-        logger.info(f"[AFK] Output: {len(valid_items)} items")
-        return valid_items
+        logger.info(f"[AFK] Output: {len(result_df)} items")
+        return result_df
