@@ -89,7 +89,16 @@ aw-daily-reporter serve
 - **Python**: 3.8 以上
 - **Node.js**: Web UI のビルドに必要（配布パッケージを利用する場合は不要）
 
-### 手順
+### 推奨: pip でインストール
+
+[Releases](https://github.com/aromarious/aw-daily-reporter/releases) から最新の `.whl` ファイルのリンクをコピーしてインストールしてください。
+
+```bash
+# 例
+pip install https://github.com/aromarious/aw-daily-reporter/releases/download/vX.X.X/aw_daily_reporter-X.X.X-py3-none-any.whl
+```
+
+### 開発版: ソースコードからビルド
 
 ```bash
 git clone https://github.com/aromarious/aw-daily-reporter.git
