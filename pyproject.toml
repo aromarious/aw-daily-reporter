@@ -22,7 +22,7 @@ aw-client = "^0.5.15"
 pandas = "*"
 tabulate = "*"
 toml = "*"
-flask = "<3.0.0"
+flask = "<4.0.0"
 waitress = "*"
 importlib-resources = {version = "*", python = "<3.9"}
 pandera = "^0.29.0"
