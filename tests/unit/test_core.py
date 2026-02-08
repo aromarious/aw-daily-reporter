@@ -377,16 +377,16 @@ class TestCmdPluginRemove(unittest.TestCase):
 class TestMain(unittest.TestCase):
     """main 関数のテストケース"""
 
-    @patch("aw_daily_reporter.core.cmd_report")
+    @patch("aw_daily_reporter.core.cmd_serve")
     @patch("aw_daily_reporter.core.setup_logging")
-    def test_main_no_args_runs_report(self, mock_logging, mock_report):
-        """引数なしでreportコマンドを実行"""
+    def test_main_no_args_runs_serve(self, mock_logging, mock_serve):
+        """引数なしでserveコマンドを実行"""
         from aw_daily_reporter.core import main
 
         with patch("sys.argv", ["aw-daily-reporter"]):
             main()
 
-        mock_report.assert_called_once()
+        mock_serve.assert_called_once()
 
     @patch("aw_daily_reporter.core.setup_logging")
     def test_main_version_flag(self, mock_logging):

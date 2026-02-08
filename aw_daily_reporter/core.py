@@ -380,14 +380,16 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # サブコマンドなしの場合はデフォルトで report を実行
+    # サブコマンドなしの場合はデフォルトで serve を実行
     if args.command is None:
-        args.command = "report"
-        args.date = None
-        args.output = None
-        args.renderer = None
-        args.verbose = False
-        cmd_report(args)
+        args.command = "serve"
+        # serve command defaults
+        args.port = None
+        args.host = "127.0.0.1"
+        args.no_open = False
+        args.no_frontend = False
+        args.debug = False
+        cmd_serve(args)
     elif hasattr(args, "func"):
         args.func(args)
     else:
