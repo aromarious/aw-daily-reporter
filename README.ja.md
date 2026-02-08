@@ -1,7 +1,6 @@
 # aw-daily-reporter
 
-[🇺🇸 English](./README.md)
-
+[English](./README.md) | **日本語**
 
 ActivityWatchで収集したライフログを「プロジェクト×カテゴリ」の2軸で分類・可視化し、AIによる日報作成を支援するツールです。
 
