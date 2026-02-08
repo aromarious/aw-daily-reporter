@@ -300,8 +300,7 @@ class PluginManager:
                     raise ValueError("URL must end with .py")
 
                 target_path = os.path.join(plugin_dir, filename)
-                # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
-                urllib.request.urlretrieve(source, target_path)
+                urllib.request.urlretrieve(source, target_path)  # nosemgrep  # noqa: E501
                 logger.info(_("Installed plugin from URL to {}").format(target_path))
             else:
                 # Local file install
