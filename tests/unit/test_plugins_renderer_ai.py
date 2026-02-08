@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime, timezone
 
 from aw_daily_reporter.plugins.renderer_ai import AIRendererPlugin
+from aw_daily_reporter.timeline.models import TimelineItem
 
 
 class TestAIRendererPlugin(unittest.TestCase):
@@ -50,15 +51,16 @@ class TestAIRendererPlugin(unittest.TestCase):
     def test_timeline_items_rendered(self):
         """タイムラインアイテムが正しく出力される"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 1800,  # 30分
-                "category": "Coding",
-                "app": "VS Code",
-                "title": "main.py",
-                "project": None,
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=1800,  # 30分
+                category="Coding",
+                app="VS Code",
+                title="main.py",
+                project=None,
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         # タイムスタンプ、カテゴリ、アプリ、タイトル、時間が含まれる
@@ -70,15 +72,16 @@ class TestAIRendererPlugin(unittest.TestCase):
     def test_timeline_with_project_shows_context(self):
         """プロジェクトがあればコンテキストに表示"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 600,
-                "category": "Coding",
-                "app": "VS Code",
-                "title": "file.py",
-                "project": "MyProject",
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=600,
+                category="Coding",
+                app="VS Code",
+                title="file.py",
+                project="MyProject",
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "Proj:MyProject" in result
@@ -86,15 +89,16 @@ class TestAIRendererPlugin(unittest.TestCase):
     def test_git_items_in_separate_section(self):
         """Gitアイテムは専用セクションに出力"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 0,
-                "category": "Git",
-                "app": "Git",
-                "title": "[repo] Commit message (abc123)",
-                "project": None,
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=0,
+                category="Git",
+                app="Git",
+                title="[repo] Commit message (abc123)",
+                project=None,
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "-- Git Activity --" in result
@@ -137,15 +141,16 @@ class TestAIRendererPlugin(unittest.TestCase):
     def test_duration_less_than_1_min_shows_1m(self):
         """1分未満のdurationは1mとして表示"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 30,  # 30秒
-                "category": "Quick",
-                "app": "App",
-                "title": "Title",
-                "project": None,
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=30,  # 30秒
+                category="Quick",
+                app="App",
+                title="Title",
+                project=None,
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "1m" in result

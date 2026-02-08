@@ -58,9 +58,11 @@ class TestSettingsManager(unittest.TestCase):
         manager = SettingsManager()
         config = manager.load()
 
-        assert "system" in config
-        assert "rules" in config
-        assert "apps" in config
+        assert config.system.language == "ja"
+        assert config.system.language == "ja"
+        # Preset "ja.json" is loaded, so rules should be present
+        assert len(config.rules) > 0
+        # Apps might be present from preset
         assert manager.is_loaded
 
     def test_load_reads_existing_file(self):
@@ -68,15 +70,16 @@ class TestSettingsManager(unittest.TestCase):
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
         # テスト用の設定ファイルを作成
-        test_config = {"system": {"language": "en"}, "rules": [{"test": "rule"}]}
+        test_config = {"system": {"language": "en"}, "rules": [{"keyword": "test", "category": "rule"}]}
         with open(self.config_path, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         manager = SettingsManager()
         config = manager.load()
 
-        assert config["system"]["language"] == "en"
-        assert config["rules"] == [{"test": "rule"}]
+        assert config.system.language == "en"
+        assert config.rules[0].keyword == "test"
+        assert config.rules[0].category == "rule"
 
     def test_load_caches_result(self):
         """loadは2回目以降キャッシュを返す"""
@@ -96,7 +99,7 @@ class TestSettingsManager(unittest.TestCase):
         config2 = manager.load()
 
         # キャッシュされているので同じ
-        assert config1["system"]["language"] == config2["system"]["language"]
+        assert config1.system.language == config2.system.language
 
     def test_load_raises_on_invalid_json(self):
         """無効なJSONで例外を送出"""
@@ -115,20 +118,25 @@ class TestSettingsManager(unittest.TestCase):
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
         manager = SettingsManager()
-        manager.config = {"system": {"language": "en"}, "rules": []}
+        # Use AppConfig with Pydantic
+        # Note: We should ideally create AppConfig instance, but for save test,
+        # modify default config is enough or assign new AppConfig
+        from aw_daily_reporter.shared.settings_manager import AppConfig, SystemConfig
+
+        manager.config = AppConfig(system=SystemConfig(language="fr"))
         manager.save()
 
         with open(self.config_path, encoding="utf-8") as f:
             saved = json.load(f)
 
-        assert saved["system"]["language"] == "en"
+        assert saved["system"]["language"] == "fr"
 
     def test_save_atomic_write(self):
         """saveがアトミックに書き込む"""
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
         manager = SettingsManager()
-        manager.config = {"test": "data"}
+        # config is initialized in __init__
         manager.save()
 
         # ファイルが正しく存在する
@@ -139,79 +147,75 @@ class TestSettingsManager(unittest.TestCase):
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
         manager = SettingsManager()
-        manager.config = {"key1": "value1"}
-
-        assert manager.get("key1") == "value1"
+        # Ensure config is loaded or initialized
+        # For AppConfig, we must access existing fields
+        assert manager.get("system") is not None
 
     def test_get_returns_default_for_missing_key(self):
         """getが存在しないキーにデフォルト値を返す"""
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
         manager = SettingsManager()
-        manager.config = {}
-
+        # Accessing non-existent attribute on AppConfig via get -> default
         assert manager.get("nonexistent") is None
         assert manager.get("nonexistent", "default") == "default"
 
     def test_set_updates_config(self):
         """setが設定を更新する"""
-        from aw_daily_reporter.shared.settings_manager import SettingsManager
+        # set() logic in SettingsManager only updates if attribute exists.
+        # We can test updating 'system'
+        from aw_daily_reporter.shared.settings_manager import SettingsManager, SystemConfig
 
         manager = SettingsManager()
-        manager.config = {}
-        manager.set("new_key", "new_value")
+        new_system = SystemConfig(language="fr")
+        manager.set("system", new_system)
 
-        assert manager.config["new_key"] == "new_value"
+        assert manager.config.system.language == "fr"
 
     def test_cleanup_removes_ephemeral_keys(self):
         """_cleanup_before_saveが一時キーを削除"""
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
+        # Pydantic model with extra="ignore" already handles this during init if strict.
+        # But here we are manually constructing the dict? No, we normally use AppConfig.
+        # If we use AppConfig, we can't assign invalid keys unless extra="allow".
+        # SystemConfig has extra="allow" now for legacy support (based on previous edits).
+        # Let's verify cleanup specifically.
+
         manager = SettingsManager()
-        manager.config = {
-            "system": {
-                "language": "ja",
-                "aw_start_of_day": "04:00",  # 一時キー
-            }
-        }
+        # Manually inject attribute to simulate legacy load behavior if extra=allow
+        manager.config.system.aw_start_of_day = "04:00"
+
         manager._cleanup_before_save()
 
-        assert "aw_start_of_day" not in manager.config["system"]
+        assert not hasattr(manager.config.system, "aw_start_of_day")
 
     def test_cleanup_migrates_legacy_day_start_hour(self):
         """_cleanup_before_saveがday_start_hourをマイグレート"""
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
         manager = SettingsManager()
-        manager.config = {
-            "system": {
-                "language": "ja",
-                "start_of_day": "00:00",
-                "day_start_hour": 4,  # レガシーキー
-            }
-        }
+        # Inject legacy attribute
+        manager.config.system.day_start_hour = 4
+
         manager._cleanup_before_save()
 
-        assert manager.config["system"]["start_of_day"] == "04:00"
-        assert "day_start_hour" not in manager.config["system"]
+        assert manager.config.system.start_of_day == "04:00"
+        assert not hasattr(manager.config.system, "day_start_hour")
 
     def test_cleanup_does_not_migrate_if_start_of_day_set(self):
         """start_of_dayが設定済みの場合はマイグレートしない"""
         from aw_daily_reporter.shared.settings_manager import SettingsManager
 
         manager = SettingsManager()
-        manager.config = {
-            "system": {
-                "language": "ja",
-                "start_of_day": "06:00",  # 既に設定済み
-                "day_start_hour": 4,
-            }
-        }
+        manager.config.system.start_of_day = "06:00"
+        manager.config.system.day_start_hour = 4
+
         manager._cleanup_before_save()
 
         # start_of_dayは変わらない
-        assert manager.config["system"]["start_of_day"] == "06:00"
-        assert "day_start_hour" not in manager.config["system"]
+        assert manager.config.system.start_of_day == "06:00"
+        assert not hasattr(manager.config.system, "day_start_hour")
 
 
 class TestCreateDefaultConfig(unittest.TestCase):
@@ -247,8 +251,8 @@ class TestCreateDefaultConfig(unittest.TestCase):
         config = manager._create_default_config()
 
         # プリセットにはルールが定義されているはず
-        assert "rules" in config
-        assert len(config["rules"]) > 0
+        # プリセットにはルールが定義されているはず
+        assert len(config.rules) > 0
 
     def test_creates_config_with_system_defaults(self):
         """システムデフォルト値が設定される"""
@@ -257,9 +261,8 @@ class TestCreateDefaultConfig(unittest.TestCase):
         manager = SettingsManager()
         config = manager._create_default_config()
 
-        assert "activitywatch" in config["system"]
-        assert config["system"]["activitywatch"]["host"] == "127.0.0.1"
-        assert config["system"]["activitywatch"]["port"] == 5600
+        assert config.system.activitywatch.host == "127.0.0.1"
+        assert config.system.activitywatch.port == 5600
 
     def test_saves_config_file(self):
         """設定ファイルを保存する"""

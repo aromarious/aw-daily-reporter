@@ -69,8 +69,8 @@ class AIRendererPlugin(RendererPlugin):
 
         # 2. Git Activity (Commits + PRs)
         # Extract Git items from timeline to show them in summary instead
-        git_items = [item for item in timeline if item.get("app") == "Git"]
-        non_git_timeline = [item for item in timeline if item.get("app") != "Git"]
+        git_items = [item for item in timeline if item.app == "Git"]
+        non_git_timeline = [item for item in timeline if item.app != "Git"]
 
         scan_summary = report_data.get("scan_summary", [])
 
@@ -84,7 +84,7 @@ class AIRendererPlugin(RendererPlugin):
             if git_items:
                 for item in git_items:
                     # item['title'] contains "[Repo] Msg (Hash)"
-                    lines.append(f"Commit: {item['title']}")
+                    lines.append(f"Commit: {item.title}")
 
             lines.append("")
 
@@ -92,19 +92,19 @@ class AIRendererPlugin(RendererPlugin):
         # ヘッダーはつけない（AIなら推測可能だが、一応1行つけてもいいかも。今回は省略して密度優先）
 
         for item in non_git_timeline:
-            ts = item["timestamp"].astimezone().strftime("%H:%M")
-            duration_min = int(item["duration"] / 60)
+            ts = item.timestamp.astimezone().strftime("%H:%M")
+            duration_min = int(item.duration / 60)
             if duration_min < 1:
                 duration_min = 1  # 1分未満は1分とする
 
-            category = item.get("category") or DEFAULT_CATEGORY
-            app = item["app"]
-            title = item["title"]
+            category = item.category or DEFAULT_CATEGORY
+            app = item.app
+            title = item.title
 
             # コンテキスト（Projectなど）があれば追加
             context_parts = []
-            if item.get("project"):
-                context_parts.append(f"Proj:{item['project']}")
+            if item.project:
+                context_parts.append(f"Proj:{item.project}")
 
             # AppとTitleで十分文脈が通じる場合が多いので、Projectはオプションにするか、重要度で決める
             # ここではシンプルに App | Title (Duration) とする

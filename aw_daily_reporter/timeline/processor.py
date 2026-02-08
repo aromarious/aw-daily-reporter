@@ -24,8 +24,8 @@ class TimelineStatsCalculator:
         """タイムラインアイテムからカテゴリ別の合計時間を計算します。"""
         stats: Dict[str, float] = {}
         for item in timeline:
-            cat = item.get("category") or DEFAULT_CATEGORY
-            stats[cat] = stats.get(cat, 0.0) + item["duration"]
+            cat = item.category or DEFAULT_CATEGORY
+            stats[cat] = stats.get(cat, 0.0) + item.duration
         return stats
 
     def analyze_working_hours(
@@ -45,8 +45,8 @@ class TimelineStatsCalculator:
                 "afk_seconds": 0.0,
             }
 
-        start = min(item["timestamp"] for item in timeline)
-        end = max(item["timestamp"] + timedelta(seconds=item["duration"]) for item in timeline)
+        start = min(item.timestamp for item in timeline)
+        end = max(item.timestamp + timedelta(seconds=item.duration) for item in timeline)
         total_span = (end - start).total_seconds()
 
         break_categories = config.get("settings", {}).get("break_categories", [])
@@ -55,21 +55,21 @@ class TimelineStatsCalculator:
         # Note: Some active events might have category="AFK"
         # (though category might not be assigned yet depending on flow)
         # Assuming merger puts source="AFK"
-        active_items = [item for item in timeline if item.get("source") != "AFK" and item.get("app") != "afk"]
+        active_items = [item for item in timeline if item.source != "AFK" and item.app != "afk"]
 
         # 3. Calculate merged duration of active items (Active Duration)
         # Sort by start time
-        active_items.sort(key=lambda x: x["timestamp"])
+        active_items.sort(key=lambda x: x.timestamp)
 
         merged_duration = 0.0
         if active_items:
             # Merge intervals
-            curr_start = active_items[0]["timestamp"]
-            curr_end = curr_start + timedelta(seconds=active_items[0]["duration"])
+            curr_start = active_items[0].timestamp
+            curr_end = curr_start + timedelta(seconds=active_items[0].duration)
 
             for item in active_items[1:]:
-                next_start = item["timestamp"]
-                next_end = next_start + timedelta(seconds=item["duration"])
+                next_start = item.timestamp
+                next_end = next_start + timedelta(seconds=item.duration)
 
                 if next_start < curr_end:
                     # Overlap, extend end if needed
@@ -99,9 +99,7 @@ class TimelineStatsCalculator:
         # or we accept double counting for stats if they do)
         # So simple sum is fine for merged timeline items.
 
-        manual_break_seconds = sum(
-            item["duration"] for item in active_items if item.get("category") in break_categories
-        )
+        manual_break_seconds = sum(item.duration for item in active_items if item.category in break_categories)
 
         # 6. Total Break = AFK + Manual Break
         total_break_seconds = afk_seconds + manual_break_seconds

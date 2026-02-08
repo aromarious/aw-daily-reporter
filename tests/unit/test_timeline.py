@@ -64,15 +64,15 @@ class TestTimelineGenerator(unittest.TestCase):
         category: str = "Coding",
         source: str = None,
     ) -> TimelineItem:
-        return {
-            "timestamp": self.base_time + timedelta(minutes=offset_minutes),
-            "duration": float(duration_minutes * 60),
-            "app": "Code",
-            "title": "Work",
-            "context": [],
-            "category": category,
-            "source": source,
-        }
+        return TimelineItem(
+            timestamp=self.base_time + timedelta(minutes=offset_minutes),
+            duration=float(duration_minutes * 60),
+            app="Code",
+            title="Work",
+            context=[],
+            category=category,
+            source=source,
+        )
 
     def test_analyze_working_hours_empty_timeline_returns_zero_stats(self):
         # T01: Empty Timeline -> All 0

@@ -119,19 +119,20 @@ class TimelineGenerator:
         self.perf_logger.debug(f"stats_calculation took {time.perf_counter() - t_stats_start:.3f}s")
 
         # 最終的なソート (プラグインで追加されたものを含めて時系列にする)
-        timeline.sort(key=lambda x: x["timestamp"])
+        # 最終的なソート (プラグインで追加されたものを含めて時系列にする)
+        timeline.sort(key=lambda x: x.timestamp)
 
         # Ensure all items are within the requested time range (Clipping)
         # This prevents events starting days ago (e.g. long AFK) from inflating the total duration
         t_clip_start = time.perf_counter()
         clipped_timeline = []
         for item in timeline:
-            i_start = item["timestamp"]
+            i_start = item.timestamp
             # Ensure timezone awareness for comparison
             if i_start.tzinfo is None:
                 i_start = i_start.replace(tzinfo=timezone.utc)
 
-            i_duration = item["duration"]
+            i_duration = item.duration
             i_end = i_start + timedelta(seconds=i_duration)
 
             # Skip if completely outside
@@ -144,8 +145,8 @@ class TimelineGenerator:
             new_duration = (new_end - new_start).total_seconds()
 
             if new_duration > 0:
-                item["timestamp"] = new_start
-                item["duration"] = new_duration
+                item.timestamp = new_start
+                item.duration = new_duration
                 clipped_timeline.append(item)
         timeline = clipped_timeline
         self.perf_logger.debug(f"clipping took {time.perf_counter() - t_clip_start:.3f}s")
@@ -157,7 +158,7 @@ class TimelineGenerator:
         work_stats = self.analyze_working_hours(timeline, self.config)
 
         # レポートデータの集約
-        unclassified_items = [item for item in timeline if not item.get("project") and item.get("category") != "AFK"]
+        unclassified_items = [item for item in timeline if not item.project and item.category != "AFK"]
         unclassified_summary = self.get_top_unclassified(unclassified_items)
 
         report_data = {
@@ -220,16 +221,14 @@ class TimelineGenerator:
         print(f"Timeline Items: {len(timeline)} events")
         debug_view = []
         for t in timeline:
-            ts_str = t["timestamp"].astimezone(local_tz).strftime("%H:%M:%S")
-            ctx_str = (
-                "\n".join(t["context"])[:100] + "..." if len("\n".join(t["context"])) > 100 else "\n".join(t["context"])
-            )
+            ts_str = t.timestamp.astimezone(local_tz).strftime("%H:%M:%S")
+            ctx_str = "\n".join(t.context)[:100] + "..." if len("\n".join(t.context)) > 100 else "\n".join(t.context)
             debug_view.append(
                 {
                     "time": ts_str,
-                    "app": t["app"][:20],
-                    "project": t.get("project") or "",
-                    "title": t["title"][:40],
+                    "app": t.app[:20],
+                    "project": t.project or "",
+                    "title": t.title[:40],
                     "context (overlay)": ctx_str,
                 }
             )
@@ -240,10 +239,10 @@ class TimelineGenerator:
     def get_project_stats(self, timeline: List[TimelineItem]) -> Dict[str, float]:
         p_stats: Dict[str, float] = {}
         for item in timeline:
-            proj = item.get("project") or DEFAULT_PROJECT
-            if item.get("category") == "AFK":
+            proj = item.project or DEFAULT_PROJECT
+            if item.category == "AFK":
                 continue
-            p_stats[proj] = p_stats.get(proj, 0.0) + item["duration"]
+            p_stats[proj] = p_stats.get(proj, 0.0) + item.duration
         return p_stats
 
     def get_client_stats(self, timeline: List[TimelineItem]) -> Dict[str, float]:
@@ -251,8 +250,8 @@ class TimelineGenerator:
         clients = self.config.get("clients", {})
         for item in timeline:
             # MetadataからクライアントIDを取得
-            client_id = (item.get("metadata") or {}).get("client")
-            if item.get("category") == "AFK":
+            client_id = (item.metadata or {}).get("client")
+            if item.category == "AFK":
                 continue
 
             # クライアントIDを名前に解決
@@ -261,7 +260,7 @@ class TimelineGenerator:
             else:
                 client_name = NON_BILLABLE_CLIENT
 
-            c_stats[client_name] = c_stats.get(client_name, 0.0) + item["duration"]
+            c_stats[client_name] = c_stats.get(client_name, 0.0) + item.duration
         return c_stats
 
     def analyze_working_hours(self, timeline: List[TimelineItem], config: Dict[str, Any]) -> WorkStats:
@@ -271,8 +270,8 @@ class TimelineGenerator:
         """Unclassifiedなアイテムの中から、時間の長いトップ項目を返します。"""
         counts: Dict[str, float] = {}
         for item in items:
-            key = f"{item['app']}: {item['title'][:40]}"
-            counts[key] = counts.get(key, 0.0) + item["duration"]
+            key = f"{item.app}: {item.title[:40]}"
+            counts[key] = counts.get(key, 0.0) + item.duration
 
         sorted_keys = sorted(counts.items(), key=lambda x: x[1], reverse=True)
         return [{"key": k, "duration": d} for k, d in sorted_keys[:limit]]

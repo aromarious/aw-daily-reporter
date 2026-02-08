@@ -7,6 +7,8 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
+from aw_daily_reporter.timeline.models import TimelineItem
+
 
 class TestTimelineGeneratorMethods(unittest.TestCase):
     """TimelineGenerator の各メソッドのテストケース"""
@@ -25,8 +27,10 @@ class TestTimelineGeneratorMethods(unittest.TestCase):
         category: str = "Coding",
         project: str = None,
         client_id: str = None,
-    ) -> dict:
-        item = {
+    ) -> "TimelineItem":
+        from aw_daily_reporter.timeline.models import TimelineItem
+
+        data = {
             "timestamp": self.base_time + timedelta(minutes=offset_minutes),
             "duration": float(duration_minutes * 60),
             "app": "Code",
@@ -34,10 +38,12 @@ class TestTimelineGeneratorMethods(unittest.TestCase):
             "context": [],
             "category": category,
             "project": project,
+            "source": "test",
         }
         if client_id:
-            item["metadata"] = {"client": client_id}
-        return item
+            data["metadata"] = {"client": client_id}
+
+        return TimelineItem(**data)
 
     def test_get_project_stats(self):
         """プロジェクト統計を正しく計算"""
@@ -106,28 +112,36 @@ class TestTimelineGeneratorMethods(unittest.TestCase):
 
     def test_get_top_unclassified_respects_limit(self):
         """制限数に従う"""
+        from aw_daily_reporter.timeline.models import TimelineItem
+
         timeline = [
-            {
-                "timestamp": self.base_time,
-                "duration": 60.0,
-                "app": "App1",
-                "title": "Title1",
-                "category": "X",
-            },
-            {
-                "timestamp": self.base_time,
-                "duration": 30.0,
-                "app": "App2",
-                "title": "Title2",
-                "category": "X",
-            },
-            {
-                "timestamp": self.base_time,
-                "duration": 120.0,
-                "app": "App3",
-                "title": "Title3",
-                "category": "X",
-            },
+            TimelineItem(
+                timestamp=self.base_time,
+                duration=60.0,
+                app="App1",
+                title="Title1",
+                category="X",
+                source="test",
+                context=[],
+            ),
+            TimelineItem(
+                timestamp=self.base_time,
+                duration=30.0,
+                app="App2",
+                title="Title2",
+                category="X",
+                source="test",
+                context=[],
+            ),
+            TimelineItem(
+                timestamp=self.base_time,
+                duration=120.0,
+                app="App3",
+                title="Title3",
+                category="X",
+                source="test",
+                context=[],
+            ),
         ]
 
         top = self.generator.get_top_unclassified(timeline, limit=2)
@@ -196,15 +210,19 @@ class TestPrintTimelineDebug(unittest.TestCase):
 
         generator = TimelineGenerator()
         base_time = datetime(2025, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
+        from aw_daily_reporter.timeline.models import TimelineItem
+
         timeline = [
-            {
-                "timestamp": base_time,
-                "duration": 3600.0,
-                "app": "Code",
-                "title": "Working on project",
-                "context": ["context1", "context2"],
-                "project": "MyProject",
-            }
+            TimelineItem(
+                timestamp=base_time,
+                duration=3600.0,
+                app="Code",
+                title="Working on project",
+                context=["context1", "context2"],
+                project="MyProject",
+                source="test",
+                category="Coding",
+            )
         ]
 
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
@@ -337,15 +355,18 @@ class TestAnalyzeWorkingHours(unittest.TestCase):
 
         generator = TimelineGenerator()
         base_time = datetime(2025, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
+        from aw_daily_reporter.timeline.models import TimelineItem
+
         timeline = [
-            {
-                "timestamp": base_time,
-                "duration": 3600.0,
-                "app": "Code",
-                "title": "Work",
-                "context": [],
-                "category": "Coding",
-            }
+            TimelineItem(
+                timestamp=base_time,
+                duration=3600.0,
+                app="Code",
+                title="Work",
+                context=[],
+                category="Coding",
+                source="test",
+            )
         ]
         config = {"settings": {}}
 

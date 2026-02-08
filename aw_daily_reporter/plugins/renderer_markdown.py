@@ -121,19 +121,19 @@ class MarkdownRendererPlugin(RendererPlugin):
         lines = [f"# {header}"]
 
         for item in timeline:
-            ts = item["timestamp"].astimezone().strftime("%H:%M:%S")
-            duration = int(item["duration"])
-            category = item.get("category") or DEFAULT_CATEGORY
+            ts = item.timestamp.astimezone().strftime("%H:%M:%S")
+            duration = int(item.duration)
+            category = item.category or DEFAULT_CATEGORY
 
             # Git イベントなどは duration が短くても表示する
             if duration < 5 and category != "Git":
                 continue
 
-            app = item["app"]
-            title = item["title"]
-            project = item.get("project")
+            app = item.app
+            title = item.title
+            project = item.project
 
-            context_list = set(item["context"])
+            context_list = set(item.context)
             if project:
                 context_list.add(f"Project: {project}")
             context = ", ".join(context_list)
