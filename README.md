@@ -1,5 +1,8 @@
 # aw-daily-reporter
 
+[🇯🇵 日本語](./README.ja.md)
+
+
 A tool that categorizes and visualizes life logs collected by ActivityWatch on two axes: "Project x Category", and supports AI-based daily report creation.
 
 - 📊 **Automatic Classification by 2 Axes**: Automatically organizes "**For what purpose (Project)**" and "**What activity (Category)**" was performed.
