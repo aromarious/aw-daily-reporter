@@ -115,3 +115,18 @@ aw-daily-reporter/
 ### カテゴリ・ルール設定
 
 Web UI の設定画面から、アプリケーションごとのカテゴリ分類ルールやプロジェクトマッピングを編集できます。
+
+## 7. ドキュメント (Documentation)
+
+開発者・コントリビューター向けの技術ドキュメントです。
+
+- **[specs.md](docs/specs.md)**
+  - 詳細設計書。アーキテクチャ、データフロー、プラグイン仕様などの詳細。
+- **[usage.md](docs/usage.md)**
+  - 開発ガイド。セットアップ、ビルド、テスト、コマンドの使い方。
+- **[logging.md](docs/logging.md)**
+  - ログ出力のガイドライン。ログレベルの基準やフォーマットについて。
+- **[git-operation.md](docs/git-operation.md)**
+  - Git 運用ルール。ブランチ戦略、コミットメッセージの規約など。
+- **[performance-improvement.md](docs/performance-improvement.md)**
+  - パフォーマンス改善に関するメモ。ボトルネックの調査や最適化の方針。
