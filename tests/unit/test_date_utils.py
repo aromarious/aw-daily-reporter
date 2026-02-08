@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime, timedelta
 
 import pytest
+
 from aw_daily_reporter.shared.date_utils import get_date_range
 
 

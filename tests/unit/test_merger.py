@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 from aw_core import Event
+
 from aw_daily_reporter.timeline.merger import TimelineMerger, events_to_df
 
 
