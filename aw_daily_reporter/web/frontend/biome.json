@@ -8,7 +8,14 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!node_modules", "!.next", "!out", "!build"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.next",
+      "!.out",
+      "!build",
+      "!next-env.d.ts"
+    ]
   },
   "linter": {
     "enabled": true,
