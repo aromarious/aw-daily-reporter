@@ -108,7 +108,7 @@ class RuleMatchingProcessor(ProcessorPlugin):
                             item["context"].append(f"Project: {rule['project']}")
 
                         # Store matched rule metadata
-                        if "metadata" not in item:
+                        if "metadata" not in item or item["metadata"] is None:
                             item["metadata"] = {}
                         item["metadata"]["matched_rule"] = {
                             "keyword": pattern,

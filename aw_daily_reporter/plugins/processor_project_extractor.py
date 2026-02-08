@@ -6,6 +6,7 @@
 """
 
 import logging
+import os
 import re
 from typing import Any, Dict, List, Optional
 
@@ -33,10 +34,6 @@ class ProjectExtractionProcessor(ProcessorPlugin):
     def process(self, timeline: List[TimelineItem], config: Dict[str, Any]) -> List[TimelineItem]:
         logger.info(f"[Plugin] Running: {self.name}")
 
-        editor_apps = config.get("apps", {}).get("editors", [])
-        if not editor_apps:
-            return timeline
-
         extraction_patterns = config.get("settings", {}).get("project_extraction_patterns", [])
         if not extraction_patterns:
             # Fallback default if not in config? Use generic pipe pattern as a safe default
@@ -46,14 +43,9 @@ class ProjectExtractionProcessor(ProcessorPlugin):
             # Skip if project is already set (e.g. by source)
             if item.get("project"):
                 continue
-
-            app_lower = item.get("app", "").lower()
-            is_editor = any(e in app_lower for e in editor_apps)
-
-            if is_editor:
-                project = self._extract_project_from_title(item.get("title", ""), extraction_patterns)
-                if project:
-                    item["project"] = project
+            project = self._extract_project_from_title(item.get("title", ""), extraction_patterns)
+            if project:
+                item["project"] = project
 
         return timeline
 
@@ -62,7 +54,12 @@ class ProjectExtractionProcessor(ProcessorPlugin):
             try:
                 match = re.search(pattern, title)
                 if match:
-                    return match.group("project")
+                    project = match.group("project")
+                    if project:
+                        # If it's an absolute path, take the basename
+                        if os.path.isabs(project):
+                            return os.path.basename(project)
+                        return project
             except (re.error, IndexError):
                 continue
         return None

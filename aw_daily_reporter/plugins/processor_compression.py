@@ -6,13 +6,17 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from ..shared.i18n import _
 from ..timeline.models import TimelineItem
 from .base import ProcessorPlugin
 
 logger = logging.getLogger(__name__)
+
+
+class CompressedGroup(TimelineItem, total=False):
+    _files: Set[str]
 
 
 class CompressionProcessor(ProcessorPlugin):
@@ -36,13 +40,10 @@ class CompressionProcessor(ProcessorPlugin):
         if not timeline:
             return timeline
 
-        if not timeline:
-            return timeline
-
         meeting_apps = config.get("apps", {}).get("meetings", [])
 
         compressed: List[TimelineItem] = []
-        current_group: Optional[TimelineItem] = None
+        current_group: Optional[CompressedGroup] = None
 
         for item in timeline:
             app_lower = item.get("app", "").lower()
@@ -116,7 +117,7 @@ class CompressionProcessor(ProcessorPlugin):
                     "file": item.get("file"),
                     "language": item.get("language"),
                     "_files": set(),
-                }  # type: ignore
+                }
 
                 # Initial extraction for the first item
                 f = item.get("file")
@@ -129,10 +130,11 @@ class CompressionProcessor(ProcessorPlugin):
 
         return compressed
 
-    def _finalize_group(self, group: Dict[str, Any]):
+    def _finalize_group(self, group: CompressedGroup) -> None:
         if "_files" in group and group["_files"]:
             files_str = ", ".join(sorted(group["_files"]))
             label = _("Edited files")
             group["context"].append(f"{label}: {files_str}")
-        for k in ["_files"]:
-            group.pop(k, None)
+
+        # Remove _files key (it's not part of TimelineItem)
+        group.pop("_files", None)  # type: ignore

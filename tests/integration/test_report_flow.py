@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from aw_core import Event
+
 from aw_daily_reporter.timeline.generator import TimelineGenerator
 
 

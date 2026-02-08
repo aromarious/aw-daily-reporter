@@ -294,18 +294,14 @@ function DashboardContent() {
       })
 
     // Try to use actual activity range first
-    // @ts-expect-error
     if (workStats?.start && workStats?.end) {
-      // @ts-expect-error
       return {
         start: format(workStats.start),
         end: format(workStats.end),
       }
     }
 
-    // @ts-expect-error
     if (report?.start_time && report?.end_time) {
-      // @ts-expect-error
       return {
         start: format(report.start_time),
         end: format(report.end_time),
@@ -684,7 +680,6 @@ function DashboardContent() {
   const workingSeconds = work_stats.working_seconds || 0
 
   const breakSeconds = work_stats.break_seconds || 0
-  // @ts-expect-error
   const afkSeconds = work_stats.afk_seconds || 0
   const nonWorkSeconds = Math.max(0, breakSeconds - afkSeconds)
 

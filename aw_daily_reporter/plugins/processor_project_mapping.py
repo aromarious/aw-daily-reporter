@@ -52,7 +52,7 @@ class ProjectMappingProcessor(ProcessorPlugin):
             target_project = project_map.get(pattern, "")
             target_client_id = client_map.get(pattern, "")
             try:
-                compiled_rules.append((re.compile(pattern), target_project, target_client_id))
+                compiled_rules.append((re.compile(pattern, re.IGNORECASE), target_project, target_client_id))
             except re.error:
                 continue
 
@@ -70,7 +70,7 @@ class ProjectMappingProcessor(ProcessorPlugin):
 
                     # 2. Client Assignment
                     if target_client_id and target_client_id in clients:
-                        curr_meta = item.get("metadata", {})
+                        curr_meta = item.get("metadata") or {}
                         curr_meta["client"] = target_client_id
                         item["metadata"] = curr_meta
 
