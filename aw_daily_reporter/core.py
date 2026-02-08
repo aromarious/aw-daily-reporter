@@ -303,6 +303,18 @@ def main() -> None:
     """
     setup_logging()
 
+    # Initialize i18n from config
+    try:
+        from .shared.i18n import setup_i18n
+        from .shared.settings_manager import SettingsManager
+
+        config = SettingsManager.get_instance().load()
+        lang = config.system.language if hasattr(config, "system") else config.get("system", {}).get("language", "en")
+        setup_i18n(lang)
+    except Exception as e:
+        # Fallback to default/system locale if config loading fails
+        logger.debug(f"Failed to load config for i18n: {e}")
+
     # バージョン情報の取得
     try:
         from importlib.metadata import PackageNotFoundError, version
