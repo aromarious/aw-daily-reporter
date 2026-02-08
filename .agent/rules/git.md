@@ -3,21 +3,35 @@ trigger: model_decision
 description: git operation rules
 ---
 
-# Git Workflow Rules
+# Git 運用ルール
 
-This project follows the Gitflow workflow. Please adhere to the rules defined in [docs/git.md](../docs/git.md).
+このプロジェクトは Gitflow ワークフローに従います。
 
-## Key Points
+## ブランチ戦略
 
-- **Branches**:
-  - `main`: Production code (only from releases).
-  - `develop`: Development code (Target for feature PRs).
-  - `feature/*`: New features (Source for PRs to `develop`).
-  - `release/*`: Release preparation.
-  - `hotfix/*`: Urgent fixes on production.
+- `main`: 本番用コード（リリース時のみ更新）。
+- `develop`: 開発用コード（機能追加PRのターゲット）。
+- `feature/*`: 新機能開発用（`develop` へのPR元）。
+- `release/*`: リリース準備用。
+- `hotfix/*`: 本番環境への緊急修正用。
 
-- **Commits**: Use Conventional Commits (`feat`, `fix`, `docs`, etc.).
-  - `wip` is allowed in `feature/*` but must be squashed before merge.
-- **Husky**: Pre-commit hooks enforce commit message format.
+## 開発フロー
 
-Review the full documentation at `docs/git.md` before making repository changes.
+1. **作業ブランチの作成**: 
+   - 実際開発するのは作業ブランチを作成してそこで実施します。
+2. **プルリクエスト（PR）**:
+   - ユーザがプルリクの作成を指示したら `develop` に向けて作ります。
+3. **マージ後の処理**:
+   - ユーザが「プルリクマージしました」と言ったら、作業ブランチのローカルリモートrefを削除します。
+
+## コミット
+
+- **作成タイミング**:
+  - コミットを作成してくださいと言うまで、コミットの作成も実行もしないでください。
+- **メッセージ形式**:
+  - Conventional Commits (`feat`, `fix`, `docs`, etc.) を使用してください。
+  - `wip` コミットは `feature/*` ブランチでは許可されますが、マージ前にスカッシュする必要があります。
+
+## その他
+
+- `husky` によるプレコミットフックがコミットメッセージのフォーマットを強制します。conventional commit

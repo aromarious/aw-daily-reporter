@@ -89,7 +89,16 @@ Access `http://localhost:5601` in your browser to use the following features:
 - **Python**: 3.8 or higher.
 - **Node.js**: Required for building Web UI (not needed if using distributed package).
 
-### Steps
+### Recommended: Install via pip
+
+Copy the link to the latest `.whl` file from [Releases](https://github.com/aromarious/aw-daily-reporter/releases) and install it.
+
+```bash
+# Example
+pip install https://github.com/aromarious/aw-daily-reporter/releases/download/vX.X.X/aw_daily_reporter-X.X.X-py3-none-any.whl
+```
+
+### Development: Build from Source
 
 ```bash
 git clone https://github.com/aromarious/aw-daily-reporter.git
