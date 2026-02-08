@@ -1,5 +1,11 @@
 # aw-daily-reporter
 
+[![CI/CD](https://github.com/aromarious/aw-daily-reporter/actions/workflows/ci.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/ci.yml)
+[![Semgrep](https://github.com/aromarious/aw-daily-reporter/actions/workflows/semgrep.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/semgrep.yml)
+[![Secret Scanning](https://github.com/aromarious/aw-daily-reporter/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/secret-scanning.yml)
+
+**English** | [日本語](./README.ja.md)
+
 A tool that categorizes and visualizes life logs collected by ActivityWatch on two axes: "Project x Category", and supports AI-based daily report creation.
 
 - 📊 **Automatic Classification by 2 Axes**: Automatically organizes "**For what purpose (Project)**" and "**What activity (Category)**" was performed.
@@ -160,7 +166,7 @@ Configuration file is saved at `~/.config/aw-daily-reporter/config.json`, but we
 ## 📚 Documentation
 
 - **Detailed Specs/Architecture**: [PROJECT.md](./PROJECT.md) and [docs/specs.md](./docs/specs.md)
-- **Development Guide**: [docs/usage.md](./docs/usage.md)
+- **Development Guide**: [docs/development.md](./docs/development.md)
 
 ## License
 

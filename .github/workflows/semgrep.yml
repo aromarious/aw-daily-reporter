@@ -1,0 +1,27 @@
+
+name: Semgrep
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '30 0 * * 0'
+
+jobs:
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: >- # more at semgrep.dev/explore
+            p/security-audit
+            p/secrets
+            p/ci
+            p/python
+            p/javascript
+            p/typescript
