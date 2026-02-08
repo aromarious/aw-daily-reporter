@@ -28,7 +28,7 @@
 
 ### Backend
 
-- **Language**: Python 3.8+
+- **Language**: Python 3.10+
 - **Framework**: Flask, Waitress
 - **Package Manager**: Poetry
 - **Main Libraries**:
@@ -38,11 +38,11 @@
 
 ### Frontend (Web UI)
 
-- **Framework**: Next.js (React)
+- **Framework**: React + Vite
 - **Language**: TypeScript
 - **Styling**: TailwindCSS, DaisyUI
 - **Visualization**: ECharts (echarts-for-react)
-- **State Management**: SWR, Context API
+- **State Management**: React Context / Hooks
 
 ## 5. ディレクトリ構成
 
@@ -51,7 +51,7 @@ aw-daily-reporter/
 ├── aw_daily_reporter/
 │   ├── __main__.py          # CLI エントリポイント
 │   ├── core.py              # コアロジック・コマンド定義
-│   ├── data/                # データファイル (presets, templates)
+│   ├── data/                # データファイル (presets)
 │   ├── locales/             # 翻訳ファイル
 │   ├── plugins/             # プラグインシステム
 │   │   ├── manager.py       # プラグイン管理
@@ -62,9 +62,9 @@ aw-daily-reporter/
 │   ├── timeline/            # タイムライン処理ロジック
 │   └── web/
 │       ├── backend/         # Flask API サーバー
-│       └── frontend/        # Next.js フロントエンド
+│       └── frontend/        # React + Vite フロントエンド
 ├── tests/                   # テストコード
-
+│
 └── pyproject.toml           # Python プロジェクト設定
 ```
 
@@ -78,7 +78,7 @@ aw-daily-reporter/
 {
   "system": {
     "language": "ja",
-    "day_start_source": "aw",
+    "day_start_source": "manual",
     "start_of_day": "04:00",
     "activitywatch": {
       "host": "127.0.0.1",

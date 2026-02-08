@@ -184,11 +184,23 @@ class MyProcessor(ProcessorPlugin):
 
 ## 6. 設定ファイル
 
-### 6.1 メイン設定 (`~/.config/aw-daily-reporter/config.toml`)
+### 6.1 メイン設定 (`~/.config/aw-daily-reporter/config.json`)
 
-- 一般設定（言語、タイムゾーン）
-- ActivityWatch 接続設定
-- レポート出力設定
+```json
+{
+  "general": {
+    "language": "ja",
+    "timezone": "Asia/Tokyo"
+  },
+  "activitywatch": {
+    "host": "127.0.0.1",
+    "port": 5600
+  },
+  "report": {
+    "output_dir": "~/Documents/daily-reports"
+  }
+}
+```
 
 ### 6.2 言語別プリセット (`data/presets/{lang}.json`)
 
