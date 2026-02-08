@@ -421,9 +421,13 @@ class PluginManager:
         start_time: datetime,
         end_time: datetime,
         config: dict[str, Any],
+        include_snapshots: bool = False,
     ) -> tuple[list[TimelineItem], list[dict[str, Any]], list[str]]:
         """
         すべてのプラグイン（スキャナとプロセッサ）を設定順に実行し、各段階のスナップショットも返す。
+
+        Args:
+            include_snapshots: Trueの場合、各段階のタイムラインをdeepcopyして保持（パフォーマンス影響大）
 
         Returns:
             (final_timeline, snapshots, scan_summary)
@@ -435,13 +439,14 @@ class PluginManager:
         scan_summary = []
 
         # Initial state
-        snapshots.append(
-            {
-                "name": "Raw Data",
-                "timeline": copy.deepcopy(current_timeline),
-                "plugin": "Context Merger",
-            }
-        )
+        if include_snapshots:
+            snapshots.append(
+                {
+                    "name": "Raw Data",
+                    "timeline": copy.deepcopy(current_timeline),
+                    "plugin": "Context Merger",
+                }
+            )
 
         # Merge and sort all plugins
         all_plugins = self._get_ordered_plugins(self.processors + self.scanners)
@@ -483,13 +488,14 @@ class PluginManager:
                     logger.error(f"Plugin {plugin.name} failed during process: {e}")
                     # Keep previous timeline if failed
 
-            snapshots.append(
-                {
-                    "name": f"After {plugin.name}",
-                    "timeline": copy.deepcopy(current_timeline),
-                    "plugin": plugin.name,
-                }
-            )
+            if include_snapshots:
+                snapshots.append(
+                    {
+                        "name": f"After {plugin.name}",
+                        "timeline": copy.deepcopy(current_timeline),
+                        "plugin": plugin.name,
+                    }
+                )
 
         return current_timeline, snapshots, scan_summary
 

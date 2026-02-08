@@ -68,6 +68,7 @@ class TimelineGenerator:
         skip_renderers: bool = False,
         override_config: Optional[Dict[str, Any]] = None,
         capture_renderers: bool = False,
+        include_snapshots: bool = False,
     ) -> Tuple[Dict[str, Any], List[TimelineItem], List[Dict[str, Any]], Dict[str, str]]:
         """データを取得し、加工パイプラインを実行してレポートを出力します。"""
         import time
@@ -105,7 +106,7 @@ class TimelineGenerator:
         # スキャナとプロセッサを混在させた統一パイプラインで実行
         t_pipeline_start = time.perf_counter()
         timeline, snapshots, scan_summary = self.plugin_manager.run_pipeline_with_snapshots(
-            timeline, start, end, self.config
+            timeline, start, end, self.config, include_snapshots=include_snapshots
         )
         self.perf_logger.debug(f"plugin_pipeline took {time.perf_counter() - t_pipeline_start:.3f}s")
 

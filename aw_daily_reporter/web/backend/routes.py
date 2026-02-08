@@ -240,6 +240,7 @@ def pipeline_preview():
     date_str = data.get("date")
     stage_index = data.get("stage", 1)
     config = data.get("config")
+    include_snapshots = data.get("include_snapshots", False)
 
     try:
         # Load config to determine day start source (copied from get_report)
@@ -290,9 +291,12 @@ def pipeline_preview():
                 suppress_timeline=True,
                 skip_renderers=True,
                 override_config=config,
+                include_snapshots=include_snapshots,
             )
         else:
-            _, _, snapshots, _ = generator.run(start, end, suppress_timeline=True, skip_renderers=True)
+            _, _, snapshots, _ = generator.run(
+                start, end, suppress_timeline=True, skip_renderers=True, include_snapshots=include_snapshots
+            )
 
         # Build stage summaries
         stages = []

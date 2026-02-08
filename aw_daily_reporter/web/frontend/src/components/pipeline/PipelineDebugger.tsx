@@ -73,13 +73,15 @@ export default function PipelineDebugger({
 	const today = new Date().toISOString().split("T")[0];
 	const [date, setDate] = useState(dateParam || initialDate || today);
 	const [selectedStage, setSelectedStage] = useState(1);
+	// スナップショット有効化フラグ（パフォーマンス最適化のためデフォルトOFF）
+	const [includeSnapshots, setIncludeSnapshots] = useState(false);
 	// Track closed stages to exclude them from domain calculation
 	const [closedStages, setClosedStages] = useState<Set<number>>(new Set());
 
 	// Fetch pipeline data
 	const { data, error, isLoading, mutate } = useSWR<PipelineData>(
-		["/api/pipeline/preview", date, selectedStage],
-		([url]) => fetcher(url, { date, stage: selectedStage }),
+		["/api/pipeline/preview", date, selectedStage, includeSnapshots],
+		([url]) => fetcher(url, { date, stage: selectedStage, include_snapshots: includeSnapshots }),
 		{
 			revalidateOnFocus: false,
 			keepPreviousData: true,
@@ -160,6 +162,17 @@ export default function PipelineDebugger({
 							className="text-sm text-base-content bg-transparent border-none outline-none"
 						/>
 					</div>
+
+					{/* Snapshots Toggle */}
+					<label className="flex items-center gap-2 cursor-pointer">
+						<input
+							type="checkbox"
+							className="toggle toggle-sm toggle-primary"
+							checked={includeSnapshots}
+							onChange={(e) => setIncludeSnapshots(e.target.checked)}
+						/>
+						<span className="text-sm text-base-content/70">Snapshots</span>
+					</label>
 
 					{/* Refresh Button */}
 					<button
