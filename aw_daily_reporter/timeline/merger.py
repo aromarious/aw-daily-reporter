@@ -84,22 +84,23 @@ class TimelineMerger:
         items: List[TimelineItem] = []
         if df.empty:
             return items
-        for _, row in df.iterrows():
+        # itertuples is 5-10x faster than iterrows
+        for row in df.itertuples():
             # timestamp might be string or datetime depending on pandas version/ops
-            ts = row["timestamp"]
+            ts = row.timestamp
             if not isinstance(ts, datetime):
                 ts = pd.to_datetime(ts).to_pydatetime()
             elif isinstance(ts, pd.Timestamp):
                 ts = ts.to_pydatetime()
 
             # context generation
-            val_dur = row["duration"]
+            val_dur = row.duration
             if hasattr(val_dur, "total_seconds"):
                 val_dur = val_dur.total_seconds()
 
-            title = str(row.get("title", ""))
-            if not title and "status" in row:
-                title = str(row.get("status"))
+            title = str(getattr(row, "title", ""))
+            if not title and hasattr(row, "status"):
+                title = str(getattr(row, "status", ""))
             if not title:
                 title = NO_TITLE
 
@@ -107,17 +108,17 @@ class TimelineMerger:
                 {
                     "timestamp": ts,
                     "duration": float(val_dur),
-                    "app": str(row.get("app", UNKNOWN_APP)),
+                    "app": str(getattr(row, "app", UNKNOWN_APP)),
                     "title": title,
                     "context": [],
-                    "url": self._safe_val(row.get("url")),
-                    "file": self._safe_val(row.get("file")),
-                    "language": self._safe_val(row.get("language")),
-                    "status": self._safe_val(row.get("status")),
+                    "url": self._safe_val(getattr(row, "url", None)),
+                    "file": self._safe_val(getattr(row, "file", None)),
+                    "language": self._safe_val(getattr(row, "language", None)),
+                    "status": self._safe_val(getattr(row, "status", None)),
                     "metadata": {},
                     "category": f"Source: {source_name}" if use_category else None,
                     "source": source_name,
-                    "project": self._safe_val(row.get("project")),
+                    "project": self._safe_val(getattr(row, "project", None)),
                 }
             )
         return items
@@ -328,18 +329,16 @@ class TimelineMerger:
                 try:
                     # overlaps returns boolean mask
                     mask = df_vscode.index.overlaps(target_iv)
-                    # To be strict about original logic (t < end and e > start), overlaps(closed=both) is fine.
-                    # But verifying strict inequality if needed.
-                    # Generally IntervalIndex overlap is what we want.
                     if mask.any():
                         matched = df_vscode.loc[mask]
-                        for _, v_row in matched.iterrows():
+                        # itertuples is 5-10x faster than iterrows
+                        for row in matched.itertuples():
                             overlays.append(
                                 {
                                     "type": "vscode",
-                                    "start": v_row["timestamp"].to_pydatetime(),
-                                    "end": v_row["end"].to_pydatetime(),
-                                    "data": v_row,
+                                    "start": row.timestamp.to_pydatetime(),
+                                    "end": row.end.to_pydatetime(),
+                                    "data": row._asdict(),
                                 }
                             )
                 except KeyError:
@@ -347,13 +346,13 @@ class TimelineMerger:
             elif not df_vscode.empty:
                 # Fallback to old slow logic if index creation failed
                 mask = (df_vscode["timestamp"] < end) & (df_vscode["end"] > start)
-                for _, v_row in df_vscode.loc[mask].iterrows():
+                for row in df_vscode.loc[mask].itertuples():
                     overlays.append(
                         {
                             "type": "vscode",
-                            "start": v_row["timestamp"].to_pydatetime(),
-                            "end": v_row["end"].to_pydatetime(),
-                            "data": v_row,
+                            "start": row.timestamp.to_pydatetime(),
+                            "end": row.end.to_pydatetime(),
+                            "data": row._asdict(),
                         }
                     )
 
@@ -379,30 +378,28 @@ class TimelineMerger:
 
                 # Range query on index if possible, otherwise slow fallback
                 if isinstance(df_web.index, pd.IntervalIndex):
-                    # IntervalIndex doesn't support simple range slice on values easily for "timestamp" column
-                    # But we can query overlaps with the wide interval
                     wide_iv = pd.Interval(pd.Timestamp(s_start), pd.Timestamp(s_end), closed="both")
                     mask_wide = df_web.index.overlaps(wide_iv)
                     candidates = df_web.loc[mask_wide]
                 else:
                     candidates = df_web[(df_web["timestamp"] >= s_start) & (df_web["timestamp"] <= s_end)]
 
-                for _, c_row in candidates.iterrows():
-                    web_t = str(c_row.get("title", ""))
+                for row in candidates.itertuples():
+                    web_t = str(getattr(row, "title", ""))
                     if web_t and len(web_t) > 2 and web_t in str(window_title):
-                        # If we find one, wrap it as DF
-                        # construct safe single-row DF
-                        matched_web = c_row.to_frame().T
-                        break
+                        # マッチした行をDataFrameとして保持（IntervalIndex対応）
+                        row_dict = row._asdict()
+                        row_dict.pop("Index", None)  # Indexキーを除去
+                        matched_web = pd.DataFrame([row_dict])
                         break
 
-            for _, w_row in matched_web.iterrows():
+            for row in matched_web.itertuples():
                 overlays.append(
                     {
                         "type": "web",
-                        "start": w_row["timestamp"].to_pydatetime(),
-                        "end": w_row["end"].to_pydatetime(),
-                        "data": w_row,
+                        "start": row.timestamp.to_pydatetime(),
+                        "end": row.end.to_pydatetime(),
+                        "data": row._asdict(),
                     }
                 )
         return overlays
