@@ -1,0 +1,189 @@
+{
+  "system": {
+    "language": "ja",
+    "day_start_source": "aw"
+  },
+  "apps": {
+    "editors": [
+      "code",
+      "cursor",
+      "antigravity",
+      "windsurf",
+      "terminal",
+      "iterm",
+      "ghostty",
+      "sublime_text",
+      "atom"
+    ],
+    "meetings": [
+      "zoom",
+      "meet",
+      "teams",
+      "slack",
+      "discord",
+      "webex"
+    ]
+  },
+  "settings": {
+    "project_extraction_patterns": [
+      "^(?P<project>.+?)\\|"
+    ],
+    "break_categories": [
+      "AFK",
+      "エンターテインメント",
+      "動画",
+      "ゲーム"
+    ],
+    "category_list": [
+      "コーディング",
+      "ブラウジング",
+      "コミュニケーション",
+      "ミーティング",
+      "エンターテインメント",
+      "動画",
+      "ゲーム",
+      "AFK",
+      "執筆",
+      "デザイン",
+      "学習",
+      "調査",
+      "管理",
+      "その他"
+    ]
+  },
+  "rules": [
+    {
+      "keyword": "google 検索",
+      "category": "ブラウジング",
+      "target": "title"
+    },
+    {
+      "keyword": "duckduckgo",
+      "category": "ブラウジング"
+    },
+    {
+      "keyword": "zoom.us",
+      "category": "ミーティング",
+      "target": "app"
+    },
+    {
+      "keyword": "microsoft teams",
+      "category": "ミーティング",
+      "target": "app"
+    },
+    {
+      "keyword": "webex",
+      "category": "ミーティング",
+      "target": "app"
+    },
+    {
+      "keyword": "google meet",
+      "category": "ミーティング"
+    },
+    {
+      "keyword": "meet.google.com",
+      "category": "ミーティング",
+      "target": "url"
+    },
+    {
+      "keyword": "zoom.us/j/",
+      "category": "ミーティング",
+      "target": "url"
+    },
+    {
+      "keyword": "teams.microsoft.com",
+      "category": "ミーティング",
+      "target": "url"
+    },
+    {
+      "keyword": "code",
+      "category": "コーディング",
+      "target": "app"
+    },
+    {
+      "keyword": "cursor",
+      "category": "コーディング",
+      "target": "app"
+    },
+    {
+      "keyword": "antigravity",
+      "category": "コーディング",
+      "target": "app"
+    },
+    {
+      "keyword": "windsurf",
+      "category": "コーディング",
+      "target": "app"
+    },
+    {
+      "keyword": "terminal",
+      "category": "コーディング",
+      "target": "app"
+    },
+    {
+      "keyword": "iterm",
+      "category": "コーディング",
+      "target": "app"
+    },
+    {
+      "keyword": "ghostty",
+      "category": "コーディング",
+      "target": "app"
+    },
+    {
+      "keyword": "slack",
+      "category": "コミュニケーション",
+      "target": "app"
+    },
+    {
+      "keyword": "discord",
+      "category": "コミュニケーション",
+      "target": "app"
+    },
+    {
+      "keyword": "chrome",
+      "category": "ブラウジング",
+      "target": "app"
+    },
+    {
+      "keyword": "safari",
+      "category": "ブラウジング",
+      "target": "app"
+    },
+    {
+      "keyword": "arc",
+      "category": "ブラウジング",
+      "target": "app"
+    },
+    {
+      "keyword": "firefox",
+      "category": "ブラウジング",
+      "target": "app"
+    },
+    {
+      "keyword": "youtube",
+      "category": "エンターテインメント",
+      "target": "title"
+    },
+    {
+      "keyword": "netflix",
+      "category": "エンターテインメント",
+      "target": "title"
+    },
+    {
+      "keyword": "vlc",
+      "category": "動画",
+      "target": "app"
+    },
+    {
+      "keyword": "iina",
+      "category": "動画",
+      "target": "app"
+    },
+    {
+      "keyword": "steam",
+      "category": "ゲーム",
+      "target": "app"
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "system": {
+    "language": "en",
+    "day_start_source": "aw"
+  },
+  "categories": {
+    "Coding": "Coding",
+    "Browsing": "Browsing",
+    "Communication": "Communication",
+    "Meeting": "Meeting",
+    "Entertainment": "Entertainment",
+    "Video": "Video",
+    "Game": "Game"
+  },
+  "apps": {
+    "editors": [
+      "code",
+      "cursor",
+      "antigravity",
+      "windsurf",
+      "terminal",
+      "iterm",
+      "ghostty",
+      "sublime_text",
+      "atom"
+    ],
+    "meetings": [
+      "zoom",
+      "meet",
+      "teams",
+      "slack",
+      "discord",
+      "webex"
+    ]
+  },
+  "settings": {
+    "project_extraction_patterns": [
+      "^(?P<project>.+?)\\|"
+    ],
+    "break_categories": [
+      "AFK",
+      "Entertainment",
+      "Video",
+      "Game"
+    ],
+    "category_list": [
+      "Coding",
+      "Browsing",
+      "Communication",
+      "Meeting",
+      "Entertainment",
+      "Video",
+      "Game",
+      "AFK",
+      "Writing",
+      "Design",
+      "Learning",
+      "Research",
+      "Management",
+      "Other"
+    ]
+  },
+  "rules": [
+    {
+      "keyword": "google search",
+      "category": "Browsing",
+      "target": "title"
+    },
+    {
+      "keyword": "duckduckgo",
+      "category": "Browsing"
+    },
+    {
+      "keyword": "zoom.us",
+      "category": "Meeting",
+      "target": "app"
+    },
+    {
+      "keyword": "microsoft teams",
+      "category": "Meeting",
+      "target": "app"
+    },
+    {
+      "keyword": "webex",
+      "category": "Meeting",
+      "target": "app"
+    },
+    {
+      "keyword": "google meet",
+      "category": "Meeting"
+    },
+    {
+      "keyword": "meet.google.com",
+      "category": "Meeting",
+      "target": "url"
+    },
+    {
+      "keyword": "zoom.us/j/",
+      "category": "Meeting",
+      "target": "url"
+    },
+    {
+      "keyword": "teams.microsoft.com",
+      "category": "Meeting",
+      "target": "url"
+    },
+    {
+      "keyword": "code",
+      "category": "Coding",
+      "target": "app"
+    },
+    {
+      "keyword": "cursor",
+      "category": "Coding",
+      "target": "app"
+    },
+    {
+      "keyword": "antigravity",
+      "category": "Coding",
+      "target": "app"
+    },
+    {
+      "keyword": "windsurf",
+      "category": "Coding",
+      "target": "app"
+    },
+    {
+      "keyword": "terminal",
+      "category": "Coding",
+      "target": "app"
+    },
+    {
+      "keyword": "iterm",
+      "category": "Coding",
+      "target": "app"
+    },
+    {
+      "keyword": "ghostty",
+      "category": "Coding",
+      "target": "app"
+    },
+    {
+      "keyword": "slack",
+      "category": "Communication",
+      "target": "app"
+    },
+    {
+      "keyword": "discord",
+      "category": "Communication",
+      "target": "app"
+    },
+    {
+      "keyword": "chrome",
+      "category": "Browsing",
+      "target": "app"
+    },
+    {
+      "keyword": "safari",
+      "category": "Browsing",
+      "target": "app"
+    },
+    {
+      "keyword": "arc",
+      "category": "Browsing",
+      "target": "app"
+    },
+    {
+      "keyword": "firefox",
+      "category": "Browsing",
+      "target": "app"
+    },
+    {
+      "keyword": "youtube",
+      "category": "Entertainment",
+      "target": "title"
+    },
+    {
+      "keyword": "netflix",
+      "category": "Entertainment",
+      "target": "title"
+    },
+    {
+      "keyword": "vlc",
+      "category": "Video",
+      "target": "app"
+    },
+    {
+      "keyword": "iina",
+      "category": "Video",
+      "target": "app"
+    },
+    {
+      "keyword": "steam",
+      "category": "Game",
+      "target": "app"
+    }
+  ]
+}

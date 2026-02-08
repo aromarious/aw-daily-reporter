@@ -1,0 +1,49 @@
+{
+  "name": "aw-daily-reporter",
+  "version": "0.1.0",
+  "description": "A tool that categorizes and visualizes life logs collected by ActivityWatch on two axes: \"Project x Category\", and supports AI-based daily report creation.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky",
+    "lint:py": "poetry run ruff check",
+    "lint:py:fix": "poetry run ruff check --fix",
+    "format:py": "poetry run ruff format",
+    "lint:frontend": "pnpm --filter frontend lint",
+    "lint:frontend:fix": "pnpm --filter frontend fix",
+    "lint": "pnpm run lint:py && pnpm run lint:frontend",
+    "format": "pnpm run format:py && pnpm run lint:frontend:fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aromarious/aw-daily-reporter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MPL-2.0",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/aromarious/aw-daily-reporter/issues"
+  },
+  "homepage": "https://github.com/aromarious/aw-daily-reporter#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
+  },
+  "lint-staged": {
+    "**/*.py": [
+      "poetry run ruff check --fix",
+      "poetry run ruff format"
+    ],
+    "aw_daily_reporter/web/frontend/**/*.{js,jsx,ts,tsx}": [
+      "pnpm --filter frontend fix"
+    ]
+  },
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
+}

@@ -1,0 +1,68 @@
+[tool.poetry]
+name = "aw-daily-reporter"
+version = "0.1.0"
+description = "A daily reporting tool for ActivityWatch"
+authors = ["User <user@example.com>"]
+license = "MPL-2.0"
+readme = "README.md"
+packages = [
+    { include = "aw_daily_reporter" },
+]
+exclude = [
+    "aw_daily_reporter/web/frontend/**/*",
+    "!aw_daily_reporter/web/frontend/out"
+]
+include = [
+    { path = "aw_daily_reporter/web/frontend/out/**/*", format = ["sdist", "wheel"] }
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+aw-client = "^0.5.15"
+pandas = "*"
+tabulate = "*"
+toml = "*"
+flask = "<3.0.0"
+waitress = "*"
+importlib-resources = {version = "*", python = "<3.9"}
+
+[tool.poetry.scripts]
+aw-daily-reporter = "aw_daily_reporter.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+ignore_missing_imports = true
+check_untyped_defs = true
+disable_error_code = ["import-untyped"]
+
+
+[dependency-groups]
+dev = [
+    "mypy (<1.14)",
+    "pytest (<8.3.0)",
+    "pytest-cov (<6.0.0)",
+    "pytest-mock (<3.14.0)",
+    "ruff (>=0.15.0,<0.16.0)"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=aw_daily_reporter --cov-report=term-missing"
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "N", "B", "A", "C4", "PT", "SIM"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

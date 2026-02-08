@@ -1,0 +1,200 @@
+"use client";
+
+import clsx from "clsx";
+import { AlertCircle, GripVertical, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "@/contexts/I18nContext";
+
+interface ExtractionPatternListProps {
+	patterns: string[];
+	onUpdate: (newPatterns: string[]) => void;
+}
+
+interface Entry {
+	id: string;
+	value: string;
+	error?: string;
+}
+
+const validatePattern = (pattern: string): string | undefined => {
+	if (!pattern) return undefined;
+
+	// Check for required Python named group syntax first
+	if (!pattern.includes("?P<project>")) {
+		return "Must include named group (?P<project>...)";
+	}
+
+	// Validate regex syntax (ignoring Python-specific ?P)
+	// Python's (?P<name>...) corresponds to JS's (?<name>...)
+	const jsPattern = pattern.replace(/\(\?P</g, "(?<");
+	try {
+		new RegExp(jsPattern);
+	} catch (_e) {
+		return "Invalid Regular Expression";
+	}
+	return undefined;
+};
+
+export default function ExtractionPatternList({
+	patterns,
+	onUpdate,
+}: ExtractionPatternListProps) {
+	const { t } = useTranslation();
+	const [entries, setEntries] = useState<Entry[]>([]);
+	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+	useEffect(() => {
+		setEntries((prev) => {
+			const existingMap = new Map(prev.map((e) => [e.value, e.id]));
+			return patterns.map((p) => {
+				const id = existingMap.get(p) || crypto.randomUUID();
+				return { id, value: p, error: validatePattern(p) };
+			});
+		});
+	}, [patterns]);
+
+	const handleUpdate = (id: string, newValue: string) => {
+		const next = entries.map((entry) =>
+			entry.id === id
+				? { ...entry, value: newValue, error: validatePattern(newValue) }
+				: entry,
+		);
+		setEntries(next);
+	};
+
+	const handleBlur = () => {
+		notifyChange(entries);
+	};
+
+	const handleDelete = (id: string) => {
+		const next = entries.filter((e) => e.id !== id);
+		setEntries(next);
+		notifyChange(next);
+	};
+
+	const handleAdd = () => {
+		setEntries((prev) => [...prev, { id: crypto.randomUUID(), value: "" }]);
+	};
+
+	const notifyChange = (currentEntries: Entry[]) => {
+		// Filter out empty strings
+		const newPatterns = currentEntries
+			.map((e) => e.value)
+			.filter((v) => v.trim() !== "");
+		onUpdate(newPatterns);
+	};
+
+	// DnD
+	const handleDragStart = (e: React.DragEvent, index: number) => {
+		setDraggedIndex(index);
+		e.dataTransfer.effectAllowed = "move";
+	};
+
+	const handleDragOver = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = "move";
+	};
+
+	const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+		e.preventDefault();
+		if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+		const newEntries = [...entries];
+		const [moved] = newEntries.splice(draggedIndex, 1);
+		newEntries.splice(dropIndex, 0, moved);
+
+		setEntries(newEntries);
+		setDraggedIndex(null);
+		notifyChange(newEntries);
+	};
+
+	const handleDragEnd = () => {
+		setDraggedIndex(null);
+	};
+
+	return (
+		<div className="flex flex-col gap-2">
+			<div className="flex items-center p-1 mb-1 gap-2">
+				<div className="w-6 shrink-0" />
+				<div className="flex-1 min-w-0 px-3 py-2 border border-transparent text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+					{t("Regex Pattern")}
+				</div>
+				<div className="w-8 shrink-0" />
+			</div>
+
+			{entries.length === 0 && (
+				<div className="text-center py-8 text-base-content/40 bg-base-200 border-base-content/10 text-sm">
+					{t("No extraction patterns defined.")}
+				</div>
+			)}
+
+			<ul className="flex flex-col gap-2">
+				{entries.map((entry, index) => {
+					const isDragged = draggedIndex === index;
+
+					return (
+						<li
+							key={entry.id}
+							draggable
+							onDragStart={(e) => handleDragStart(e, index)}
+							onDragOver={handleDragOver}
+							onDrop={(e) => handleDrop(e, index)}
+							onDragEnd={handleDragEnd}
+							className={clsx(
+								"flex gap-2 items-start transition-all p-1 rounded-md border border-transparent hover:border-base-content/20 hover:bg-base-200 list-none",
+								isDragged &&
+									"opacity-50 border-dashed border-primary/50 bg-primary/10",
+							)}
+						>
+							<div
+								className="w-6 flex justify-center shrink-0 cursor-move text-base-content/40 hover:text-base-content/80 mt-2"
+								title="Drag to reorder"
+							>
+								<GripVertical size={16} />
+							</div>
+
+							<div className="flex-1 flex flex-col gap-1">
+								<input
+									type="text"
+									className={clsx(
+										"w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary focus:border-primary placeholder-base-content/40 bg-base-100 font-mono",
+										entry.error
+											? "border-error bg-error/10 focus:border-error focus:ring-error"
+											: "border-base-content/20",
+									)}
+									placeholder={t("Regex (e.g. ^(?P<project>.+?)\\|)")}
+									value={entry.value}
+									onChange={(e) => handleUpdate(entry.id, e.target.value)}
+									onBlur={handleBlur}
+								/>
+								{entry.error && (
+									<div className="flex items-center gap-1 text-xs text-error px-1">
+										<AlertCircle size={12} />
+										<span>{entry.error}</span>
+									</div>
+								)}
+							</div>
+
+							<button
+								type="button"
+								onClick={() => handleDelete(entry.id)}
+								className="w-8 flex justify-center shrink-0 h-8 mt-1 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors"
+								title="Delete"
+							>
+								<Trash2 size={16} />
+							</button>
+						</li>
+					);
+				})}
+			</ul>
+
+			<button
+				type="button"
+				onClick={handleAdd}
+				className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2"
+			>
+				<Plus size={16} /> {t("Add Pattern")}
+			</button>
+		</div>
+	);
+}

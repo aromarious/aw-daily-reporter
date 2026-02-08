@@ -1,0 +1,12 @@
+{
+  "makefile.configureOnOpen": false,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "biome.suggestInstallingGlobally": false,
+  "biome.configurationPath": "aw_daily_reporter/web/frontend/biome.json",
+  "biome.requireConfiguration": true,
+  "biome.lsp.bin": "./aw_daily_reporter/web/frontend/node_modules/.bin/biome"
+}

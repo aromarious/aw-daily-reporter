@@ -1,0 +1,18 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.env
+*.egg-info/
+dist/
+build/
+
+# System
+.DS_Store
+
+.coverage
+node_modules/
+/instance/
+/htmlcov/
