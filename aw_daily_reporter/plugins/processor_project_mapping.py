@@ -70,7 +70,7 @@ class ProjectMappingProcessor(ProcessorPlugin):
 
                     # 2. Client Assignment
                     if target_client_id and target_client_id in clients:
-                        curr_meta = item.get("metadata", {})
+                        curr_meta = item.get("metadata") or {}
                         curr_meta["client"] = target_client_id
                         item["metadata"] = curr_meta
 
