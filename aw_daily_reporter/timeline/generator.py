@@ -363,6 +363,8 @@ def main() -> None:
     from ..settings_manager import SettingsManager
 
     config = SettingsManager.get_instance().load()
+    if hasattr(config, "model_dump"):
+        config = config.model_dump(mode="json")
     default_renderer = config.get("settings", {}).get("default_renderer")
 
     if default_renderer and default_renderer in outputs:

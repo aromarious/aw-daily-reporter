@@ -53,7 +53,9 @@ class AppConfig(BaseModel):
     settings: SettingsConfig = Field(default_factory=SettingsConfig)
     rules: List[CategoryRule] = Field(default_factory=list)
     project_map: Dict[str, str] = Field(default_factory=dict)
+    client_map: Dict[str, str] = Field(default_factory=dict)
     apps: Dict[str, Any] = Field(default_factory=dict)
+    clients: Dict[str, Any] = Field(default_factory=dict)
     model_config = ConfigDict(extra="ignore")
 
 

@@ -58,7 +58,14 @@ class CompressionProcessor(ProcessorPlugin):
                 category = None
 
             # Determine if this item belongs to the current group
-            if current_group and current_group.get("project") == project and current_group.get("category") == category:
+            # Git items should never be merged to preserve individual commits
+            is_git = row.app == "Git"
+            if (
+                not is_git
+                and current_group
+                and current_group.get("project") == project
+                and current_group.get("category") == category
+            ):
                 # --- MERGE ---
                 current_group["duration"] += row.duration
 
@@ -102,7 +109,7 @@ class CompressionProcessor(ProcessorPlugin):
 
                 # Initial Title Strategy
                 new_title = getattr(row, "title", "") or ""
-                if project:
+                if project and not is_git:
                     if getattr(row, "file", None):
                         new_title = _("【{project}】(Multiple file edits)").format(project=project)
                     elif category:

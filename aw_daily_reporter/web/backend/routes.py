@@ -292,6 +292,9 @@ def pipeline_preview():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
     generator = TimelineGenerator()
     try:
         # Run with optional config override
@@ -309,13 +312,18 @@ def pipeline_preview():
                 start, end, suppress_timeline=True, skip_renderers=True, include_snapshots=include_snapshots
             )
 
+        def _get_item_attr(item, key, default=None):
+            if isinstance(item, dict):
+                return item.get(key, default)
+            return getattr(item, key, default)
+
         # Build stage summaries
         stages = []
         for i, snap in enumerate(snapshots):
             timeline = snap.get("timeline", [])
-            categorized = sum(1 for item in timeline if item.get("category"))
-            with_project = sum(1 for item in timeline if item.get("project"))
-            total_duration = sum(item.get("duration", 0) for item in timeline)
+            categorized = sum(1 for item in timeline if _get_item_attr(item, "category"))
+            with_project = sum(1 for item in timeline if _get_item_attr(item, "project"))
+            total_duration = sum(_get_item_attr(item, "duration", 0) for item in timeline)
 
             stages.append(
                 {
@@ -343,10 +351,10 @@ def pipeline_preview():
             before_cats = {}
             after_cats = {}
             for item in before_snap.get("timeline", []):
-                cat = item.get("category") or DEFAULT_CATEGORY
+                cat = _get_item_attr(item, "category") or DEFAULT_CATEGORY
                 before_cats[cat] = before_cats.get(cat, 0) + 1
             for item in after_snap.get("timeline", []):
-                cat = item.get("category") or DEFAULT_CATEGORY
+                cat = _get_item_attr(item, "category") or DEFAULT_CATEGORY
                 after_cats[cat] = after_cats.get(cat, 0) + 1
 
             all_cats = set(before_cats.keys()) | set(after_cats.keys())

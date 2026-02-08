@@ -217,6 +217,40 @@ class TestSettingsManager(unittest.TestCase):
         assert manager.config.system.start_of_day == "06:00"
         assert not hasattr(manager.config.system, "day_start_hour")
 
+    def test_save_loads_clients(self):
+        """clients設定が正しく保存・読み込みされる"""
+        from aw_daily_reporter.shared.settings_manager import AppConfig, SettingsManager
+
+        manager = SettingsManager()
+        manager.config = AppConfig(clients={"client1": {"name": "Test Client"}})
+        manager.save()
+
+        # Reload to verify persistence
+        # Reset instance to force reload from file
+        SettingsManager._instance = None
+        new_manager = SettingsManager()
+        loaded_config = new_manager.load()
+
+        assert "client1" in loaded_config.clients
+        assert loaded_config.clients["client1"]["name"] == "Test Client"
+
+    def test_save_loads_client_map(self):
+        """client_map設定が正しく保存・読み込みされる"""
+        from aw_daily_reporter.shared.settings_manager import AppConfig, SettingsManager
+
+        manager = SettingsManager()
+        manager.config = AppConfig(client_map={"^aw-.*": "client_aw"})
+        manager.save()
+
+        # Reload to verify persistence
+        # Reset instance to force reload from file
+        SettingsManager._instance = None
+        new_manager = SettingsManager()
+        loaded_config = new_manager.load()
+
+        assert "^aw-.*" in loaded_config.client_map
+        assert loaded_config.client_map["^aw-.*"] == "client_aw"
+
 
 class TestCreateDefaultConfig(unittest.TestCase):
     """_create_default_config メソッドのテスト"""

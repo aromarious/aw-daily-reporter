@@ -95,3 +95,41 @@ class TestCompressionProcessor(unittest.TestCase):
         df = self._to_df(timeline)
         compressed = self.processor.process(df, self.config)
         assert len(compressed) == 2
+
+    def test_no_compress_git_items(self):
+        """Gitアイテムはマージせず、タイトルもそのまま保持することを確認"""
+        now = datetime.now()
+        # 同じプロジェクト、同じカテゴリの連続したGitアイテム
+        timeline: list[TimelineItem] = [
+            {
+                "timestamp": now,
+                "duration": 60,
+                "app": "Git",
+                "title": "[aw-daily-reporter] Commit 1",
+                "project": "aw-daily-reporter",
+                "category": "Programming",
+                "context": [],
+            },
+            {
+                "timestamp": now + timedelta(seconds=60),
+                "duration": 120,
+                "app": "Git",
+                "title": "[aw-daily-reporter] Commit 2",
+                "project": "aw-daily-reporter",
+                "category": "Programming",
+                "context": [],
+            },
+        ]
+
+        df = self._to_df(timeline)
+        compressed = self.processor.process(df, self.config)
+
+        # マージされずに2つのアイテムとして残るべき
+        assert len(compressed) == 2
+
+        # タイトルが変更されていないことを確認
+        assert compressed.iloc[0]["title"] == "[aw-daily-reporter] Commit 1"
+        assert compressed.iloc[1]["title"] == "[aw-daily-reporter] Commit 2"
+
+        # 最初の要素のプロジェクトなどが保持されているか
+        assert compressed.iloc[0]["project"] == "aw-daily-reporter"

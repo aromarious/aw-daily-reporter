@@ -89,7 +89,8 @@ class AIRendererPlugin(RendererPlugin):
             lines.append("")
 
         # 3. タイムライン (Time | Cat | App | Title | Dur)
-        # ヘッダーはつけない（AIなら推測可能だが、一応1行つけてもいいかも。今回は省略して密度優先）
+        if non_git_timeline:
+            lines.append("-- Detailed Activity --")
 
         for item in non_git_timeline:
             ts = item.timestamp.astimezone().strftime("%H:%M")
