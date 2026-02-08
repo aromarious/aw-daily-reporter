@@ -1,12 +1,14 @@
 import { useState } from "react"
 import { mutate } from "swr"
 import { useTranslation } from "@/contexts/I18nContext"
+import { useToast } from "@/contexts/ToastContext"
 import { api } from "@/lib/api"
 
 import type { TimelineItem } from "@/types"
 
 export function useRuleManagement(date: string) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [ruleModalOpen, setRuleModalOpen] = useState(false)
   const [initialRule, setInitialRule] = useState<{
     keyword: string | string[]
@@ -48,10 +50,10 @@ export function useRuleManagement(date: string) {
       setRuleModalOpen(false)
       // Refresh data
       mutate(`/api/report?date=${date}`)
-      alert(t("Rule created successfully!")) // Simple alert for now
+      showToast(t("Rule created successfully!"), "success")
     } catch (e) {
       console.error("Failed to save rule", e)
-      alert(t("Failed to save rule."))
+      showToast(t("Failed to save rule."), "error")
     }
   }
 

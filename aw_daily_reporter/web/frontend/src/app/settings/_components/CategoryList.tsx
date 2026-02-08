@@ -29,6 +29,10 @@ interface CategoryListProps {
   initialBreakCategories?: string[]
 }
 
+import ConfirmModal from "@/components/ConfirmModal"
+
+// ... existing interfaces ...
+
 export default function CategoryList({
   categories = [],
   rules = [],
@@ -41,6 +45,10 @@ export default function CategoryList({
   const { t } = useTranslation()
   const finalPlaceholder = placeholder || t("Add a category...")
   const [input, setInput] = useState("")
+
+  // State for confirmation modal
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
 
   const handleAdd = () => {
     const trimmed = input.trim()
@@ -58,31 +66,38 @@ export default function CategoryList({
     }
   }
 
-  const handleRemove = (categoryToRemove: string) => {
-    if (!confirm(t("Are you sure you want to delete this category?"))) return
+  const handleRemoveClick = (category: string) => {
+    setCategoryToDelete(category)
+    setConfirmOpen(true)
+  }
 
-    const newCategories = categories.filter((c) => c !== categoryToRemove)
+  const executeRemove = () => {
+    if (!categoryToDelete) return
+
+    const newCategories = categories.filter((c) => c !== categoryToDelete)
     const newColors = { ...initialColors }
-    delete newColors[categoryToRemove]
+    delete newColors[categoryToDelete]
     const newBreaks = initialBreakCategories.filter(
-      (c) => c !== categoryToRemove,
+      (c) => c !== categoryToDelete,
     )
 
     onChange(newCategories, newColors, newBreaks)
+    setConfirmOpen(false)
+    setCategoryToDelete(null)
   }
 
   const handleColorChange = (category: string, color: string) => {
+    // ... existing implementation ...
     const newColors = { ...initialColors, [category]: color }
     onChange(categories, newColors, initialBreakCategories)
-    // Close dropdown (managed by CSS focus/hover usually, or we let it close on blur)
-    // For DaisyUI dropdown, clicking inside might not close it automatically if we don't blur the trigger.
-    // We can blur the active element.
+
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur()
     }
   }
 
   const handleTypeChange = (category: string, isBreak: boolean) => {
+    // ... existing implementation ...
     let newBreaks = [...initialBreakCategories]
     if (isBreak) {
       if (!newBreaks.includes(category)) {
@@ -97,6 +112,7 @@ export default function CategoryList({
   return (
     <div className={className}>
       <div className="flex gap-2 mb-4">
+        {/* ... existing input ... */}
         <input
           type="text"
           value={input}
@@ -145,6 +161,7 @@ export default function CategoryList({
               return (
                 <tr key={category} className="hover:bg-base-200/50 group/row">
                   <td className="text-center overflow-visible">
+                    {/* ... existing color dropdown ... */}
                     <div className="dropdown dropdown-right dropdown-end">
                       <button
                         type="button"
@@ -229,7 +246,7 @@ export default function CategoryList({
                   <td className="text-center">
                     <button
                       type="button"
-                      onClick={() => handleRemove(category)}
+                      onClick={() => handleRemoveClick(category)}
                       className="btn btn-ghost btn-xs text-error hover:bg-error/10"
                       title={t("Delete Category")}
                     >
@@ -242,6 +259,18 @@ export default function CategoryList({
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title={t("Delete Category")}
+        message={t(
+          "Are you sure you want to delete this category? Use in existing rules might be affected.",
+        )}
+        onConfirm={executeRemove}
+        onCancel={() => setConfirmOpen(false)}
+        confirmLabel={t("Delete")}
+        type="danger"
+      />
     </div>
   )
 }

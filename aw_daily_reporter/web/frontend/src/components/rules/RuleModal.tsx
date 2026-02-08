@@ -106,11 +106,6 @@ export default function RuleModal({
       finalKeywords.push(keywordInput.trim())
     }
 
-    if (finalKeywords.length === 0) {
-      alert(t("Please add at least one keyword."))
-      return
-    }
-
     // 配列のまま送信（バックエンドは配列対応済み）
     onSave({ ...formData, keyword: finalKeywords })
     onClose()
@@ -171,6 +166,7 @@ export default function RuleModal({
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Form Content omitted for brevity, assuming it matches previous valid state until the buttons */}
               <div>
                 <h3 className="text-xs font-bold text-base-content/40 uppercase tracking-wider mb-3">
                   {t("Match Conditions")}
@@ -371,7 +367,13 @@ export default function RuleModal({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-semibold text-primary-content bg-primary hover:bg-primary/90 transition-colors shadow-sm rounded-lg"
+                  disabled={keywords.length === 0 && !keywordInput.trim()}
+                  title={
+                    keywords.length === 0 && !keywordInput.trim()
+                      ? t("Please add at least one keyword")
+                      : ""
+                  }
+                  className="px-4 py-2 text-sm font-semibold text-primary-content bg-primary hover:bg-primary/90 transition-colors shadow-sm rounded-lg disabled:bg-base-300 disabled:text-base-content/40 disabled:cursor-not-allowed"
                 >
                   {t("Save Rule")}
                 </button>
