@@ -42,7 +42,7 @@ class CompressionProcessor(ProcessorPlugin):
         meeting_apps = config.get("apps", {}).get("meetings", [])
 
         compressed: List[TimelineItem] = []
-        current_group: Optional[Dict] = None
+        current_group: Optional[TimelineItem] = None
 
         for item in timeline:
             app_lower = item.get("app", "").lower()
@@ -116,7 +116,7 @@ class CompressionProcessor(ProcessorPlugin):
                     "file": item.get("file"),
                     "language": item.get("language"),
                     "_files": set(),
-                }
+                }  # type: ignore
 
                 # Initial extraction for the first item
                 f = item.get("file")

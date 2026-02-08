@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import dynamic from "next/dynamic";
+import dynamic from "next/dynamic"
 
 const Header = dynamic(() => import("./Header").then((mod) => mod.Header), {
-	ssr: false,
-});
+  ssr: false,
+})
 
 export function NoSSRHeader() {
-	return <Header />;
+  return <Header />
 }

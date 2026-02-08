@@ -17,7 +17,7 @@ class CategoryRule(TypedDict):
     target: Optional[str]  # "app", "title", "url", or None (any)
 
 
-class TimelineItem(TypedDict):
+class TimelineItem(TypedDict, total=False):
     timestamp: datetime
     duration: float
     app: str

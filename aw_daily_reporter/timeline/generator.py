@@ -199,7 +199,10 @@ class TimelineGenerator:
         return url
 
     def _get_local_tz(self) -> timezone:
-        return datetime.now().astimezone().tzinfo
+        tz = datetime.now().astimezone().tzinfo
+        if isinstance(tz, timezone):
+            return tz
+        return timezone.utc  # Fallback
 
     def merge_timeline(self, events_map: Dict[str, List[Event]], end_time: datetime = None) -> List[TimelineItem]:
         timeline, segments, projects = self.merger.merge_timeline(events_map, end_time)

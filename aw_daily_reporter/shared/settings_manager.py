@@ -10,7 +10,7 @@ import logging
 import os
 import shutil
 import tempfile
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ class SettingsManager:
                     preset = json.load(f)
                 # プリセットの内容をマージ（systemは個別にマージして上書き防止）
                 if "system" in preset:
-                    default_config["system"].update(preset["system"])
+                    cast(Dict[str, Any], default_config["system"]).update(preset["system"])
                 if "settings" in preset:
                     default_config["settings"] = preset["settings"]
                 if "rules" in preset:

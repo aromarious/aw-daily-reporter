@@ -75,7 +75,10 @@ class TimelineMerger:
         return val if pd.notna(val) else None
 
     def _get_local_tz(self) -> timezone:
-        return datetime.now().astimezone().tzinfo
+        tz = datetime.now().astimezone().tzinfo
+        if isinstance(tz, timezone):
+            return tz
+        return timezone.utc
 
     def _df_to_items(self, df: pd.DataFrame, source_name: str, use_category: bool = False) -> List[TimelineItem]:
         items: List[TimelineItem] = []
@@ -106,14 +109,15 @@ class TimelineMerger:
                     "duration": float(val_dur),
                     "app": str(row.get("app", UNKNOWN_APP)),
                     "title": title,
+                    "context": [],
                     "url": self._safe_val(row.get("url")),
                     "file": self._safe_val(row.get("file")),
                     "language": self._safe_val(row.get("language")),
                     "status": self._safe_val(row.get("status")),
+                    "metadata": {},
                     "category": f"Source: {source_name}" if use_category else None,
                     "source": source_name,
                     "project": self._safe_val(row.get("project")),
-                    "context": [],
                 }
             )
         return items

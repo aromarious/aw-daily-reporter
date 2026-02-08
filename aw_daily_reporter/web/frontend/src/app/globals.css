@@ -4,8 +4,8 @@
 :root {
   --background: #f8fafc;
   --foreground: #1e293b;
-  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-jetbrains-mono: 'JetBrains Mono', monospace;
+  --font-inter: "Inter", system-ui, -apple-system, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", monospace;
   color-scheme: light dark;
 }
 
@@ -16,66 +16,74 @@ input[type="date"] {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--fallback-bc,oklch(var(--bc)/0.3)), transparent 0%);
-    border-radius: 4px;
+  background: color-mix(
+    in srgb,
+    var(--fallback-bc, oklch(var(--bc) / 0.3)),
+    transparent 0%
+  );
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in srgb, var(--fallback-bc,oklch(var(--bc)/0.5)), transparent 0%);
+  background: color-mix(
+    in srgb,
+    var(--fallback-bc, oklch(var(--bc) / 0.5)),
+    transparent 0%
+  );
 }
 
 /* Grid.js Overrides for Glassmorphism & Theme Support */
 .gridjs-container {
-    color: var(--fallback-bc,oklch(var(--bc)/1));
-    font-family: var(--font-inter);
+  color: var(--fallback-bc, oklch(var(--bc) / 1));
+  font-family: var(--font-inter);
 }
 .gridjs-wrapper {
-    border-radius: 0.75rem;
-    box-shadow: none;
-    border: 1px solid var(--fallback-b2,oklch(var(--b2)/1));
-    background-color: var(--fallback-b1,oklch(var(--b1)/0.5));
+  border-radius: 0.75rem;
+  box-shadow: none;
+  border: 1px solid var(--fallback-b2, oklch(var(--b2) / 1));
+  background-color: var(--fallback-b1, oklch(var(--b1) / 0.5));
 }
 .gridjs-head {
-    padding-bottom: 1rem;
+  padding-bottom: 1rem;
 }
 .gridjs-th {
-    color: var(--fallback-bc,oklch(var(--bc)/0.6));
-    font-weight: 600;
-    background-color: var(--fallback-b2,oklch(var(--b2)/0.5));
-    border-bottom: 2px solid var(--fallback-b3,oklch(var(--b3)/1));
+  color: var(--fallback-bc, oklch(var(--bc) / 0.6));
+  font-weight: 600;
+  background-color: var(--fallback-b2, oklch(var(--b2) / 0.5));
+  border-bottom: 2px solid var(--fallback-b3, oklch(var(--b3) / 1));
 }
 .gridjs-tr:hover td {
-    background-color: var(--fallback-b2,oklch(var(--b2)/0.5));
+  background-color: var(--fallback-b2, oklch(var(--b2) / 0.5));
 }
 .gridjs-td {
-    font-size: 0.9rem;
-    border-bottom: 1px solid var(--fallback-b2,oklch(var(--b2)/1));
-    background-color: transparent;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--fallback-b2, oklch(var(--b2) / 1));
+  background-color: transparent;
 }
 .gridjs-footer {
-    border: none;
-    background: transparent;
-    padding-top: 1rem;
+  border: none;
+  background: transparent;
+  padding-top: 1rem;
 }
 .gridjs-pagination .gridjs-pages button {
-    background-color: var(--fallback-b1,oklch(var(--b1)/1));
-    color: var(--fallback-bc,oklch(var(--bc)/1));
-    border: 1px solid var(--fallback-b3,oklch(var(--b3)/1));
+  background-color: var(--fallback-b1, oklch(var(--b1) / 1));
+  color: var(--fallback-bc, oklch(var(--bc) / 1));
+  border: 1px solid var(--fallback-b3, oklch(var(--b3) / 1));
 }
 .gridjs-pagination .gridjs-pages button:hover {
-    background-color: var(--fallback-b2,oklch(var(--b2)/1));
+  background-color: var(--fallback-b2, oklch(var(--b2) / 1));
 }
 .gridjs-pagination .gridjs-pages button:disabled {
-    opacity: 0.5;
+  opacity: 0.5;
 }
 .gridjs-pagination .gridjs-pages button.gridjs-currentPage {
-    background-color: var(--fallback-p,oklch(var(--p)/1));
-    color: var(--fallback-pc,oklch(var(--pc)/1));
-    border-color: var(--fallback-p,oklch(var(--p)/1));
+  background-color: var(--fallback-p, oklch(var(--p) / 1));
+  color: var(--fallback-pc, oklch(var(--pc) / 1));
+  border-color: var(--fallback-p, oklch(var(--p) / 1));
 }

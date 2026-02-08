@@ -31,7 +31,7 @@ class GitScanner(ScannerPlugin):
         start_time: datetime,
         end_time: datetime,
         config: Dict[str, Any],
-    ) -> List[TimelineItem]:
+    ) -> List[Union[TimelineItem, str]]:
         logger.info(f"[Plugin] Running: {self.name}")
         repos: Set[str] = self.extract_repos_from_timeline(timeline)
         all_items: List[Union[TimelineItem, str]] = []

@@ -8,15 +8,18 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky",
     "lint:py": "poetry run ruff check",
-    "lint:py:fix": "poetry run ruff check --fix",
     "format:py": "poetry run ruff format",
+    "format:py:check": "poetry run ruff format --check",
+    "typecheck:py": "poetry run mypy aw_daily_reporter tests",
+    "test:py": "poetry run pytest",
     "lint:frontend": "pnpm --filter frontend lint",
-    "lint:frontend:fix": "pnpm --filter frontend fix",
-    "lint": "pnpm run lint:py && pnpm run lint:frontend",
-    "format": "pnpm run format:py && pnpm run lint:frontend:fix"
+    "typecheck:frontend": "pnpm --filter frontend type-check",
+    "build:frontend": "pnpm --filter frontend build",
+    "lint": "pnpm run lint:py && pnpm run format:py:check && pnpm run lint:frontend",
+    "typecheck": "pnpm run typecheck:py && pnpm run typecheck:frontend",
+    "test": "pnpm run test:py",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",

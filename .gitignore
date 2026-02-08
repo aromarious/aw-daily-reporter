@@ -16,3 +16,4 @@ build/
 node_modules/
 /instance/
 /htmlcov/
+/*.txt

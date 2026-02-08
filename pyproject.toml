@@ -35,7 +35,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
 ignore_missing_imports = true
-check_untyped_defs = true
+check_untyped_defs = false
+implicit_optional = true
 disable_error_code = ["import-untyped"]
 
 

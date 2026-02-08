@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import useSWR from "swr";
-import { fetcher } from "@/lib/api";
-import { setCustomCategoryColors } from "@/lib/colors";
+import { useEffect } from "react"
+import useSWR from "swr"
+import { fetcher } from "@/lib/api"
+import { setCustomCategoryColors } from "@/lib/colors"
 
 export function ConfigInitializer() {
-	const { data: config } = useSWR("/api/settings", fetcher);
+  const { data: config } = useSWR("/api/settings", fetcher)
 
-	useEffect(() => {
-		if (config?.settings?.category_colors) {
-			setCustomCategoryColors(config.settings.category_colors);
-		}
-	}, [config]);
+  useEffect(() => {
+    if (config?.settings?.category_colors) {
+      setCustomCategoryColors(config.settings.category_colors)
+    }
+  }, [config])
 
-	return null;
+  return null
 }

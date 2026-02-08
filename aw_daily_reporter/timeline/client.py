@@ -28,12 +28,12 @@ class AWClient:
     """
 
     def __init__(self, client_name: str = "aw-daily-reporter-timeline", hostname: str = HOSTNAME):
+        self.client: Any = None
         try:
             self.client = ActivityWatchClient(client_name, testing=False)
         except Exception as e:
-            # This rarely fails as it just sets up the object, but essentially indicates library issue
             logger.warning(f"Warning: Failed to initialize ActivityWatchClient: {e}")
-            self.client = None
+            pass
         self.hostname = hostname
 
     def get_setting(self, key: str) -> Any:

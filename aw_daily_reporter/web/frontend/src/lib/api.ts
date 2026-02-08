@@ -1,13 +1,7 @@
-import axios from "axios";
+import axios from "axios"
 
 export const api = axios.create({
-	baseURL: "",
-});
+  baseURL: "",
+})
 
-export const fetcher = (url: string) => api.get(url).then((res) => res.data);
-
-interface Plugin {
-    plugin_id: string;
-    name: string;
-    enabled: boolean;
-}
+export const fetcher = (url: string) => api.get(url).then((res) => res.data)

@@ -29,7 +29,8 @@ def get_translator(lang: Optional[str] = None) -> NullTranslations:
         try:
             import locale
 
-            sys_lang = locale.getdefaultlocale()[0]  # e.g., 'ja_JP'
+            # getdefaultlocale is deprecated since Python 3.11, use getlocale() instead
+            sys_lang = locale.getlocale()[0]  # e.g., 'ja_JP'
             if sys_lang:
                 lang = sys_lang.split("_")[0]
         except Exception:

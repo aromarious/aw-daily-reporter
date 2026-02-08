@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: git operation rules
+---
+
 # Git Workflow Rules
 
 This project follows the Gitflow workflow. Please adhere to the rules defined in [docs/git.md](../docs/git.md).

@@ -395,7 +395,7 @@ class PluginManager:
         Returns:
             Dict[str, List[Any]]: {"summary": List[str], "items": List[TimelineItem]}
         """
-        results = {"summary": [], "items": []}
+        results: dict[str, list[Any]] = {"summary": [], "items": []}
         scanners_to_run = self._get_ordered_plugins(self.scanners)
 
         for scanner in scanners_to_run:

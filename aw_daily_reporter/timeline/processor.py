@@ -24,7 +24,7 @@ class TimelineStatsCalculator:
         """タイムラインアイテムからカテゴリ別の合計時間を計算します。"""
         stats: Dict[str, float] = {}
         for item in timeline:
-            cat = item.get("category", DEFAULT_CATEGORY)
+            cat = item.get("category") or DEFAULT_CATEGORY
             stats[cat] = stats.get(cat, 0.0) + item["duration"]
         return stats
 

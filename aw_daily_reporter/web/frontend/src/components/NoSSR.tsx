@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import dynamic from "next/dynamic";
-import React from "react";
+import dynamic from "next/dynamic"
+import React from "react"
 
 const NoSSRWrapper = (props: { children: React.ReactNode }) => (
-	<React.Fragment>{props.children}</React.Fragment>
-);
+  <React.Fragment>{props.children}</React.Fragment>
+)
 
 export const NoSSR = dynamic(() => Promise.resolve(NoSSRWrapper), {
-	ssr: false,
-});
+  ssr: false,
+})
