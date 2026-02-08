@@ -9,7 +9,6 @@ import logging
 import re
 from typing import Any
 
-import pandas as pd
 from pandera.typing import DataFrame
 
 from ..shared.constants import DEFAULT_CATEGORY
@@ -73,84 +72,106 @@ class RuleMatchingProcessor(ProcessorPlugin):
         else:
             df["metadata"] = df["metadata"].apply(lambda x: x if isinstance(x, dict) else {})
 
-        # 各行を処理
-        for idx in df.index:
-            category = df.at[idx, "category"]
-            if category != DEFAULT_CATEGORY:
+        # ルールの正規表現を事前コンパイル（高速化）
+        compiled_rules = []
+        for rule in reversed(rules):
+            if not rule.get("enabled", True):
                 continue
 
-            app = str(df.at[idx, "app"]).lower()
-            title = str(df.at[idx, "title"]) if pd.notna(df.at[idx, "title"]) else ""
-            context = df.at[idx, "context"] if isinstance(df.at[idx, "context"], list) else []
+            kw_raw = rule.get("keyword")
+            if isinstance(kw_raw, list):
+                keywords = kw_raw
+            elif isinstance(kw_raw, str):
+                keywords = [kw_raw]
+            else:
+                keywords = []
 
-            # UI上部にあるルールを優先するため、逆順（下から上）に適用する
-            for rule in reversed(rules):
-                # Skip disabled rules (enabled defaults to True)
-                if not rule.get("enabled", True):
+            valid_keywords = [kw for kw in keywords if kw and _is_valid_regex(kw)]
+            if not valid_keywords:
+                continue
+
+            pattern = "|".join(valid_keywords)
+            try:
+                compiled = re.compile(pattern, re.IGNORECASE)
+            except re.error:
+                continue
+
+            compiled_rules.append(
+                {
+                    "compiled": compiled,
+                    "pattern": pattern,
+                    "app_filter": rule.get("app", "").lower() if rule.get("app") else None,
+                    "target": rule.get("target"),
+                    "category": rule.get("category"),
+                    "project": rule.get("project"),
+                }
+            )
+
+        # データをリストに変換（df.at[]より高速）
+        categories = df["category"].tolist()
+        apps = df["app"].astype(str).str.lower().tolist()
+        titles = df["title"].fillna("").astype(str).tolist()
+        contexts = df["context"].tolist()
+        metadatas = df["metadata"].tolist()
+        projects = df["project"].tolist() if "project" in df.columns else [None] * len(df)
+
+        # 各行を処理
+        for i in range(len(df)):
+            if categories[i] != DEFAULT_CATEGORY:
+                continue
+
+            app = apps[i]
+            title = titles[i]
+            context = contexts[i] if isinstance(contexts[i], list) else []
+
+            for rule in compiled_rules:
+                if rule["app_filter"] and rule["app_filter"] not in app:
                     continue
 
-                if rule.get("app") and rule["app"].lower() not in app:
-                    continue
-
-                kw_raw = rule.get("keyword")
-                if isinstance(kw_raw, list):
-                    keywords = kw_raw
-                elif isinstance(kw_raw, str):
-                    keywords = [kw_raw]
-                else:
-                    keywords = []
-
-                # 有効なキーワードのみフィルタリング
-                valid_keywords = [kw for kw in keywords if kw and _is_valid_regex(kw)]
-                if not valid_keywords:
-                    continue
-
-                # キーワードを | で結合して1つの正規表現パターンに
-                pattern = "|".join(valid_keywords)
-                target = rule.get("target")
+                target = rule["target"]
+                compiled = rule["compiled"]
                 matched = False
-                flags = re.IGNORECASE
 
                 if target == "app":
-                    matched = bool(re.search(pattern, df.at[idx, "app"], flags))
+                    matched = bool(compiled.search(app))
                 elif target == "title":
-                    matched = bool(re.search(pattern, title, flags))
+                    matched = bool(compiled.search(title))
                 elif target == "url":
                     urls = [c[len("URL: ") :] for c in context if c.startswith("URL: ")]
-                    matched = any(re.search(pattern, u, flags) for u in urls)
+                    matched = any(compiled.search(u) for u in urls)
                 else:
                     # Combined match
-                    active_window_text = f"{df.at[idx, 'app']} {title}"
+                    active_window_text = f"{app} {title}"
                     context_text = ", ".join(context)
-                    matched = bool(re.search(pattern, active_window_text, flags)) or bool(
-                        re.search(pattern, context_text, flags)
-                    )
+                    matched = bool(compiled.search(active_window_text)) or bool(compiled.search(context_text))
 
                 if matched:
-                    # Apply category if rule has it (overwrite allowed)
-                    if rule.get("category"):
-                        category = rule["category"]
+                    if rule["category"]:
+                        categories[i] = rule["category"]
 
-                    # Apply project if rule has it (overwrite allowed)
-                    if rule.get("project"):
-                        df.at[idx, "project"] = rule["project"]
-                        context = list(context)  # mutate safely
+                    if rule["project"]:
+                        projects[i] = rule["project"]
+                        context = list(context)
                         context.append(f"Project: {rule['project']}")
-                        df.at[idx, "context"] = context
+                        contexts[i] = context
 
-                    # Store matched rule metadata
-                    metadata = df.at[idx, "metadata"] or {}
+                    metadata = metadatas[i] or {}
                     metadata["matched_rule"] = {
-                        "keyword": pattern,
+                        "keyword": rule["pattern"],
                         "target": target or "any",
-                        "rule_category": rule.get("category"),
-                        "rule_project": rule.get("project"),
+                        "rule_category": rule["category"],
+                        "rule_project": rule["project"],
                     }
-                    df.at[idx, "metadata"] = metadata
+                    metadatas[i] = metadata
 
-            df.at[idx, "category"] = category
+        # リストをDataFrameに戻す
+        df["category"] = categories
+        df["context"] = contexts
+        df["metadata"] = metadatas
+        if "project" in df.columns:
+            df["project"] = projects
 
-        # 3. カテゴリ名のローカライズ
+        # カテゴリ名のローカライズ
         cat_map = config.get("categories", {})
         if cat_map:
             df["category"] = df["category"].map(lambda c: cat_map.get(c, c))
