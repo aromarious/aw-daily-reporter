@@ -359,6 +359,7 @@ export default function SnapshotTimeline({
         : "rgba(255, 255, 255, 0.95)",
       borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#e2e8f0",
       textStyle: { color: isDark ? "#e2e8f0" : "#334155" },
+      appendToBody: true,
     },
     grid: {
       left: "10%",

@@ -6,6 +6,7 @@
 """
 
 import logging
+import os
 import re
 from typing import Any, Dict, List, Optional
 
@@ -62,7 +63,12 @@ class ProjectExtractionProcessor(ProcessorPlugin):
             try:
                 match = re.search(pattern, title)
                 if match:
-                    return match.group("project")
+                    project = match.group("project")
+                    if project:
+                        # If it's an absolute path, take the basename
+                        if os.path.isabs(project):
+                            return os.path.basename(project)
+                        return project
             except (re.error, IndexError):
                 continue
         return None
