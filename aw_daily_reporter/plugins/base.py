@@ -12,6 +12,10 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from pandera.typing import DataFrame
+
+from .schemas import TimelineSchema
+
 if TYPE_CHECKING:
     from ..timeline.models import TimelineItem
 
@@ -40,16 +44,16 @@ class ProcessorPlugin(BasePlugin):
     """タイムラインデータを加工するプラグイン"""
 
     @abstractmethod
-    def process(self, timeline: list[TimelineItem], config: dict[str, Any]) -> list[TimelineItem]:
+    def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         """
-        タイムラインデータを加工して返します。
+        タイムラインDataFrameを加工して返します。
 
         Args:
-            timeline: 加工対象のタイムラインアイテムのリスト
+            df: 加工対象のタイムラインDataFrame
             config: 設定情報
 
         Returns:
-            List[TimelineItem]: 加工後のタイムラインアイテムのリスト
+            DataFrame[TimelineSchema]: 加工後のタイムラインDataFrame
         """
         pass
 

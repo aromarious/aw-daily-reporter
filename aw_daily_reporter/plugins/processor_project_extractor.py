@@ -8,11 +8,13 @@
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
+
+from pandera.typing import DataFrame
 
 from ..shared.i18n import _
-from ..timeline.models import TimelineItem
 from .base import ProcessorPlugin
+from .schemas import TimelineSchema
 
 logger = logging.getLogger(__name__)
 
@@ -31,25 +33,37 @@ class ProjectExtractionProcessor(ProcessorPlugin):
     def description(self) -> str:
         return _("Extracts project names from window titles using configured patterns (Editors only).")
 
-    def process(self, timeline: List[TimelineItem], config: Dict[str, Any]) -> List[TimelineItem]:
+    def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
+
+        if df.empty:
+            return df
 
         extraction_patterns = config.get("settings", {}).get("project_extraction_patterns", [])
         if not extraction_patterns:
             # Fallback default if not in config? Use generic pipe pattern as a safe default
             extraction_patterns = [r"^(?P<project>.+?)\|"]
 
-        for item in timeline:
-            # Skip if project is already set (e.g. by source)
-            if item.get("project"):
-                continue
-            project = self._extract_project_from_title(item.get("title", ""), extraction_patterns)
-            if project:
-                item["project"] = project
+        # 最初に1回だけコピーを作成（以降は直接変更）
+        df = df.copy()
 
-        return timeline
+        # projectカラムを確保
+        if "project" not in df.columns:
+            df["project"] = None
 
-    def _extract_project_from_title(self, title: str, patterns: List[str]) -> Optional[str]:
+        # projectが未設定の行のみ処理
+        mask = df["project"].isna() | (df["project"] == "")
+        if not mask.any():
+            return df
+
+        # titleからプロジェクトを抽出
+        df.loc[mask, "project"] = df.loc[mask, "title"].apply(
+            lambda title: self._extract_project_from_title(title or "", extraction_patterns)
+        )
+
+        return df
+
+    def _extract_project_from_title(self, title: str, patterns: list[str]) -> Optional[str]:
         for pattern in patterns:
             try:
                 match = re.search(pattern, title)

@@ -42,14 +42,23 @@ class GitScanner(ScannerPlugin):
         if end_time.tzinfo is None:
             end_time = end_time.astimezone()
 
-        for repo in repos:
-            # Commits
-            commits: List[TimelineItem] = self.get_commits(repo, start_time, end_time)
-            all_items.extend(commits)
+        # 並列実行でgit/gh CLIを高速化
+        from concurrent.futures import ThreadPoolExecutor, as_completed
 
-            # PRs
-            prs: List[str] = self.get_gh_pr_status(repo, start_time, end_time)
-            all_items.extend(prs)
+        def fetch_repo_data(repo: str) -> List[Union[TimelineItem, str]]:
+            items: List[Union[TimelineItem, str]] = []
+            items.extend(self.get_commits(repo, start_time, end_time))
+            items.extend(self.get_gh_pr_status(repo, start_time, end_time))
+            return items
+
+        # 最大4スレッドで並列実行
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {executor.submit(fetch_repo_data, repo): repo for repo in repos}
+            for future in as_completed(futures):
+                try:
+                    all_items.extend(future.result())
+                except Exception as e:
+                    logger.warning(f"[Plugin] Failed to fetch repo data: {e}")
 
         return all_items
 

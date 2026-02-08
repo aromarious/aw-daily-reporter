@@ -1,6 +1,8 @@
 import unittest
 from datetime import datetime, timedelta, timezone
 
+import pandas as pd
+
 from aw_daily_reporter.plugins.processor_afk import AFKProcessor
 from aw_daily_reporter.timeline.models import TimelineItem
 
@@ -37,25 +39,34 @@ class TestAFKProcessor(unittest.TestCase):
             "category": "Coding",
             "source": source,
             "status": status,
-            # Processor requires these keys to exist even if None for some logic
             "project": None,
             "file": None,
             "language": None,
             "url": None,
         }
 
+    def _to_df(self, items: list[TimelineItem]) -> pd.DataFrame:
+        """TimelineItemのリストをDataFrameに変換"""
+        if not items:
+            return pd.DataFrame()
+        df = pd.DataFrame(items)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        return df
+
     def test_process_empty_timeline_returns_empty_list(self):
-        assert self.processor.process([], {}) == []
+        result = self.processor.process(pd.DataFrame(), {})
+        assert result.empty
 
     def test_process_no_afk_events_keeps_content(self):
         # Scenario: No AFK watcher data provided. Should keep content.
         timeline = [self._create_item(0, 60, app="Code")]
+        df = self._to_df(timeline)
 
-        result = self.processor.process(timeline, {})
+        result = self.processor.process(df, {})
 
         assert len(result) == 1
-        assert result[0]["app"] == "Code"
-        assert result[0]["duration"] == 3600.0
+        assert result.iloc[0]["app"] == "Code"
+        assert result.iloc[0]["duration"] == 3600.0
 
     def test_process_filters_out_afk_periods(self):
         # Scenario:
@@ -70,34 +81,35 @@ class TestAFKProcessor(unittest.TestCase):
         afk_items = [
             # 10:00-10:20 Active
             self._create_item(0, 20, source="AFK", status="not-afk", app="aw-watcher-afk"),
-            # 10:20-10:30 Inactive (implied by gap or explicit afk status logic?)
-            # The logic relies on "not-afk" ranges.
-            # If "afk" status event exists, it just doesn't contribute to active range.
+            # 10:20-10:30 Inactive
             self._create_item(20, 10, source="AFK", status="afk", app="aw-watcher-afk"),
             # 10:30-11:00 Active
             self._create_item(30, 30, source="AFK", status="not-afk", app="aw-watcher-afk"),
         ]
 
         timeline = [content_item] + afk_items
+        df = self._to_df(timeline)
 
-        result = self.processor.process(timeline, {})
+        result = self.processor.process(df, {})
 
         # Expect split:
         # 1. 10:00-10:20 (20m)
         # 2. 10:30-11:00 (30m)
         assert len(result) == 2
-        assert result[0]["duration"] == 1200.0
-        assert result[1]["duration"] == 1800.0
+        assert result.iloc[0]["duration"] == 1200.0
+        assert result.iloc[1]["duration"] == 1800.0
 
         # Verify timestamps
-        assert result[0]["timestamp"] == self.base_time
-        assert result[1]["timestamp"] == self.base_time + timedelta(minutes=30)
+        assert pd.Timestamp(result.iloc[0]["timestamp"]).tz_convert("UTC") == pd.Timestamp(self.base_time)
+        expected_ts = pd.Timestamp(self.base_time + timedelta(minutes=30))
+        assert pd.Timestamp(result.iloc[1]["timestamp"]).tz_convert("UTC") == expected_ts
 
     def test_process_removes_system_apps(self):
         # Scenario: loginwindow event
         timeline = [self._create_item(0, 10, app="loginwindow")]
+        df = self._to_df(timeline)
 
-        result = self.processor.process(timeline, {})
+        result = self.processor.process(df, {})
         assert len(result) == 0
 
     def test_process_flattens_overlapping_content(self):
@@ -111,24 +123,22 @@ class TestAFKProcessor(unittest.TestCase):
             self._create_item(5, 10, app="AppB"),
             self._create_item(0, 60, source="AFK", status="not-afk"),  # Active
         ]
+        df = self._to_df(items)
 
-        result = self.processor.process(items, {})
+        result = self.processor.process(df, {})
 
         # Expected Flatten Logic
-        # (Prioritizes earlier start? Code says: if start < last_end: start = last_end)
-        # A: 10:00-10:10.
-        # B: Starts 10:05. Modified Start -> 10:10. Ends 10:15.
-
         assert len(result) == 2
 
         # Item 1: AppA, 10:00-10:10
-        assert result[0]["app"] == "AppA"
-        assert result[0]["duration"] == 600.0
+        assert result.iloc[0]["app"] == "AppA"
+        assert result.iloc[0]["duration"] == 600.0
 
         # Item 2: AppB, 10:10-10:15 (5 mins)
-        assert result[1]["app"] == "AppB"
-        assert result[1]["duration"] == 300.0
-        assert result[1]["timestamp"] == self.base_time + timedelta(minutes=10)
+        assert result.iloc[1]["app"] == "AppB"
+        assert result.iloc[1]["duration"] == 300.0
+        expected_ts = pd.Timestamp(self.base_time + timedelta(minutes=10))
+        assert pd.Timestamp(result.iloc[1]["timestamp"]).tz_convert("UTC") == expected_ts
 
 
 if __name__ == "__main__":

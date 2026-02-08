@@ -1,6 +1,8 @@
 import unittest
 from datetime import datetime
 
+import pandas as pd
+
 from aw_daily_reporter.plugins.processor_rule_matching import RuleMatchingProcessor
 from aw_daily_reporter.shared.constants import DEFAULT_CATEGORY
 from aw_daily_reporter.timeline.models import TimelineItem
@@ -17,6 +19,12 @@ class TestRuleMatchingProcessor(unittest.TestCase):
 
     def setUp(self):
         self.processor = RuleMatchingProcessor()
+
+    def _to_df(self, items: list) -> pd.DataFrame:
+        """TimelineItemのリストをDataFrameに変換"""
+        if not items:
+            return pd.DataFrame()
+        return pd.DataFrame(items)
 
     def test_categorize_timeline(self):
         rules = [
@@ -53,9 +61,10 @@ class TestRuleMatchingProcessor(unittest.TestCase):
             },
         ]
 
-        processed_timeline = self.processor.process(timeline, config)
+        df = self._to_df(timeline)
+        processed = self.processor.process(df, config)
 
-        assert processed_timeline[0]["category"] == "Coding"
-        assert processed_timeline[1]["category"] == "Communication"
+        assert processed.iloc[0]["category"] == "Coding"
+        assert processed.iloc[1]["category"] == "Communication"
         # Default behavior: if no match, category becomes DEFAULT_CATEGORY
-        assert processed_timeline[2]["category"] == DEFAULT_CATEGORY
+        assert processed.iloc[2]["category"] == DEFAULT_CATEGORY
