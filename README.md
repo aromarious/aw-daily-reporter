@@ -1,7 +1,10 @@
 # aw-daily-reporter
 
-**English** | [日本語](./README.ja.md)
+[![CI/CD](https://github.com/aromarious/aw-daily-reporter/actions/workflows/ci.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/ci.yml)
+[![Semgrep](https://github.com/aromarious/aw-daily-reporter/actions/workflows/semgrep.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/semgrep.yml)
+[![Secret Scanning](https://github.com/aromarious/aw-daily-reporter/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/secret-scanning.yml)
 
+**English** | [日本語](./README.ja.md)
 
 A tool that categorizes and visualizes life logs collected by ActivityWatch on two axes: "Project x Category", and supports AI-based daily report creation.
 

@@ -1,5 +1,9 @@
 # aw-daily-reporter
 
+[![CI/CD](https://github.com/aromarious/aw-daily-reporter/actions/workflows/ci.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/ci.yml)
+[![Semgrep](https://github.com/aromarious/aw-daily-reporter/actions/workflows/semgrep.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/semgrep.yml)
+[![Secret Scanning](https://github.com/aromarious/aw-daily-reporter/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/aromarious/aw-daily-reporter/actions/workflows/secret-scanning.yml)
+
 [English](./README.md) | **日本語**
 
 ActivityWatchで収集したライフログを「プロジェクト×カテゴリ」の2軸で分類・可視化し、AIによる日報作成を支援するツールです。
