@@ -149,9 +149,38 @@ class AFKProcessor(ProcessorPlugin):
 
         sorted_points = sorted(split_points)
 
-        # アクティブ範囲内かチェックするヘルパー関数
-        def is_in_active(t: pd.Timestamp) -> bool:
-            return any(s <= t < e for s, e in active_ranges)
+        # アクティブ範囲をNumPy配列に変換してバイナリサーチで高速化
+        import bisect
+
+        import numpy as np
+
+        if active_ranges:
+            # active_rangesをソートして開始時刻の配列を作成（int64ナノ秒で統一）
+            sorted_ranges = sorted(active_ranges, key=lambda x: x[0])
+            range_starts_ns = np.array([r[0].value for r in sorted_ranges], dtype="int64")
+            range_ends_ns = np.array([r[1].value for r in sorted_ranges], dtype="int64")
+
+            def is_in_active(t: pd.Timestamp) -> bool:
+                # バイナリサーチで候補範囲を特定（O(log n)）
+                t_ns = t.value
+                idx = bisect.bisect_right(range_starts_ns, t_ns) - 1
+                return idx >= 0 and range_starts_ns[idx] <= t_ns < range_ends_ns[idx]
+        else:
+
+            def is_in_active(t: pd.Timestamp) -> bool:
+                return False
+
+        # df_activeのtimestamp/endをNumPy配列に変換（高速検索用）
+        if not df_active.empty:
+            # datetime64をint64（ナノ秒）に変換して比較を高速化
+            # pd.Timestamp.valueはナノ秒を返すのでapplyで取得
+            active_timestamps = df_active["timestamp"].apply(lambda x: x.value).values
+            active_ends = df_active["end"].apply(lambda x: x.value).values
+            active_rows = df_active.to_dict("records")
+        else:
+            active_timestamps = []
+            active_ends = []
+            active_rows = []
 
         # セグメントごとに処理
         final_rows = []
@@ -169,15 +198,15 @@ class AFKProcessor(ProcessorPlugin):
             if not is_in_active(seg_mid):
                 continue
 
-            # Activeイベントを検索（重なっているもの全てを取得）
-            for row in df_active.itertuples():
-                if row.timestamp <= seg_mid < row.end:
-                    row_dict = row._asdict()
-                    del row_dict["Index"]
-                    row_dict["timestamp"] = seg_start
-                    row_dict["duration"] = dur
-                    row_dict.pop("end", None)
-                    final_rows.append(row_dict)
+            # Activeイベントを検索（NumPy配列で高速検索）
+            seg_mid_ns = seg_mid.value  # ナノ秒に変換
+            for j, row_dict in enumerate(active_rows):
+                if active_timestamps[j] <= seg_mid_ns < active_ends[j]:
+                    new_row = row_dict.copy()
+                    new_row["timestamp"] = seg_start
+                    new_row["duration"] = dur
+                    new_row.pop("end", None)
+                    final_rows.append(new_row)
 
         # ========================================
         # Step 5: 最終クリーンアップ
