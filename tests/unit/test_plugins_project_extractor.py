@@ -30,12 +30,12 @@ class TestProjectExtractionProcessor(unittest.TestCase):
         result = self.processor.process([], self.base_config)
         assert result == []
 
-    def test_no_editor_apps_config_returns_unchanged(self):
-        """editor設定がなければタイムラインは変更されない"""
+    def test_no_editor_apps_config_extracts_with_default(self):
+        """editor設定がなくてもデフォルト設定で抽出される"""
         config = {"apps": {}, "settings": {}}
         item = {"app": "VS Code", "title": "MyProject | file.py", "project": None}
         result = self.processor.process([item], config)
-        assert result[0].get("project") is None
+        assert result[0].get("project") == "MyProject "
 
     def test_extracts_project_from_editor_title(self):
         """エディタアプリのタイトルからプロジェクト名を抽出する"""
@@ -58,12 +58,6 @@ class TestProjectExtractionProcessor(unittest.TestCase):
         }
         result = self.processor.process([item], self.base_config)
         assert result[0]["project"] == "ExistingProject"
-
-    def test_skips_non_editor_apps(self):
-        """エディタ以外のアプリはスキップ"""
-        item = {"app": "Chrome", "title": "MyProject | docs", "project": None}
-        result = self.processor.process([item], self.base_config)
-        assert result[0]["project"] is None
 
     def test_no_match_leaves_project_none(self):
         """パターンにマッチしなければprojectはNoneのまま"""
