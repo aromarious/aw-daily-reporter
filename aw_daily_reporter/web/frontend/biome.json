@@ -13,6 +13,7 @@
       "!node_modules",
       "!.next",
       "!.out",
+      "!out",
       "!build",
       "!next-env.d.ts"
     ]
