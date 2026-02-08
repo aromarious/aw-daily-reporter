@@ -42,7 +42,7 @@ jobs:
           poetry install --no-interaction --no-root
 
       - name: Check lock file
-        run: poetry lock --check
+        run: poetry check --lock
 
       - name: Run Lint
         run: pnpm run lint
