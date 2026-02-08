@@ -6,13 +6,13 @@ TypedDictベースのデータ構造を定義します。
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
 
 class CategoryRule(BaseModel):
-    keyword: str
+    keyword: Union[str, List[str]]
     category: Optional[str] = None
     project: Optional[str] = None
     app: Optional[str] = None

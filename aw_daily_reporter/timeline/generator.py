@@ -101,6 +101,8 @@ class TimelineGenerator:
             self.config = override_config
         else:
             self.config = load_config()
+            if hasattr(self.config, "model_dump"):
+                self.config = self.config.model_dump(mode="json")
 
         # 処理パイプラインの実行 (Snapshotsを収集)
         # スキャナとプロセッサを混在させた統一パイプラインで実行

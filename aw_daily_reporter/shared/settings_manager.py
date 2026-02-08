@@ -10,7 +10,7 @@ import logging
 import os
 import shutil
 import tempfile
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -40,7 +40,7 @@ class SettingsConfig(BaseModel):
 
 
 class CategoryRule(BaseModel):
-    keyword: str
+    keyword: Union[str, List[str]]
     category: Optional[str] = None
     project: Optional[str] = None
     app: Optional[str] = None

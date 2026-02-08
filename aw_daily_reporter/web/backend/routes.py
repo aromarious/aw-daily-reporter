@@ -12,6 +12,7 @@ import math
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
+from pydantic import BaseModel
 
 from aw_daily_reporter.shared.logging import get_logger
 
@@ -30,6 +31,8 @@ def json_serial(obj):
         return obj.isoformat()
     if dataclasses.is_dataclass(obj):
         return dataclasses.asdict(obj)
+    if isinstance(obj, BaseModel):
+        return obj.model_dump(mode="json")
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
@@ -45,6 +48,8 @@ def sanitize_for_json(obj):
         return obj.isoformat()
     elif dataclasses.is_dataclass(obj):
         return sanitize_for_json(dataclasses.asdict(obj))
+    elif isinstance(obj, BaseModel):
+        return sanitize_for_json(obj.model_dump(mode="json"))
     return obj
 
 
@@ -99,7 +104,8 @@ def get_report():
     try:
         from ...shared.settings_manager import SettingsManager
 
-        config = SettingsManager.get_instance().load()
+        config_obj = SettingsManager.get_instance().load()
+        config = config_obj.model_dump(mode="json") if hasattr(config_obj, "model_dump") else config_obj
         system_config = config.get("system", {})
         day_start_source = system_config.get("day_start_source", "manual")
         manual_start_of_day = system_config.get("start_of_day", "00:00")
@@ -251,7 +257,12 @@ def pipeline_preview():
         try:
             from ...shared.settings_manager import SettingsManager
 
-            loaded_config = SettingsManager.get_instance().load()
+            loaded_config_obj = SettingsManager.get_instance().load()
+            loaded_config = (
+                loaded_config_obj.model_dump(mode="json")
+                if hasattr(loaded_config_obj, "model_dump")
+                else loaded_config_obj
+            )
             system_config = loaded_config.get("system", {})
             day_start_source = system_config.get("day_start_source", "manual")
             manual_start_of_day = system_config.get("start_of_day", "00:00")
@@ -373,7 +384,8 @@ def handle_settings():
     manager = SettingsManager.get_instance()
 
     if request.method == "GET":
-        config = manager.load()
+        config_obj = manager.load()
+        config = config_obj.model_dump(mode="json") if hasattr(config_obj, "model_dump") else config_obj
 
         # Inject current AW setting for UI display
         if config.get("system", {}).get("day_start_source") == "aw":
@@ -391,8 +403,11 @@ def handle_settings():
 
     elif request.method == "POST":
         try:
+            from ...shared.settings_manager import AppConfig
+
             new_config = request.json
-            manager.config = new_config
+            # Ensure we store AppConfig object
+            manager.config = AppConfig(**new_config)
             manager.save()
             return jsonify({"status": "saved"})
         except Exception as e:
@@ -402,7 +417,12 @@ def handle_settings():
         try:
             # Partial update (recursive merge)
             patch_data = request.json
-            current_config = manager.load()
+            current_config_obj = manager.load()
+            current_config = (
+                current_config_obj.model_dump(mode="json")
+                if hasattr(current_config_obj, "model_dump")
+                else current_config_obj
+            )
 
             def deep_update(target, source):
                 for k, v in source.items():
@@ -411,8 +431,11 @@ def handle_settings():
                     else:
                         target[k] = v
 
+            from ...shared.settings_manager import AppConfig
+
             deep_update(current_config, patch_data)
-            manager.config = current_config
+            # Re-validate and store as AppConfig
+            manager.config = AppConfig(**current_config)
             manager.save()
             return jsonify({"status": "patched"})
         except Exception as e:
