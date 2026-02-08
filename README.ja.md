@@ -160,7 +160,7 @@ aw-daily-reporter plugin list
 ## 📚 ドキュメント (Documentation)
 
 - **詳細な仕様・アーキテクチャ**: [PROJECT.md](./PROJECT.md) および [docs/specs.md](./docs/specs.md)
-- **開発ガイド**: [docs/usage.md](./docs/usage.md)
+- **開発ガイド**: [docs/development.md](./docs/development.md)
 
 ## License
 

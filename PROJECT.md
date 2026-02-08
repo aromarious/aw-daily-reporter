@@ -122,7 +122,7 @@ Web UI の設定画面から、アプリケーションごとのカテゴリ分�
 
 - **[specs.md](docs/specs.md)**
   - 詳細設計書。アーキテクチャ、データフロー、プラグイン仕様などの詳細。
-- **[usage.md](docs/usage.md)**
+- **[development.md](docs/development.md)**
   - 開発ガイド。セットアップ、ビルド、テスト、コマンドの使い方。
 - **[logging.md](docs/logging.md)**
   - ログ出力のガイドライン。ログレベルの基準やフォーマットについて。

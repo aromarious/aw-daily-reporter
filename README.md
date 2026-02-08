@@ -166,7 +166,7 @@ Configuration file is saved at `~/.config/aw-daily-reporter/config.json`, but we
 ## 📚 Documentation
 
 - **Detailed Specs/Architecture**: [PROJECT.md](./PROJECT.md) and [docs/specs.md](./docs/specs.md)
-- **Development Guide**: [docs/usage.md](./docs/usage.md)
+- **Development Guide**: [docs/development.md](./docs/development.md)
 
 ## License
 
