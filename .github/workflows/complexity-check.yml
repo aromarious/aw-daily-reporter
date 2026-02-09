@@ -1,0 +1,80 @@
+name: Complexity Check
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/complexity-check.yml'
+  pull_request:
+    branches: [ "main", "develop" ]
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/complexity-check.yml'
+  workflow_dispatch:
+
+jobs:
+  complexity-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install complexity check tools
+        run: |
+          pip install radon xenon
+
+      - name: Run Radon - Cyclomatic Complexity
+        run: |
+          echo "=== サイクロマティック複雑度チェック ==="
+          radon cc aw_daily_reporter/ tests/ -a -nb
+          echo ""
+          echo "=== 複雑度が高い関数・メソッド（C以上） ==="
+          radon cc aw_daily_reporter/ tests/ -nc
+
+      - name: Run Radon - Maintainability Index
+        run: |
+          echo "=== 保守性指標チェック ==="
+          radon mi aw_daily_reporter/ tests/ -nb
+          echo ""
+          echo "=== 保守性が低いファイル（B未満） ==="
+          radon mi aw_daily_reporter/ tests/ -nc
+
+      - name: Run Xenon - Complexity Threshold Check
+        # 最初は警告のみで fail させない
+        continue-on-error: true
+        run: |
+          echo "=== 複雑度閾値チェック ==="
+          echo "基準: サイクロマティック複雑度 C (10-20) 以下"
+          xenon --max-absolute C --max-modules B --max-average A aw_daily_reporter/ tests/
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 複雑度チェック完了"
+          echo ""
+          echo "### 基準値"
+          echo "- サイクロマティック複雑度: C (10-20) 以下推奨"
+          echo "- 保守性指標: B (20-100) 以上推奨"
+          echo ""
+          echo "### 評価基準"
+          echo "**サイクロマティック複雑度:**"
+          echo "- A: 1-5 (シンプル)"
+          echo "- B: 6-10 (やや複雑)"
+          echo "- C: 11-20 (複雑)"
+          echo "- D: 21-30 (非常に複雑)"
+          echo "- E: 31-40 (極めて複雑)"
+          echo "- F: 41+ (リファクタリング必須)"
+          echo ""
+          echo "**保守性指標:**"
+          echo "- A: 100-20 (非常に保守しやすい)"
+          echo "- B: 19-10 (保守しやすい)"
+          echo "- C: 9-0 (保守が困難)"
