@@ -29,7 +29,7 @@ interface CategoryListProps {
   initialBreakCategories?: string[]
 }
 
-import ConfirmModal from "@/components/ConfirmModal"
+import ConfirmModal from "./ConfirmModal"
 
 // ... existing interfaces ...
 

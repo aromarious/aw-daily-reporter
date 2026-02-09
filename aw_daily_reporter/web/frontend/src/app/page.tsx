@@ -1,14 +1,6 @@
 "use client"
 
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Grid3X3,
-  Loader2,
-  RefreshCw,
-  X,
-} from "lucide-react"
+import { Grid3X3, Loader2 } from "lucide-react"
 
 // ... imports ...
 
@@ -17,8 +9,11 @@ import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import useSWR from "swr"
-import { BillingSummaryCard } from "@/app/_components/BillingSummaryCard"
+import { DashboardCharts } from "@/app/_components/DashboardCharts"
+import { DashboardHeader } from "@/app/_components/DashboardHeader"
 import { DashboardStats } from "@/app/_components/DashboardStats"
+import { FilterBadge } from "@/app/_components/FilterBadge"
+import { NoReportData } from "@/app/_components/NoReportData"
 import { RendererOutputViewer } from "@/app/_components/RendererOutputViewer"
 import { Card } from "@/components/Card"
 import TimelineTable from "@/components/TimelineTable"
@@ -35,10 +30,6 @@ import { loadConstants } from "@/lib/colors"
 import { formatDuration } from "@/lib/date"
 
 // Dynamic imports for SSR safety
-const CategoryPieChart = dynamic(
-  () => import("@/app/_components/CategoryPieChart"),
-  { ssr: false },
-)
 const HourlyActivityChart = dynamic(
   () => import("@/app/_components/HourlyActivityChart"),
   { ssr: false },
@@ -151,32 +142,7 @@ function DashboardContent() {
   if (!data) return null
 
   if (!report) {
-    return (
-      <div className="min-h-screen bg-base-100 flex items-center justify-center p-4">
-        <div className="bg-base-100 p-6 rounded-xl shadow-sm border border-warning/20 max-w-md w-full">
-          <div className="flex items-center gap-3 text-warning mb-4">
-            <AlertCircle size={24} />
-            <h2 className="font-semibold text-lg">{t("No Report Data")}</h2>
-          </div>
-          <p className="text-base-content/70 mb-4">
-            {t(
-              "The server returned a response, but it contains no report data.",
-            )}
-          </p>
-          <div className="bg-base-200 p-3 rounded-lg text-xs font-mono text-base-content/60 overflow-auto max-h-48">
-            {JSON.stringify(data, null, 2)}
-          </div>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="w-full mt-4 py-2.5 bg-neutral text-neutral-content rounded-lg hover:bg-neutral/90 transition-colors font-medium flex items-center justify-center gap-2"
-          >
-            <RefreshCw size={16} />
-            {t("Reload")}
-          </button>
-        </div>
-      </div>
-    )
+    return <NoReportData data={data} />
   }
 
   const { work_stats } = report
@@ -188,79 +154,16 @@ function DashboardContent() {
     <main className="container mx-auto px-6 py-8">
       <div className="flex flex-col gap-6">
         {/* Header with Date Navigation */}
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-2xl font-bold text-base-content">
-              {t("Activity Dashboard")}
-            </h1>
-            <div className="flex items-center gap-2 mt-1 text-base-content/60">
-              <button
-                type="button"
-                onClick={handlePrevDay}
-                className="p-1 hover:bg-base-200 rounded text-base-content/40 hover:text-base-content/80 transition-colors"
-                title={t("Previous Day")}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                type="button"
-                className="relative group cursor-pointer flex items-center gap-2"
-                onClick={() => dateInputRef.current?.showPicker()}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    dateInputRef.current?.showPicker()
-                  }
-                }}
-              >
-                <span className="border-b border-transparent group-hover:border-base-300 transition-colors">
-                  {new Date(date).toLocaleDateString(undefined, {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </span>
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  value={date}
-                  onChange={handleDateChange}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  aria-label="Date selector"
-                />
-              </button>
-              <button
-                type="button"
-                onClick={handleNextDay}
-                className="p-1 hover:bg-base-200 rounded text-base-content/40 hover:text-base-content/80 transition-colors"
-                title={t("Next Day")}
-              >
-                <ChevronRight size={18} />
-              </button>
-
-              {!isToday && (
-                <button
-                  type="button"
-                  onClick={handleToday}
-                  className="ml-2 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded hover:bg-primary/20 font-medium transition-colors"
-                >
-                  {t("Today")}
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            {/* Header Stats */}
-            <div className="text-right pl-6 border-l border-base-200">
-              <div className="text-sm text-base-content/60">
-                {t("Total Active Time")}
-              </div>
-              <div className="text-2xl font-bold text-base-content">
-                {totalDurationStr}
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHeader
+          date={date}
+          dateInputRef={dateInputRef}
+          handlePrevDay={handlePrevDay}
+          handleNextDay={handleNextDay}
+          handleDateChange={handleDateChange}
+          handleToday={handleToday}
+          isToday={isToday}
+          totalDurationStr={totalDurationStr}
+        />
 
         {/* Stats Cards */}
         <DashboardStats report={report} />
@@ -276,61 +179,16 @@ function DashboardContent() {
         </Card>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card
-            title={t("Time by Category")}
-            className="overflow-hidden"
-            collapsible
-            isOpen={openCards.has("categoryPie")}
-            onToggle={(isOpen) => toggleCard("categoryPie", isOpen)}
-          >
-            <CategoryPieChart
-              data={categoryData}
-              onCategoryClick={(category) =>
-                applyFilterWithCollapse({ category }, "categoryPie")
-              }
-            />
-          </Card>
-          <Card
-            title={t("Time by Project")}
-            className="overflow-hidden"
-            collapsible
-            isOpen={openCards.has("projectPie")}
-            onToggle={(isOpen) => toggleCard("projectPie", isOpen)}
-          >
-            <CategoryPieChart
-              data={projectData}
-              colorType="project"
-              onCategoryClick={(project) =>
-                applyFilterWithCollapse({ project }, "projectPie")
-              }
-            />
-          </Card>
-          <Card
-            title={t("Time by Client")}
-            className="overflow-hidden"
-            collapsible
-            isOpen={openCards.has("clientPie")}
-            onToggle={(isOpen) => toggleCard("clientPie", isOpen)}
-          >
-            <CategoryPieChart
-              data={Object.entries(report.client_stats || {})
-                .map(([name, value]) => ({ name, value: value as number }))
-                .sort((a, b) => b.value - a.value)}
-              colorType="project"
-              customColors={clientColors}
-              onCategoryClick={(client) =>
-                applyFilterWithCollapse({ client }, "clientPie")
-              }
-            />
-          </Card>
-          {/* Billing Summary Card */}
-          <BillingSummaryCard
-            report={report}
-            isOpen={openCards.has("billing")}
-            onToggle={(isOpen) => toggleCard("billing", isOpen)}
-          />
-        </div>
+        <DashboardCharts
+          categoryData={categoryData}
+          projectData={projectData}
+          clientStats={report.client_stats || {}}
+          clientColors={clientColors}
+          report={report}
+          openCards={openCards}
+          toggleCard={toggleCard}
+          applyFilterWithCollapse={applyFilterWithCollapse}
+        />
 
         {/* Hourly Activity (full width) */}
         <Card
@@ -373,36 +231,7 @@ function DashboardContent() {
         </Card>
 
         {/* Filter Badge */}
-        {filter && (
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-sm text-base-content/70">
-              {t("Filtering:")}
-            </span>
-            {filter.project && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                {t("Project")}: {filter.project}
-              </span>
-            )}
-            {filter.category && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                {t("Category")}: {filter.category}
-              </span>
-            )}
-            {filter.client && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
-                {t("Client")}: {filter.client}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={clearFilter}
-              className="p-0.5 rounded hover:bg-base-200 text-base-content/50"
-              title={t("Clear filter")}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
+        <FilterBadge filter={filter} clearFilter={clearFilter} />
 
         {/* Main Timeline */}
         <Card

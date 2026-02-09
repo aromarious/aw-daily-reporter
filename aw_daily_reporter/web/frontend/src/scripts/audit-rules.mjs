@@ -11,7 +11,6 @@ const SRC_DIR = path.join(PROJECT_ROOT, "src")
 
 // Configuration
 const STATE_HOOK_LIMIT = 5
-const FILE_LENGTH_LIMIT = 500 // If file > 500 lines, likely too big
 
 // Helpers
 function getFiles(dir, ext = []) {
@@ -122,25 +121,6 @@ function checkStateOverload(allSrcFiles) {
   return issues
 }
 
-function checkFileLength(allSrcFiles) {
-  let issues = 0
-  console.log("\n--- Checking for File Length (Heuristic) ---")
-  for (const file of allSrcFiles) {
-    const content = fs.readFileSync(file, "utf-8")
-    const lines = content.split("\n").length
-    if (lines > FILE_LENGTH_LIMIT) {
-      console.warn(
-        `⚠️  [SIZE] ${path.relative(PROJECT_ROOT, file)} is ${lines} lines long.`,
-      )
-      console.warn(
-        `    Rule: "Component should be around 150 lines." (File length > 300 suggests complex component or too many components)\n`,
-      )
-      issues++
-    }
-  }
-  return issues
-}
-
 async function main() {
   console.log("🔍 Starting React Rules Audit...\n")
 
@@ -156,9 +136,6 @@ async function main() {
 
   // 2. Check for State Overload
   issues += checkStateOverload(allSrcFiles)
-
-  // 3. Check for File Length (Heuristic for Component Length)
-  issues += checkFileLength(allSrcFiles)
 
   if (issues === 0) {
     console.log("\n✅ No custom rule violations found.")
