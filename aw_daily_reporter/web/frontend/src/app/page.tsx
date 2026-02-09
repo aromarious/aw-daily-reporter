@@ -17,10 +17,10 @@ import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import useSWR from "swr"
+import { BillingSummaryCard } from "@/app/_components/BillingSummaryCard"
+import { DashboardStats } from "@/app/_components/DashboardStats"
+import { RendererOutputViewer } from "@/app/_components/RendererOutputViewer"
 import { Card } from "@/components/Card"
-import { BillingSummaryCard } from "@/components/dashboard/BillingSummaryCard"
-import { DashboardStats } from "@/components/dashboard/DashboardStats"
-import { RendererOutputViewer } from "@/components/RendererOutputViewer"
 import TimelineTable from "@/components/TimelineTable"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useToast } from "@/contexts/ToastContext"
@@ -44,7 +44,7 @@ const HourlyActivityChart = dynamic(
   { ssr: false },
 )
 const ProjectCategoryHeatmap = dynamic(
-  () => import("@/components/echarts/ProjectCategoryHeatmap"),
+  () => import("@/app/_components/ProjectCategoryHeatmap"),
   { ssr: false },
 )
 const DualLaneTimeline = dynamic(
