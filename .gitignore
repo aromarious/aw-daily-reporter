@@ -19,3 +19,8 @@ node_modules/
 /instance/
 /htmlcov/
 /*.txt
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
