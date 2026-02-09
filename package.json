@@ -1,6 +1,6 @@
 {
   "name": "aw-daily-reporter",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A tool that categorizes and visualizes life logs collected by ActivityWatch on two axes: \"Project x Category\", and supports AI-based daily report creation.",
   "main": "index.js",
   "directories": {

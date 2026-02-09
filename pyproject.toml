@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aw-daily-reporter"
-version = "0.2.0"
+version = "0.2.1"
 description = "A daily reporting tool for ActivityWatch"
 authors = ["User <user@example.com>"]
 license = "MPL-2.0"
