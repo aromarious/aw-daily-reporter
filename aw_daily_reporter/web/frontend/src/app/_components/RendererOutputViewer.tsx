@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import useSWR, { mutate } from "swr"
 import { useTranslation } from "@/contexts/I18nContext"
+import { useToast } from "@/contexts/ToastContext"
 import { api, fetcher } from "@/lib/api"
 
 interface RendererOutputViewerProps {
@@ -16,6 +17,7 @@ export function RendererOutputViewer({
 }: RendererOutputViewerProps) {
   const keys = useMemo(() => Object.keys(outputs), [outputs])
   const [activeKey, setActiveKey] = useState(keys[0])
+  const { showToast } = useToast()
 
   // Define config type for SWR
   interface Config {
@@ -74,7 +76,7 @@ export function RendererOutputViewer({
 
   const handleCopy = () => {
     navigator.clipboard.writeText(outputs[activeKey])
-    alert(t("Copied to clipboard!"))
+    showToast(t("Copied to clipboard!"), "success")
   }
 
   if (keys.length === 0) return null

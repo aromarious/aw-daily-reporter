@@ -138,24 +138,18 @@ describe("RuleModal", () => {
   /**
    * Target: RuleModal
    * Scenario: Submit without Keywords
-   * Expected: Alerts and does not call onSave
+   * Expected: Button is disabled and shows tooltip
    */
-  it("test_RuleModal_SubmitNoKeywords_ShowsAlert", async () => {
+  it("test_RuleModal_SubmitNoKeywords_ButtonDisabled", () => {
     const onSave = vi.fn()
-    const user = userEvent.setup()
-    // Mock window.alert
-    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {})
-
     render(<RuleModal {...defaultProps} onSave={onSave} />)
 
-    // Submit without adding keywords
     const saveButton = screen.getByRole("button", { name: "Save Rule" })
-    await user.click(saveButton)
-
-    expect(alertMock).toHaveBeenCalledWith("Please add at least one keyword.")
-    expect(onSave).not.toHaveBeenCalled()
-
-    alertMock.mockRestore()
+    expect(saveButton).toBeDisabled()
+    expect(saveButton).toHaveAttribute(
+      "title",
+      "Please add at least one keyword",
+    )
   })
 
   /**
