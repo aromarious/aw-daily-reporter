@@ -10,7 +10,9 @@ packages = [
 ]
 exclude = [
     "aw_daily_reporter/web/frontend/**/*",
-    "!aw_daily_reporter/web/frontend/out"
+    "!aw_daily_reporter/web/frontend/out",
+    "node_modules",
+    "node_modules/**/*"
 ]
 include = [
     { path = "aw_daily_reporter/web/frontend/out/**/*", format = ["sdist", "wheel"] }
