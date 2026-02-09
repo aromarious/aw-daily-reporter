@@ -122,6 +122,8 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           working-directory: aw_daily_reporter/web/frontend
+          json-summary-path: coverage/coverage-summary.json
+          json-final-path: coverage/coverage-final.json
           package-manager: pnpm
 
   build:
