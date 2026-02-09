@@ -37,6 +37,12 @@ pnpm test:frontend
 
 # フロントエンドのカバレッジ計測
 pnpm test:frontend:coverage
+
+# E2E テスト実行
+pnpm test:e2e
+
+# E2E テスト (UI モード)
+pnpm test:e2e:ui
 ```
 
 ## サブディレクトリで実行する場合
@@ -50,6 +56,7 @@ npm run check:rules # 品質監査 (Biome + Custom Rules)
 ```
 
 詳細なテスト方針については、[frontend-testing-strategy.md](frontend-testing-strategy.md) を参照してください。
+E2E テストの実行方法と追加方法については、[e2e-testing.md](e2e-testing.md) を参照してください。
 品質監査ルールの詳細は、[frontend-audit.md](frontend-audit.md) を参照してください。
 
 ## 開発環境のセットアップ
