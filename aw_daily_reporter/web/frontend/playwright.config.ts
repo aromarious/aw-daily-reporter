@@ -39,29 +39,37 @@ export default defineConfig({
   },
 
   // プロジェクト設定（各ブラウザ）
-  projects: [
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
-    // モバイル端末のテスト
-    {
-      name: "Mobile Chrome",
-      use: { ...devices["Pixel 5"] },
-    },
-    {
-      name: "Mobile Safari",
-      use: { ...devices["iPhone 12"] },
-    },
-  ],
+  // CI環境ではChromiumのみ、ローカルでは全ブラウザでテスト
+  projects: process.env.CI
+    ? [
+        {
+          name: "chromium",
+          use: { ...devices["Desktop Chrome"] },
+        },
+      ]
+    : [
+        {
+          name: "chromium",
+          use: { ...devices["Desktop Chrome"] },
+        },
+        {
+          name: "firefox",
+          use: { ...devices["Desktop Firefox"] },
+        },
+        {
+          name: "webkit",
+          use: { ...devices["Desktop Safari"] },
+        },
+        // モバイル端末のテスト
+        {
+          name: "Mobile Chrome",
+          use: { ...devices["Pixel 5"] },
+        },
+        {
+          name: "Mobile Safari",
+          use: { ...devices["iPhone 12"] },
+        },
+      ],
 
   // 開発サーバーの起動設定
   // バックエンド（Flask）とフロントエンド（Next.js）の両方を起動
