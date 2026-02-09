@@ -171,7 +171,7 @@ class TimelineGenerator:
             "project_stats": self.get_project_stats(timeline),
             "client_stats": self.get_client_stats(timeline),
             "clients": self.config.get("clients", {}),  # For billing calculations
-            "work_stats": work_stats,
+            "work_stats": work_stats.model_dump(),
             "scan_summary": scan_summary,
             "unclassified_summary": unclassified_summary,
         }

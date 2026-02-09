@@ -8,7 +8,7 @@ import unittest
 from datetime import datetime, timezone
 
 from aw_daily_reporter.plugins.renderer_markdown import MarkdownRendererPlugin
-from aw_daily_reporter.timeline.models import TimelineItem
+from aw_daily_reporter.timeline.models import TimelineItem, WorkStats
 
 
 class TestMarkdownRendererPlugin(unittest.TestCase):
@@ -234,6 +234,47 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
         other_pos = result.find("Other:")
         assert coding_pos < uncategorized_pos
         assert coding_pos < other_pos
+
+    # --- Issue #29: Pydantic モデルとの互換性テスト ---
+
+    def test_work_stats_from_generator_format(self):
+        """generator.py が model_dump() で生成した辞書形式で正しく動作すること（Issue #29）"""
+        # Arrange: generator.py が work_stats.model_dump() で生成する形式
+        work_stats = WorkStats(
+            start=datetime(2025, 1, 15, 9, 0, tzinfo=timezone.utc),
+            end=datetime(2025, 1, 15, 18, 0, tzinfo=timezone.utc),
+            working_seconds=7200,
+            break_seconds=1800,
+            afk_seconds=0,
+        )
+        report_data = {
+            **self.base_report_data,
+            "work_stats": work_stats.model_dump(),
+        }
+
+        # Act: レンダリングを実行
+        result = self.renderer.render([], report_data, self.base_config)
+
+        # Assert: エラーなく動作し、working_seconds, start, end が正しく表示される
+        assert "2025-01-15" in result
+        assert re.search(r"\d{2}:\d{2}", result)  # 時刻が表示される
+
+    def test_work_stats_missing(self):
+        """work_stats が report_data に存在しない場合のエラーハンドリング"""
+        # Arrange: work_stats を含まない report_data
+        report_data = {
+            "date": "2025-01-15",
+            "category_stats": {},
+            "project_stats": {},
+            "scan_summary": [],
+        }
+
+        # Act: レンダリングを実行
+        result = self.renderer.render([], report_data, self.base_config)
+
+        # Assert: エラーにならず、稼働時間セクションが表示されない
+        assert "2025-01-15" in result
+        assert "⏰" not in result
 
 
 if __name__ == "__main__":
