@@ -6,7 +6,7 @@ import unittest
 from datetime import datetime, timezone
 
 from aw_daily_reporter.plugins.renderer_ai import AIRendererPlugin
-from aw_daily_reporter.timeline.models import TimelineItem
+from aw_daily_reporter.timeline.models import TimelineItem, WorkStats
 
 
 class TestAIRendererPlugin(unittest.TestCase):
@@ -168,6 +168,62 @@ class TestAIRendererPlugin(unittest.TestCase):
         assert "Short:" not in result
         assert "LongProj:" in result
         assert "ShortProj:" not in result
+
+    # --- Issue #29: Pydantic モデルとの互換性テスト ---
+
+    def test_work_stats_from_generator_format(self):
+        """generator.py が model_dump() で生成した辞書形式で正しく動作すること（Issue #29）"""
+        # Arrange: generator.py が work_stats.model_dump() で生成する形式
+        work_stats = WorkStats(
+            start=datetime(2025, 1, 15, 9, 0, tzinfo=timezone.utc),
+            end=datetime(2025, 1, 15, 18, 0, tzinfo=timezone.utc),
+            working_seconds=7200,
+            break_seconds=1800,
+            afk_seconds=0,
+        )
+        # generator.py では model_dump() で辞書化されている
+        report_data = {
+            **self.base_report_data,
+            "work_stats": work_stats.model_dump(),
+        }
+
+        # Act: レンダリングを実行
+        result = self.renderer.render([], report_data, self.base_config)
+
+        # Assert: エラーなく動作し、working_seconds が正しく表示される
+        assert "Date: 2025-01-15" in result
+        assert "Total Work: 2h 0m" in result
+
+    def test_work_stats_as_dict(self):
+        """work_stats が辞書でも正しく動作すること（後方互換性）"""
+        # Arrange: 辞書形式
+        report_data = {
+            **self.base_report_data,
+            "work_stats": {"working_seconds": 3600, "break_seconds": 600},
+        }
+
+        # Act: レンダリングを実行
+        result = self.renderer.render([], report_data, self.base_config)
+
+        # Assert: 正しく表示される
+        assert "Total Work: 1h 0m" in result
+
+    def test_work_stats_missing(self):
+        """work_stats が report_data に存在しない場合のエラーハンドリング"""
+        # Arrange: work_stats を含まない report_data
+        report_data = {
+            "date": "2025-01-15",
+            "category_stats": {},
+            "project_stats": {},
+            "scan_summary": [],
+        }
+
+        # Act: レンダリングを実行
+        result = self.renderer.render([], report_data, self.base_config)
+
+        # Assert: エラーにならず、デフォルト値（0h 0m）が表示される
+        assert "Date: 2025-01-15" in result
+        assert "Total Work: 0h 0m" in result
 
 
 if __name__ == "__main__":
