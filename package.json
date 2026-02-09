@@ -18,7 +18,10 @@
     "build:frontend": "pnpm --filter frontend build",
     "lint": "pnpm run lint:py && pnpm run format:py:check && pnpm run lint:frontend",
     "typecheck": "pnpm run typecheck:py && pnpm run typecheck:frontend",
-    "test": "pnpm run test:py",
+    "test:py": "poetry run pytest",
+    "test:frontend": "pnpm --filter frontend test",
+    "test:frontend:coverage": "pnpm --filter frontend test:coverage",
+    "test": "pnpm run test:py && pnpm run test:frontend:coverage",
     "prepare": "husky"
   },
   "repository": {

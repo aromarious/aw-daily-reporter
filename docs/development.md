@@ -25,6 +25,20 @@ poetry run black .
 ```
 
 # フロントエンド (React/Next.js)
+## プロジェクトルートから実行する場合 (推奨)
+```bash
+# 全テスト実行
+pnpm test
+
+# フロントエンドのみテスト実行
+pnpm test:frontend
+
+# フロントエンドのカバレッジ計測
+pnpm test:frontend:coverage
+```
+
+## サブディレクトリで実行する場合
+```bash
 cd aw_daily_reporter/web/frontend
 npm run test    # テスト実行
 npm run type-check # 型チェック
