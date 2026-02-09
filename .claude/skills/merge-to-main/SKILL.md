@@ -1,7 +1,7 @@
 ---
 name: merge-to-main
 description: develop を main ブランチにマージする
-disable-model-invocation: true
+disable-model-invocation: false
 allowed-tools: Bash
 ---
 
@@ -9,26 +9,55 @@ allowed-tools: Bash
 
 ## 手順
 
-### 1. `main` ブランチに切り替える
+### 1. 現在のブランチと状態を確認する
+
+まず、現在の Git 状態を確認する。
 
 ```bash
-git checkout main
+git status
 ```
+
+### 2. `main` ブランチに切り替えて最新化する
+
+`main` ブランチに切り替えて、リモートから最新の変更を取得する。
 
 ```bash
-git pull origin main
+git checkout main && git pull origin main
 ```
 
-### 2. `develop` ブランチの変更をマージする
+### 3. `develop` ブランチの状態を確認する
+
+`develop` ブランチが最新であることを確認する。
 
 ```bash
-git merge develop
+git fetch origin develop
 ```
 
-### 3. リモート `main` にプッシュする
+### 4. `develop` ブランチをマージする
+
+**重要**: これは main ブランチへのマージなので、ユーザーに確認してから実行すること。
+
+```bash
+git merge origin/develop
+```
+
+### 5. リモート `main` にプッシュする
+
+**重要**: main ブランチへのプッシュは慎重に行うこと。ユーザーに最終確認してから実行すること。
 
 ```bash
 git push origin main
 ```
 
-### 4. 完了をユーザーに報告する
+### 6. 元のブランチに戻る
+
+作業ブランチ `develop` に戻る。
+
+```bash
+git checkout develop
+```
+
+### 7. 完了をユーザーに報告する
+
+- `develop` が `main` にマージされたことを報告
+- GitHub でのリリース作成を促す（必要に応じて）

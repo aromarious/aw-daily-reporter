@@ -10,55 +10,65 @@ argument-hint: "<PR_NUMBER>"
 
 ## 手順
 
-### 1. プルリクの状態を確認する
+### 1. PR 番号の取得
+
+引数が指定されていない場合、現在のブランチから PR 番号を取得する。
 
 ```bash
-gh pr view <PR_NUMBER> --json State,Mergeable,HeadBranch
+gh pr view --json number --jq .number
 ```
 
-### 2. CI の実行結果を確認する
+### 2. プルリクの状態を確認する
+
+PR の状態、マージ可能性、ブランチ名を取得する。
 
 ```bash
-gh pr checks <PR_NUMBER> --watch
+gh pr view <PR_NUMBER> --json State,Mergeable,HeadBranch,Title
 ```
 
-- すべてのチェックが `pass` になることを確認する
+### 3. CI の実行結果を確認する
 
-### 3. マージ処理を行う
+すべてのチェックが完了し、成功していることを確認する。
 
-- まだマージされていない場合:
+```bash
+gh pr checks <PR_NUMBER>
+```
+
+- すべてのチェックが `pass` でない場合は、ユーザーに確認する
+
+### 4. マージ処理を行う
+
+**重要**: ユーザーに最終確認してからマージを実行すること。
+
+- PR がまだマージされていない場合:
 
 ```bash
 gh pr merge <PR_NUMBER> --squash --delete-branch
 ```
 
-- すでにマージ済みの場合:
-  - リモートブランチが残っていれば削除する
+- すでにマージ済みでリモートブランチが残っている場合:
 
 ```bash
 git push origin --delete <BRANCH_NAME>
 ```
 
-### 4. ローカル環境を整理する
+### 5. ローカル環境を整理する
 
-- `develop` ブランチに切り替えて最新にする
+`develop` ブランチに切り替えて最新にし、作業ブランチを削除する。
 
 ```bash
 git checkout develop && git pull origin develop
 ```
 
-- ローカルの作業ブランチを削除する
-
 ```bash
 git branch -D <BRANCH_NAME>
 ```
-
-- リモートの不要な参照を削除する
 
 ```bash
 git fetch --prune
 ```
 
-### 5. 完了をユーザーに報告する
+### 6. 完了をユーザーに報告する
 
-- 「プレビュー環境で確認をお願いします」と伝える
+- マージが完了したことを報告
+- プレビュー環境やステージング環境での確認を促す（該当する場合）
