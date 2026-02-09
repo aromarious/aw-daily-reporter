@@ -41,9 +41,13 @@ test.describe("設定ページ", () => {
         await tab.click()
 
         // Assert: タブがアクティブになったこと
-        await expect(tab)
-          .toHaveAttribute("aria-selected", "true")
-          .or(expect(tab).toHaveClass(/active|selected/))
+        // aria-selected 属性または active/selected クラスのいずれかを持つことを確認
+        const hasAriaSelected =
+          (await tab.getAttribute("aria-selected")) === "true"
+        const hasActiveClass = await tab.evaluate((el) =>
+          /active|selected/.test(el.className),
+        )
+        expect(hasAriaSelected || hasActiveClass).toBe(true)
       }
     } else {
       test.skip()
