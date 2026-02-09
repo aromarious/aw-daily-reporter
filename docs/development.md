@@ -25,7 +25,9 @@ poetry run black .
 ```
 
 # フロントエンド (React/Next.js)
+
 ## プロジェクトルートから実行する場合 (推奨)
+
 ```bash
 # 全テスト実行
 pnpm test
@@ -38,12 +40,13 @@ pnpm test:frontend:coverage
 ```
 
 ## サブディレクトリで実行する場合
+
 ```bash
 cd aw_daily_reporter/web/frontend
 npm run test    # テスト実行
 npm run type-check # 型チェック
 npm run lint    # Linter (Biome)
-npm run audit   # 品質監査 (Biome + Custom Rules)
+npm run check:rules # 品質監査 (Biome + Custom Rules)
 ```
 
 詳細なテスト方針については、[frontend-testing-strategy.md](frontend-testing-strategy.md) を参照してください。

@@ -15,7 +15,7 @@
     "start": "next start",
     "lint": "ultracite check .",
     "fix": "ultracite fix . --unsafe",
-    "audit": "ultracite check . && node src/scripts/audit-rules.mjs",
+    "check:rules": "ultracite check . && node src/scripts/audit-rules.mjs",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit"

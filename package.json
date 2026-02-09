@@ -21,6 +21,7 @@
     "test:py": "poetry run pytest",
     "test:frontend": "pnpm --filter frontend test",
     "test:frontend:coverage": "pnpm --filter frontend test:coverage",
+    "check:rules": "pnpm --filter frontend check:rules",
     "test": "pnpm run test:py && pnpm run test:frontend:coverage",
     "prepare": "husky"
   },

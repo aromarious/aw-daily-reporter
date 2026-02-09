@@ -1,10 +1,12 @@
 # フロントエンド品質監査 (Frontend Audit)
 
-このドキュメントでは、React/Next.js コードベースの品質と設計ルールを維持するために導入された監査ツール (`npm run audit`) について説明します。
+このドキュメントでは、React/Next.js コードベースの品質と設計ルールを維持するために導入された監査ツール (`npm run check:rules`) について説明します。
 
 ## 概要
 
-`npm run audit` は、標準的な Linter では検出しにくい設計上の問題や、プロジェクト固有のルール遵守状況をチェックするためのコマンドです。
+`npm run check:rules` は、標準的な Linter では検出しにくい設計上の問題や、プロジェクト固有のルール遵守状況をチェックするためのコマンドです。
+`npm audit` (脆弱性チェック) と混同しないよう、独自のコマンド名になっています。
+
 以下の2つのツールを組み合わせて実行されます。
 
 1. **Biome (Ultracite)**: コードフォーマット、構文エラー、複雑度 (Complexity) のチェック
@@ -15,7 +17,13 @@
 `web/frontend` ディレクトリで以下のコマンドを実行します。
 
 ```bash
-npm run audit
+npm run check:rules
+```
+
+またはプロジェクトルートから:
+
+```bash
+pnpm run check:rules
 ```
 
 ## チェック項目詳細
