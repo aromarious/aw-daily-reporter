@@ -6,7 +6,7 @@ import { useTranslation } from "@/contexts/I18nContext"
 
 interface DashboardHeaderProps {
   date: string
-  dateInputRef: RefObject<HTMLInputElement>
+  dateInputRef: RefObject<HTMLInputElement | null>
   handlePrevDay: () => void
   handleNextDay: () => void
   handleDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void

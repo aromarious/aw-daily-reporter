@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic"
 import { Card } from "@/components/Card"
 import { useTranslation } from "@/contexts/I18nContext"
+import type { ChartCard } from "@/hooks/useDashboardCards"
 import { BillingSummaryCard } from "./BillingSummaryCard"
 
 const CategoryPieChart = dynamic(() => import("./CategoryPieChart"), {
@@ -17,11 +18,11 @@ interface DashboardChartsProps {
   report: {
     client_stats?: Record<string, number>
   }
-  openCards: Set<string>
-  toggleCard: (cardId: string, isOpen: boolean) => void
+  openCards: Set<ChartCard>
+  toggleCard: (card: ChartCard, isOpen: boolean) => void
   applyFilterWithCollapse: (
-    filter: { category?: string; project?: string; client?: string },
-    cardId: string,
+    filterValue: { category?: string; project?: string; client?: string },
+    sourceCard: ChartCard,
   ) => void
 }
 
