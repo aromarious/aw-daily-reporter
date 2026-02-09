@@ -83,9 +83,9 @@ class TestTimelineGenerator(unittest.TestCase):
         stats = self.generator.analyze_working_hours(timeline, {})
 
         # Assert
-        assert stats["working_seconds"] == 0.0
-        assert stats["break_seconds"] == 0.0
-        assert stats["afk_seconds"] == 0.0
+        assert stats.working_seconds == 0.0
+        assert stats.break_seconds == 0.0
+        assert stats.afk_seconds == 0.0
 
     def test_analyze_working_hours_single_item_returns_duration(self):
         # T02: Single Item
@@ -96,8 +96,8 @@ class TestTimelineGenerator(unittest.TestCase):
         stats = self.generator.analyze_working_hours(timeline, {})
 
         # Assert
-        assert stats["working_seconds"] == 3600.0
-        assert stats["break_seconds"] == 0.0
+        assert stats.working_seconds == 3600.0
+        assert stats.break_seconds == 0.0
 
     def test_analyze_working_hours_with_gap_calculates_afk(self):
         # T03: Gap -> AFK (Implicit Break)
@@ -115,9 +115,9 @@ class TestTimelineGenerator(unittest.TestCase):
         # Total span: 10:00 - 13:00 (3h = 10800s)
         # Active: 2h (7200s)
         # AFK (Gap): 1h (3600s)
-        assert stats["working_seconds"] == 7200.0
-        assert stats["afk_seconds"] == 3600.0
-        assert stats["break_seconds"] == 3600.0
+        assert stats.working_seconds == 7200.0
+        assert stats.afk_seconds == 3600.0
+        assert stats.break_seconds == 3600.0
 
     def test_analyze_working_hours_with_afk_item_excludes_from_working(self):
         # T04: Explicit AFK item
@@ -138,8 +138,8 @@ class TestTimelineGenerator(unittest.TestCase):
         # Total span: 10:00 - 12:30 (2.5h)
         # Working: 2h (1h + 1h)
         # AFK: 30m
-        assert stats["working_seconds"] == 7200.0
-        assert stats["afk_seconds"] == 1800.0
+        assert stats.working_seconds == 7200.0
+        assert stats.afk_seconds == 1800.0
 
     def test_analyze_working_hours_overlapping_items_merges_duration(self):
         # T05: Overlap
@@ -153,7 +153,7 @@ class TestTimelineGenerator(unittest.TestCase):
         stats = self.generator.analyze_working_hours(timeline, {})
 
         # Assert
-        assert stats["working_seconds"] == 5400.0  # 90 mins
+        assert stats.working_seconds == 5400.0  # 90 mins
 
     def test_analyze_working_hours_manual_break_category_counts_as_break(self):
         # T06: Manual Break Category
@@ -173,8 +173,8 @@ class TestTimelineGenerator(unittest.TestCase):
         # Total Span: 1.5h.
         # Break: 30m (Lunch) + 0m (Gap).
         # Working: 1h.
-        assert stats["working_seconds"] == 3600.0
-        assert stats["break_seconds"] == 1800.0
+        assert stats.working_seconds == 3600.0
+        assert stats.break_seconds == 1800.0
 
     def test_analyze_working_hours_exact_overlap_returns_single_duration(self):
         # T07: Exact Overlap
@@ -187,7 +187,7 @@ class TestTimelineGenerator(unittest.TestCase):
         stats = self.generator.analyze_working_hours(timeline, {})
 
         # Assert
-        assert stats["working_seconds"] == 3600.0
+        assert stats.working_seconds == 3600.0
 
     def test_analyze_working_hours_sub_item_overlap_ignored(self):
         # T08: Sub-item Overlap (B inside A)
@@ -200,7 +200,7 @@ class TestTimelineGenerator(unittest.TestCase):
         stats = self.generator.analyze_working_hours(timeline, {})
 
         # Assert
-        assert stats["working_seconds"] == 7200.0  # 2h
+        assert stats.working_seconds == 7200.0  # 2h
 
 
 if __name__ == "__main__":

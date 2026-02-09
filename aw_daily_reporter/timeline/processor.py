@@ -37,13 +37,13 @@ class TimelineStatsCalculator:
         # 1. Determine Start/End of the reporting period
         if not timeline:
             now = datetime.now().astimezone()
-            return {
-                "start": now,
-                "end": now,
-                "working_seconds": 0.0,
-                "break_seconds": 0.0,
-                "afk_seconds": 0.0,
-            }
+            return WorkStats(
+                start=now,
+                end=now,
+                working_seconds=0.0,
+                break_seconds=0.0,
+                afk_seconds=0.0,
+            )
 
         start = min(item.timestamp for item in timeline)
         end = max(item.timestamp + timedelta(seconds=item.duration) for item in timeline)
@@ -107,10 +107,10 @@ class TimelineStatsCalculator:
         # 7. Working Seconds = Total Span - Total Break
         working_seconds = max(0.0, total_span - total_break_seconds)
 
-        return {
-            "start": start,
-            "end": end,
-            "working_seconds": working_seconds,
-            "break_seconds": total_break_seconds,
-            "afk_seconds": afk_seconds,
-        }
+        return WorkStats(
+            start=start,
+            end=end,
+            working_seconds=working_seconds,
+            break_seconds=total_break_seconds,
+            afk_seconds=afk_seconds,
+        )

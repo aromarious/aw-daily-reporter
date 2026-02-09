@@ -30,26 +30,27 @@ class TestAFKProcessor(unittest.TestCase):
         source: str = "Window",
         status: str = None,
     ) -> TimelineItem:
-        return {
-            "timestamp": self.base_time + timedelta(minutes=offset_minutes),
-            "duration": float(duration_minutes * 60),
-            "app": app,
-            "title": "Work",
-            "context": [],
-            "category": "Coding",
-            "source": source,
-            "status": status,
-            "project": None,
-            "file": None,
-            "language": None,
-            "url": None,
-        }
+        return TimelineItem(
+            timestamp=self.base_time + timedelta(minutes=offset_minutes),
+            duration=float(duration_minutes * 60),
+            app=app,
+            title="Work",
+            context=[],
+            category="Coding",
+            source=source,
+            status=status,
+            project=None,
+            file=None,
+            language=None,
+            url=None,
+            metadata={},
+        )
 
     def _to_df(self, items: list[TimelineItem]) -> pd.DataFrame:
         """TimelineItemのリストをDataFrameに変換"""
         if not items:
             return pd.DataFrame()
-        df = pd.DataFrame(items)
+        df = pd.DataFrame([item.model_dump() for item in items])
         df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
         return df
 

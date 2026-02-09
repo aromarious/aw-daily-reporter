@@ -372,7 +372,9 @@ class TestAnalyzeWorkingHours(unittest.TestCase):
 
         result = generator.analyze_working_hours(timeline, config)
 
-        assert isinstance(result, dict)
+        from aw_daily_reporter.timeline.models import WorkStats
+
+        assert isinstance(result, WorkStats)
 
 
 if __name__ == "__main__":

@@ -148,7 +148,7 @@ class SettingsManager:
         preset_dir = os.path.join(os.path.dirname(__file__), "..", "data", "presets")
         preset_path = os.path.join(preset_dir, "ja.json")
 
-        default_config = {
+        default_config: Dict[str, Any] = {
             "system": {
                 "language": "ja",
                 "activitywatch": {"host": "127.0.0.1", "port": 5600},
@@ -158,7 +158,9 @@ class SettingsManager:
             "settings": {},
             "rules": [],
             "project_map": {},
+            "client_map": {},
             "apps": {},
+            "clients": {},
         }
 
         # プリセットファイルを読み込んでマージ

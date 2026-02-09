@@ -150,24 +150,24 @@ class GitScanner(ScannerPlugin):
                         h, author, msg, date_str = parts
                         dt = datetime.fromisoformat(date_str)
                         items.append(
-                            {
-                                "timestamp": dt,
-                                "duration": 1.0,
-                                "app": "Git",
-                                "title": f"[{repo_name}] {msg} ({h})",
-                                "context": [
+                            TimelineItem(
+                                timestamp=dt,
+                                duration=1.0,
+                                app="Git",
+                                title=f"[{repo_name}] {msg} ({h})",
+                                context=[
                                     f"{_('Author')}: {author}",
                                     f"{_('Repo')}: {repo_path}",
                                 ],
-                                "category": "Git",
-                                "project": repo_name,  # Set repo name as project, allows mapping/propagation
-                                "source": "GitScanner",
-                                "metadata": {},
-                                "url": None,
-                                "file": None,
-                                "language": None,
-                                "status": None,
-                            }
+                                category="Git",
+                                project=repo_name,  # Set repo name as project, allows mapping/propagation
+                                source="GitScanner",
+                                metadata={},
+                                url=None,
+                                file=None,
+                                language=None,
+                                status=None,
+                            )
                         )
 
         except subprocess.CalledProcessError:
@@ -219,6 +219,6 @@ class GitScanner(ScannerPlugin):
             # Note: this now returns items, so we convert back to string for legacy scan_activity if called
             items = self.get_commits(repo, start_time, datetime.now().astimezone())
             for item in items:
-                all_activities.append(item["title"])
+                all_activities.append(item.title)
             all_activities.extend(self.get_gh_pr_status(repo, start_time, datetime.now().astimezone()))
         return all_activities

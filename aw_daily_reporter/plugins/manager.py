@@ -463,7 +463,7 @@ class PluginManager:
                     if scan_result:
                         # 戻り値の型によって振り分け (Mixed types supported)
                         scanner_summary_added = False
-                        new_items = []
+                        new_items: list[dict[str, Any]] = []
                         for item in scan_result:
                             if isinstance(item, str):
                                 if not scanner_summary_added:
