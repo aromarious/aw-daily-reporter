@@ -9,7 +9,7 @@ import type { FullConfig, Rule } from "../types"
 
 // Dynamic Components for Rules Tab
 const RuleList = dynamic(() => import("@/components/RuleList"), { ssr: false })
-const RuleModal = dynamic(() => import("@/components/RuleModal"), {
+const RuleModal = dynamic(() => import("@/components/rules/RuleModal"), {
   ssr: false,
 })
 

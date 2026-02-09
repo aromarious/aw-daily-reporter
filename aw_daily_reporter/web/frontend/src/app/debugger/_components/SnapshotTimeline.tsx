@@ -2,11 +2,15 @@
 
 import dynamic from "next/dynamic"
 import { useTheme } from "next-themes"
+import type { EChartsWrapperProps } from "@/components/echarts/EChartsWrapper"
 import { useSnapshotTimeline } from "@/hooks/useSnapshotTimeline"
 
-const EChartsWrapper = dynamic(() => import("../echarts/EChartsWrapper"), {
-  ssr: false,
-})
+const EChartsWrapper = dynamic<EChartsWrapperProps>(
+  () => import("@/components/echarts/EChartsWrapper"),
+  {
+    ssr: false,
+  },
+)
 
 import type { TimelineItem } from "@/types"
 export type { TimelineItem }

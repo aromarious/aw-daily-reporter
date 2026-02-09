@@ -51,7 +51,7 @@ const DualLaneTimeline = dynamic(
   () => import("@/components/echarts/DualLaneTimeline"),
   { ssr: false },
 )
-const RuleModal = dynamic(() => import("@/components/RuleModal"), {
+const RuleModal = dynamic(() => import("@/components/rules/RuleModal"), {
   ssr: false,
 })
 

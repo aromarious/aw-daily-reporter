@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
-import TagInput from "@/components/TagInput"
+import TagInput from "@/components/rules/TagInput"
 
 describe("TagInput", () => {
   /**
