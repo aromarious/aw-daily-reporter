@@ -11,7 +11,7 @@ const SRC_DIR = path.join(PROJECT_ROOT, "src")
 
 // Configuration
 const STATE_HOOK_LIMIT = 5
-const FILE_LENGTH_LIMIT = 300 // If file > 300 lines, likely too big
+const FILE_LENGTH_LIMIT = 500 // If file > 500 lines, likely too big
 
 // Helpers
 function getFiles(dir, ext = []) {

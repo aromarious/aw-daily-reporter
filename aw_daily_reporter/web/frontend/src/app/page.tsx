@@ -4,18 +4,22 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  CupSoda,
   Grid3X3,
   Loader2,
   RefreshCw,
   X,
 } from "lucide-react"
+
+// ... imports ...
+
+// Remove Clock, CupSoda from lucide-react import
 import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import useSWR from "swr"
 import { Card } from "@/components/Card"
+import { BillingSummaryCard } from "@/components/dashboard/BillingSummaryCard"
+import { DashboardStats } from "@/components/dashboard/DashboardStats"
 import { RendererOutputViewer } from "@/components/RendererOutputViewer"
 import TimelineTable from "@/components/TimelineTable"
 import { useTranslation } from "@/contexts/I18nContext"
@@ -27,7 +31,8 @@ import { useFilteredTimeline } from "@/hooks/useFilteredTimeline"
 import { useRuleManagement } from "@/hooks/useRuleManagement"
 import { useTimeRange } from "@/hooks/useTimeRange"
 import { fetcher } from "@/lib/api"
-import { isUncategorized, loadConstants } from "@/lib/colors"
+import { loadConstants } from "@/lib/colors"
+import { formatDuration } from "@/lib/date"
 
 // Dynamic imports for SSR safety
 const CategoryPieChart = dynamic(
@@ -49,8 +54,6 @@ const DualLaneTimeline = dynamic(
 const RuleModal = dynamic(() => import("@/components/RuleModal"), {
   ssr: false,
 })
-
-import { formatDuration } from "@/lib/date"
 
 interface SettingsConfig {
   system?: {
@@ -177,20 +180,9 @@ function DashboardContent() {
   }
 
   const { work_stats } = report
-
-  // Calculate generic stats if missing from API
   const totalSeconds =
     (work_stats.working_seconds || 0) + (work_stats.break_seconds || 0)
-  const workingSeconds = work_stats.working_seconds || 0
-
-  const breakSeconds = work_stats.break_seconds || 0
-  const afkSeconds = work_stats.afk_seconds || 0
-
   const totalDurationStr = formatDuration(totalSeconds)
-  const workDurationStr = formatDuration(workingSeconds)
-  const afkDurationStr = formatDuration(afkSeconds)
-  const nonWorkSeconds = Math.max(0, breakSeconds - afkSeconds)
-  const nonWorkDurationStr = formatDuration(nonWorkSeconds)
 
   return (
     <main className="container mx-auto px-6 py-8">
@@ -271,45 +263,7 @@ function DashboardContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card title={t("Working Hours")} className="relative overflow-hidden">
-            <div className="absolute -right-10 -bottom-10 text-base-content opacity-5 mix-blend-normal pointer-events-none">
-              <Clock size={180} strokeWidth={1.5} />
-            </div>
-            <div className="relative z-10">
-              <div className="text-2xl font-bold text-base-content">
-                {workDurationStr}
-              </div>
-              <div className="text-sm text-base-content/60">
-                {totalSeconds > 0
-                  ? ((workingSeconds / totalSeconds) * 100).toFixed(1)
-                  : 0}
-                {t("% of total")}
-              </div>
-            </div>
-          </Card>
-          <Card title={t("Break Time")} className="relative overflow-hidden">
-            <div className="absolute -right-10 -bottom-8 text-base-content opacity-5 mix-blend-normal pointer-events-none">
-              <CupSoda size={180} strokeWidth={1.5} />
-            </div>
-            <div className="relative z-10">
-              <div className="text-2xl font-bold text-base-content/80">
-                {formatDuration(breakSeconds)}
-              </div>
-              <div className="text-xs text-base-content/60 mt-1 flex gap-3">
-                <span title={t("AFK Time")}>
-                  {t("AFK Time")}: {afkDurationStr}
-                </span>
-                <span
-                  className="border-l border-base-content/20 pl-3"
-                  title={t("Other non-work time")}
-                >
-                  {t("Other non-work time")}: {nonWorkDurationStr}
-                </span>
-              </div>
-            </div>
-          </Card>
-        </div>
+        <DashboardStats report={report} />
 
         {/* Activity Timeline */}
         <Card title={t("Activity Timeline")} className="overflow-hidden">
@@ -371,109 +325,11 @@ function DashboardContent() {
             />
           </Card>
           {/* Billing Summary Card */}
-          {report.clients && Object.keys(report.clients).length > 0 && (
-            <Card
-              title={t("Billing Summary")}
-              className="overflow-hidden"
-              collapsible
-              isOpen={openCards.has("billing")}
-              onToggle={(isOpen) => toggleCard("billing", isOpen)}
-            >
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-base-content/60 text-xs">
-                    <th className="text-left pb-2 font-medium">
-                      {t("Client")}
-                    </th>
-                    <th className="text-right pb-2 font-medium">{t("Time")}</th>
-                    <th className="text-right pb-2 font-medium">{t("Rate")}</th>
-                    <th className="text-right pb-2 font-medium">
-                      {t("Amount")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(report.client_stats || {})
-                    .sort(([nameA, a], [nameB, b]) => {
-                      const aUncat = isUncategorized(nameA)
-                      const bUncat = isUncategorized(nameB)
-                      if (aUncat !== bUncat) return aUncat ? 1 : -1
-                      return (b as number) - (a as number)
-                    })
-                    .map(([clientName, seconds]) => {
-                      const clientEntry = Object.entries(
-                        report.clients || {},
-                      ).find(
-                        ([, c]) => (c as { name: string }).name === clientName,
-                      )
-                      const rate = clientEntry
-                        ? (clientEntry[1] as { rate: number }).rate
-                        : 0
-                      const hours = (seconds as number) / 3600
-                      const amount = hours * rate
-
-                      return (
-                        <tr
-                          key={clientName}
-                          className="border-t border-base-200"
-                        >
-                          <td className="py-2 text-base-content">
-                            {clientName}
-                          </td>
-                          <td className="py-2 text-right text-base-content/80">
-                            {hours.toFixed(1)}h
-                          </td>
-                          <td className="py-2 text-right text-base-content/60">
-                            {rate > 0 ? `¥${rate.toLocaleString()}` : "-"}
-                          </td>
-                          <td className="py-2 text-right font-medium text-base-content/90">
-                            {rate > 0
-                              ? `¥${Math.round(amount).toLocaleString()}`
-                              : "-"}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-base-200">
-                    <td className="py-2 font-semibold text-base-content">
-                      {t("Total")}
-                    </td>
-                    <td className="py-2 text-right font-medium text-base-content/80">
-                      {(
-                        Object.values(report.client_stats || {}).reduce<number>(
-                          (sum, s) => sum + (s as number),
-                          0,
-                        ) / 3600
-                      ).toFixed(1)}
-                      h
-                    </td>
-                    <td className="py-2"></td>
-                    <td className="py-2 text-right font-bold text-success">
-                      ¥
-                      {Math.round(
-                        Object.entries(report.client_stats || {}).reduce(
-                          (sum, [name, seconds]) => {
-                            const clientEntry = Object.entries(
-                              report.clients || {},
-                            ).find(
-                              ([, c]) => (c as { name: string }).name === name,
-                            )
-                            const rate = clientEntry
-                              ? (clientEntry[1] as { rate: number }).rate
-                              : 0
-                            return sum + ((seconds as number) / 3600) * rate
-                          },
-                          0,
-                        ),
-                      ).toLocaleString()}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </Card>
-          )}
+          <BillingSummaryCard
+            report={report}
+            isOpen={openCards.has("billing")}
+            onToggle={(isOpen) => toggleCard("billing", isOpen)}
+          />
         </div>
 
         {/* Hourly Activity (full width) */}
