@@ -17,7 +17,10 @@ let uncategorizedKeywords: string[] = [
 ]
 
 // APIから定数を取得（アプリ起動時に1回だけ呼ばれる想定）
-let constantsLoaded = false
+export let constantsLoaded = false
+export function resetConstantsLoaded() {
+  constantsLoaded = false
+}
 export async function loadConstants(): Promise<void> {
   if (constantsLoaded) return
   try {

@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react"
 import dynamic from "next/dynamic"
 
 const PipelineDebugger = dynamic(
-  () => import("@/components/pipeline/PipelineDebugger"),
+  () => import("./_components/PipelineDebugger"),
   {
     ssr: false,
     loading: () => (

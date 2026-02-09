@@ -4,67 +4,56 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  CupSoda,
   Grid3X3,
   Loader2,
   RefreshCw,
   X,
 } from "lucide-react"
+
+// ... imports ...
+
+// Remove Clock, CupSoda from lucide-react import
 import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useEffect, useMemo, useRef, useState } from "react"
-import useSWR, { mutate } from "swr"
+import { Suspense, useEffect, useState } from "react"
+import useSWR from "swr"
+import { BillingSummaryCard } from "@/app/_components/BillingSummaryCard"
+import { DashboardStats } from "@/app/_components/DashboardStats"
+import { RendererOutputViewer } from "@/app/_components/RendererOutputViewer"
 import { Card } from "@/components/Card"
 import TimelineTable from "@/components/TimelineTable"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useToast } from "@/contexts/ToastContext"
-import { api, fetcher } from "@/lib/api"
-import { getProjectColor, isUncategorized, loadConstants } from "@/lib/colors"
+import { useDashboardCards } from "@/hooks/useDashboardCards"
+import { useDashboardChartData } from "@/hooks/useDashboardChartData"
+import { useDateNavigation } from "@/hooks/useDateNavigation"
+import { useFilteredTimeline } from "@/hooks/useFilteredTimeline"
+import { useRuleManagement } from "@/hooks/useRuleManagement"
+import { useTimeRange } from "@/hooks/useTimeRange"
+import { fetcher } from "@/lib/api"
+import { loadConstants } from "@/lib/colors"
+import { formatDuration } from "@/lib/date"
 
 // Dynamic imports for SSR safety
 const CategoryPieChart = dynamic(
-  () => import("@/components/echarts/CategoryPieChart"),
+  () => import("@/app/_components/CategoryPieChart"),
   { ssr: false },
 )
 const HourlyActivityChart = dynamic(
-  () => import("@/components/echarts/HourlyActivityChart"),
+  () => import("@/app/_components/HourlyActivityChart"),
   { ssr: false },
 )
 const ProjectCategoryHeatmap = dynamic(
-  () => import("@/components/echarts/ProjectCategoryHeatmap"),
+  () => import("@/app/_components/ProjectCategoryHeatmap"),
   { ssr: false },
 )
 const DualLaneTimeline = dynamic(
-  () => import("@/components/echarts/DualLaneTimeline"),
+  () => import("@/app/_components/DualLaneTimeline"),
   { ssr: false },
 )
-const RuleModal = dynamic(() => import("@/components/RuleModal"), {
+const RuleModal = dynamic(() => import("@/components/rules/RuleModal"), {
   ssr: false,
 })
-
-interface TimelineItem {
-  timestamp: string
-  duration: number
-  app: string
-  title: string
-  category?: string
-  project?: string
-  url?: string
-  metadata?: {
-    client?: string
-    matched_rule?: {
-      keyword: string
-      target: string
-    }
-  }
-}
-
-const formatDuration = (seconds: number) => {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return `${h}h ${m}m`
-}
 
 interface SettingsConfig {
   system?: {
@@ -74,204 +63,38 @@ interface SettingsConfig {
   }
 }
 
-const getAdjustedDate = (config: SettingsConfig | undefined) => {
-  const d = new Date()
-  if (!config) return d
-
-  const system = config.system || {}
-  const source = system.day_start_source || "manual"
-  let offset = system.start_of_day || "00:00"
-
-  if (source === "aw" && system.aw_start_of_day) {
-    offset = system.aw_start_of_day
-  }
-
-  // offset format is "HH:MM"
-  // If current time < offset, it's considered the previous day
-  const [offsetHour, offsetMinute] = offset.split(":").map(Number)
-  const currentHour = d.getHours()
-  const currentMinute = d.getMinutes()
-
-  if (
-    currentHour < offsetHour ||
-    (currentHour === offsetHour && currentMinute < offsetMinute)
-  ) {
-    d.setDate(d.getDate() - 1)
-  }
-  return d
-}
-
-function RendererOutputViewer({
-  outputs,
-  rendererNames,
-}: {
-  outputs: Record<string, string>
-  rendererNames?: Record<string, string>
-}) {
-  const keys = useMemo(() => Object.keys(outputs), [outputs])
-  const [activeKey, setActiveKey] = useState(keys[0])
-  const { data: config } = useSWR("/api/settings", fetcher)
-  const { t } = useTranslation()
-
-  // Load initial active key from settings or default to first available
-  useEffect(() => {
-    if (
-      config?.settings?.default_renderer &&
-      keys.includes(config.settings.default_renderer)
-    ) {
-      setActiveKey(config.settings.default_renderer)
-    }
-  }, [config, keys])
-
-  // Update active key if keys change and current is invalid
-  useEffect(() => {
-    if (!keys.includes(activeKey) && keys.length > 0) {
-      setActiveKey(keys[0])
-    }
-  }, [keys, activeKey])
-
-  const handleTabChange = async (
-    key: string,
-    _outputs: Record<string, string>,
-  ) => {
-    setActiveKey(key)
-    // Persist selection
-    try {
-      // Optimistic update mechanism could be added here if we want to reflect change immediately in SWR cache
-      // But for now, just save to backend.
-      // fetching current config to merge is safer but expensive?
-      // We can assume 'config' from SWR is fresh enough or use PATCH.
-      // We are using PATCH now, so we don't need to fetch full config!
-
-      await api.patch("/api/settings", {
-        settings: {
-          default_renderer: key,
-        },
-      })
-      // create mutated config for SWR update
-      if (config) {
-        mutate(
-          "/api/settings",
-          {
-            ...config,
-            settings: {
-              ...config.settings,
-              default_renderer: key,
-            },
-          },
-          false,
-        )
-      }
-    } catch (e) {
-      console.error("Failed to save default renderer", e)
-    }
-  }
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(outputs[activeKey])
-    alert(t("Copied to clipboard!"))
-  }
-
-  if (keys.length === 0) return null
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between border-b border-base-200 pb-2">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {keys.map((key) => {
-            const name = rendererNames?.[key] || key
-            return (
-              <button
-                type="button"
-                key={key}
-                onClick={() => handleTabChange(key, outputs)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                  activeKey === key
-                    ? "bg-primary/10 text-primary"
-                    : "text-base-content/70 hover:bg-base-200"
-                }`}
-              >
-                {name}
-              </button>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="text-xs px-3 py-1.5 bg-base-200 hover:bg-base-300 text-base-content/80 rounded-md transition-colors font-medium ml-2 shrink-0"
-        >
-          {t("Copy")}
-        </button>
-      </div>
-      <div className="relative">
-        <pre className="p-4 bg-[#1e293b] text-slate-50 rounded-lg overflow-x-auto text-xs font-mono min-h-50 max-h-150 custom-scrollbar selection:bg-primary/30">
-          {outputs[activeKey]}
-        </pre>
-      </div>
-    </div>
-  )
-}
-
 function DashboardContent() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const _router = useRouter()
+  const _pathname = usePathname()
+  const _searchParams = useSearchParams()
   const { t } = useTranslation()
   const { showToast } = useToast()
 
-  // Rule Modal State
-  const [ruleModalOpen, setRuleModalOpen] = useState(false)
-  const [initialRule, setInitialRule] = useState<{
-    keyword: string | string[]
-    category: string
-    project: string
-    target?: string
-    app?: string
-  } | null>(null)
-  const [suggestedKeyword, setSuggestedKeyword] = useState("")
-
-  // Detailed Log open/close state
   const [isDetailedLogOpen, setIsDetailedLogOpen] = useState(true)
 
-  // Date state
-  const dateInputRef = useRef<HTMLInputElement>(null)
   // Fetch settings for day start configuration
   const { data: settings } = useSWR<SettingsConfig>("/api/settings", fetcher)
 
-  const [date, setDate] = useState(() => {
-    const dateParam = searchParams.get("date")
-    if (dateParam) return dateParam
+  // Date Navigation
+  const {
+    date,
+    dateInputRef,
+    handlePrevDay,
+    handleNextDay,
+    handleDateChange,
+    handleToday,
+    isToday,
+  } = useDateNavigation(settings)
 
-    // Initial load might not have settings yet, defaulting to calendar day
-    // This will be updated by useEffect once settings are loaded
-    const d = new Date()
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    return `${year}-${month}-${day}`
-  })
-
-  // Update date on initial load when settings become available and no date param was provided
-  useEffect(() => {
-    if (settings && !searchParams.get("date")) {
-      const adjusted = getAdjustedDate(settings)
-      const year = adjusted.getFullYear()
-      const month = String(adjusted.getMonth() + 1).padStart(2, "0")
-      const day = String(adjusted.getDate()).padStart(2, "0")
-      const formatted = `${year}-${month}-${day}`
-
-      // Only update if different to avoid unnecessary re-renders/fetches
-      setDate((prev) => (prev !== formatted ? formatted : prev))
-    }
-  }, [settings, searchParams])
-
-  const updateDate = (newDate: string) => {
-    setDate(newDate)
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("date", newDate)
-    router.replace(`${pathname}?${params.toString()}`)
-  }
+  // Rule actions
+  const {
+    ruleModalOpen,
+    setRuleModalOpen,
+    initialRule,
+    suggestedKeyword,
+    handleCreateRule,
+    handleSaveRule,
+  } = useRuleManagement(date)
 
   const { data, error, isLoading } = useSWR(`/api/report?date=${date}`, fetcher)
 
@@ -281,180 +104,22 @@ function DashboardContent() {
     }
   }, [error, showToast, t])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const timeRange = useMemo(() => {
-    const report = data?.report
-    const workStats = report?.work_stats
-
-    const format = (iso: string) =>
-      new Date(iso).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-
-    // Try to use actual activity range first
-    if (workStats?.start && workStats?.end) {
-      return {
-        start: format(workStats.start),
-        end: format(workStats.end),
-      }
-    }
-
-    if (report?.start_time && report?.end_time) {
-      return {
-        start: format(report.start_time),
-        end: format(report.end_time),
-      }
-    }
-    return null
-  }, [data?.report])
-
-  // チャートカードの識別子
-  type ChartCard =
-    | "categoryPie"
-    | "projectPie"
-    | "clientPie"
-    | "billing"
-    | "hourly"
-    | "heatmap"
-  const ALL_CARDS: ChartCard[] = [
-    "categoryPie",
-    "projectPie",
-    "clientPie",
-    "billing",
-    "hourly",
-    "heatmap",
-  ]
-
-  // Filter state for chart clicks
-  const [filter, setFilter] = useState<{
-    project?: string
-    category?: string
-    client?: string
-    source?: ChartCard
-  } | null>(null)
-
-  // カード開閉状態
-  const [openCards, setOpenCards] = useState<Set<ChartCard>>(new Set(ALL_CARDS))
-
-  // フィルタ適用時：クリック元以外のカードを閉じる
-  const applyFilterWithCollapse = (
-    filterValue: { project?: string; category?: string; client?: string },
-    sourceCard: ChartCard,
-  ) => {
-    setFilter({ ...filterValue, source: sourceCard })
-    setOpenCards(new Set([sourceCard]))
-  }
-
-  // フィルタ解除：全カードを開く
-  const clearFilter = () => {
-    setFilter(null)
-    setOpenCards(new Set(ALL_CARDS))
-  }
-
-  // カードのトグル（手動での開閉）
-  const toggleCard = (card: ChartCard, isOpen: boolean) => {
-    setOpenCards((prev) => {
-      const next = new Set(prev)
-      if (isOpen) {
-        next.add(card)
-      } else {
-        next.delete(card)
-      }
-      return next
-    })
-  }
-
   // APIから定数を読み込む（初回のみ）
   useEffect(() => {
     loadConstants()
   }, [])
 
-  // Esc キーでフィルタ解除
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // モーダルが開いている場合は処理しない（モーダル側のESCハンドラに任せる）
-      if (ruleModalOpen) return
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const timeRange = useTimeRange(data)
 
-      if (e.key === "Escape" && filter) {
-        setFilter(null)
-        setOpenCards(new Set(ALL_CARDS))
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [filter, ruleModalOpen])
-
-  // Rule actions
-  const handleCreateRule = (item: TimelineItem) => {
-    // Escape special regex characters in title
-    const keyword = item.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    setInitialRule({
-      keyword: [], // Empty keyword list so it doesn't show as a chip
-      category: item.category || "",
-      project: item.project || "",
-      target: "title",
-      app: item.app,
-    })
-    setSuggestedKeyword(keyword) // Pass as suggested input
-    setRuleModalOpen(true)
-  }
-
-  const handleSaveRule = async (rule: {
-    keyword: string | string[]
-    category: string
-    project: string
-    target?: string
-    app?: string
-  }) => {
-    try {
-      // Get current config first to append
-      const config = await api.get("/api/settings").then((res) => res.data)
-      const newRules = [rule, ...(config.rules || [])]
-
-      await api.post("/api/settings", { ...config, rules: newRules })
-
-      setRuleModalOpen(false)
-      // Refresh data
-      mutate(`/api/report?date=${date}`)
-      alert(t("Rule created successfully!")) // Simple alert for now
-    } catch (e) {
-      console.error("Failed to save rule", e)
-      alert(t("Failed to save rule."))
-    }
-  }
-
-  // Date handlers
-  const handlePrevDay = () => {
-    const d = new Date(date)
-    d.setDate(d.getDate() - 1)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    updateDate(`${year}-${month}-${day}`)
-  }
-
-  const handleNextDay = () => {
-    const d = new Date(date)
-    d.setDate(d.getDate() + 1)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    updateDate(`${year}-${month}-${day}`)
-  }
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateDate(e.target.value)
-  }
-
-  const handleToday = () => {
-    const d = getAdjustedDate(settings)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    updateDate(`${year}-${month}-${day}`)
-  }
+  const {
+    filter,
+    openCards,
+    applyFilterWithCollapse,
+    clearFilter,
+    toggleCard,
+  } = useDashboardCards(ruleModalOpen)
 
   // Generate chart data
   const {
@@ -464,166 +129,10 @@ function DashboardContent() {
     categories,
     heatmapData,
     clientColors,
-  } = useMemo(() => {
-    if (!data?.timeline) {
-      return {
-        categoryData: [],
-        projectData: [],
-        hourlyData: [],
-        categories: [],
-        heatmapData: { projects: [], categories: [], matrix: [] },
-        clientColors: {},
-      }
-    }
+  } = useDashboardChartData(data)
 
-    const timeline = data.timeline as TimelineItem[]
-
-    // Category aggregation
-    const categoryMap = new Map<string, number>()
-    timeline.forEach((item) => {
-      const cat = item.category || "Other"
-      categoryMap.set(cat, (categoryMap.get(cat) || 0) + item.duration)
-    })
-    const categoryData = Array.from(categoryMap.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-
-    // Hourly aggregation
-    const hourlyMap = new Map<number, Record<string, number>>()
-    timeline.forEach((item) => {
-      const hour = new Date(item.timestamp).getHours()
-      const cat = item.category || "Other"
-      if (!hourlyMap.has(hour)) {
-        hourlyMap.set(hour, {})
-      }
-      const hourData = hourlyMap.get(hour)
-      if (hourData) {
-        hourData[cat] = (hourData[cat] || 0) + item.duration
-      }
-    })
-    const hourlyData = Array.from(hourlyMap.entries())
-      .map(([hour, categories]) => ({ hour, categories }))
-      .sort((a, b) => a.hour - b.hour)
-
-    // Project aggregation
-    const projectMap = new Map<string, number>()
-    timeline.forEach((item) => {
-      let proj = item.project || "Uncategorized"
-      if (isUncategorized(proj)) proj = "Uncategorized"
-      projectMap.set(proj, (projectMap.get(proj) || 0) + item.duration)
-    })
-    const projectData = Array.from(projectMap.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-
-    // Unique categories
-    const categories = Array.from(
-      new Set(timeline.map((i) => i.category || "Other")),
-    )
-
-    // Project x Category heatmap data
-    const projectCategoryMap = new Map<string, Map<string, number>>()
-    // Client Project Aggregation
-    const clientProjectMap = new Map<string, Map<string, number>>()
-
-    timeline.forEach((item) => {
-      let project = item.project || "Uncategorized"
-      if (isUncategorized(project)) project = "Uncategorized"
-      const category = item.category || "Other"
-
-      // Project x Category
-      if (!projectCategoryMap.has(project)) {
-        projectCategoryMap.set(project, new Map())
-      }
-      const catMap = projectCategoryMap.get(project)
-      if (catMap) {
-        catMap.set(category, (catMap.get(category) || 0) + item.duration)
-      }
-
-      // Client x Project
-      const client = item.metadata?.client
-      if (client) {
-        if (!clientProjectMap.has(client)) {
-          clientProjectMap.set(client, new Map())
-        }
-        const cpMap = clientProjectMap.get(client)
-        if (cpMap) {
-          cpMap.set(project, (cpMap.get(project) || 0) + item.duration)
-        }
-      }
-    })
-
-    // Calculate Client colors (based on dominant project)
-    const clientColors: Record<string, string> = {}
-    const clientsConfig = data.report?.clients || {}
-    clientProjectMap.forEach((projMap, clientId) => {
-      let maxDuration = -1
-      let dominantProject = ""
-      projMap.forEach((duration, project) => {
-        if (duration > maxDuration) {
-          maxDuration = duration
-          dominantProject = project
-        }
-      })
-      if (dominantProject) {
-        // Resolve Client ID to Name
-        const clientName = clientsConfig[clientId]?.name || clientId
-        clientColors[clientName] = getProjectColor(dominantProject)
-      }
-    })
-
-    const sortWithUncategorizedLast = (
-      items: string[],
-      valueMap: Map<string, number>,
-    ) => {
-      return items.sort((a, b) => {
-        const aUncat = isUncategorized(a)
-        const bUncat = isUncategorized(b)
-        // Both uncategorized or both categorized -> sort by value desc
-        if (aUncat === bUncat) {
-          const valA = valueMap.get(a) || 0
-          const valB = valueMap.get(b) || 0
-          return valB - valA
-        }
-        // One is uncategorized -> push to end
-        return aUncat ? 1 : -1
-      })
-    }
-
-    const projectsList = sortWithUncategorizedLast(
-      Array.from(projectCategoryMap.keys()),
-      projectMap,
-    )
-    const categoriesList = sortWithUncategorizedLast(
-      Array.from(
-        new Set(
-          Array.from(projectCategoryMap.values()).flatMap((m) =>
-            Array.from(m.keys()),
-          ),
-        ),
-      ),
-      categoryMap,
-    )
-    const matrix = projectsList.map((proj) => {
-      const catMap = projectCategoryMap.get(proj)
-      return categoriesList.map((cat) => catMap?.get(cat) ?? 0)
-    })
-
-    const heatmapData = {
-      projects: projectsList,
-      categories: categoriesList,
-      matrix,
-    }
-
-    return {
-      categoryData,
-      projectData,
-      hourlyData,
-      categories,
-      heatmapData,
-      clientColors,
-    }
-  }, [data])
+  const { report, timeline } = data || {}
+  const filteredTimeline = useFilteredTimeline(timeline, filter, report)
 
   if (error)
     return (
@@ -640,8 +149,6 @@ function DashboardContent() {
     )
 
   if (!data) return null
-
-  const { report, timeline } = data
 
   if (!report) {
     return (
@@ -673,20 +180,9 @@ function DashboardContent() {
   }
 
   const { work_stats } = report
-
-  // Calculate generic stats if missing from API
   const totalSeconds =
     (work_stats.working_seconds || 0) + (work_stats.break_seconds || 0)
-  const workingSeconds = work_stats.working_seconds || 0
-
-  const breakSeconds = work_stats.break_seconds || 0
-  const afkSeconds = work_stats.afk_seconds || 0
-  const nonWorkSeconds = Math.max(0, breakSeconds - afkSeconds)
-
   const totalDurationStr = formatDuration(totalSeconds)
-  const workDurationStr = formatDuration(workingSeconds)
-  const afkDurationStr = formatDuration(afkSeconds)
-  const nonWorkDurationStr = formatDuration(nonWorkSeconds)
 
   return (
     <main className="container mx-auto px-6 py-8">
@@ -742,14 +238,7 @@ function DashboardContent() {
                 <ChevronRight size={18} />
               </button>
 
-              {date !==
-                (() => {
-                  const d = getAdjustedDate(settings)
-                  const year = d.getFullYear()
-                  const month = String(d.getMonth() + 1).padStart(2, "0")
-                  const day = String(d.getDate()).padStart(2, "0")
-                  return `${year}-${month}-${day}`
-                })() && (
+              {!isToday && (
                 <button
                   type="button"
                   onClick={handleToday}
@@ -774,45 +263,7 @@ function DashboardContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card title={t("Working Hours")} className="relative overflow-hidden">
-            <div className="absolute -right-10 -bottom-10 text-base-content opacity-5 mix-blend-normal pointer-events-none">
-              <Clock size={180} strokeWidth={1.5} />
-            </div>
-            <div className="relative z-10">
-              <div className="text-2xl font-bold text-base-content">
-                {workDurationStr}
-              </div>
-              <div className="text-sm text-base-content/60">
-                {totalSeconds > 0
-                  ? ((workingSeconds / totalSeconds) * 100).toFixed(1)
-                  : 0}
-                {t("% of total")}
-              </div>
-            </div>
-          </Card>
-          <Card title={t("Break Time")} className="relative overflow-hidden">
-            <div className="absolute -right-10 -bottom-8 text-base-content opacity-5 mix-blend-normal pointer-events-none">
-              <CupSoda size={180} strokeWidth={1.5} />
-            </div>
-            <div className="relative z-10">
-              <div className="text-2xl font-bold text-base-content/80">
-                {formatDuration(breakSeconds)}
-              </div>
-              <div className="text-xs text-base-content/60 mt-1 flex gap-3">
-                <span title={t("AFK Time")}>
-                  {t("AFK Time")}: {afkDurationStr}
-                </span>
-                <span
-                  className="border-l border-base-content/20 pl-3"
-                  title={t("Other non-work time")}
-                >
-                  {t("Other non-work time")}: {nonWorkDurationStr}
-                </span>
-              </div>
-            </div>
-          </Card>
-        </div>
+        <DashboardStats report={report} />
 
         {/* Activity Timeline */}
         <Card title={t("Activity Timeline")} className="overflow-hidden">
@@ -874,109 +325,11 @@ function DashboardContent() {
             />
           </Card>
           {/* Billing Summary Card */}
-          {report.clients && Object.keys(report.clients).length > 0 && (
-            <Card
-              title={t("Billing Summary")}
-              className="overflow-hidden"
-              collapsible
-              isOpen={openCards.has("billing")}
-              onToggle={(isOpen) => toggleCard("billing", isOpen)}
-            >
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-base-content/60 text-xs">
-                    <th className="text-left pb-2 font-medium">
-                      {t("Client")}
-                    </th>
-                    <th className="text-right pb-2 font-medium">{t("Time")}</th>
-                    <th className="text-right pb-2 font-medium">{t("Rate")}</th>
-                    <th className="text-right pb-2 font-medium">
-                      {t("Amount")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(report.client_stats || {})
-                    .sort(([nameA, a], [nameB, b]) => {
-                      const aUncat = isUncategorized(nameA)
-                      const bUncat = isUncategorized(nameB)
-                      if (aUncat !== bUncat) return aUncat ? 1 : -1
-                      return (b as number) - (a as number)
-                    })
-                    .map(([clientName, seconds]) => {
-                      const clientEntry = Object.entries(
-                        report.clients || {},
-                      ).find(
-                        ([, c]) => (c as { name: string }).name === clientName,
-                      )
-                      const rate = clientEntry
-                        ? (clientEntry[1] as { rate: number }).rate
-                        : 0
-                      const hours = (seconds as number) / 3600
-                      const amount = hours * rate
-
-                      return (
-                        <tr
-                          key={clientName}
-                          className="border-t border-base-200"
-                        >
-                          <td className="py-2 text-base-content">
-                            {clientName}
-                          </td>
-                          <td className="py-2 text-right text-base-content/80">
-                            {hours.toFixed(1)}h
-                          </td>
-                          <td className="py-2 text-right text-base-content/60">
-                            {rate > 0 ? `¥${rate.toLocaleString()}` : "-"}
-                          </td>
-                          <td className="py-2 text-right font-medium text-base-content/90">
-                            {rate > 0
-                              ? `¥${Math.round(amount).toLocaleString()}`
-                              : "-"}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-base-200">
-                    <td className="py-2 font-semibold text-base-content">
-                      {t("Total")}
-                    </td>
-                    <td className="py-2 text-right font-medium text-base-content/80">
-                      {(
-                        Object.values(report.client_stats || {}).reduce<number>(
-                          (sum, s) => sum + (s as number),
-                          0,
-                        ) / 3600
-                      ).toFixed(1)}
-                      h
-                    </td>
-                    <td className="py-2"></td>
-                    <td className="py-2 text-right font-bold text-success">
-                      ¥
-                      {Math.round(
-                        Object.entries(report.client_stats || {}).reduce(
-                          (sum, [name, seconds]) => {
-                            const clientEntry = Object.entries(
-                              report.clients || {},
-                            ).find(
-                              ([, c]) => (c as { name: string }).name === name,
-                            )
-                            const rate = clientEntry
-                              ? (clientEntry[1] as { rate: number }).rate
-                              : 0
-                            return sum + ((seconds as number) / 3600) * rate
-                          },
-                          0,
-                        ),
-                      ).toLocaleString()}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </Card>
-          )}
+          <BillingSummaryCard
+            report={report}
+            isOpen={openCards.has("billing")}
+            onToggle={(isOpen) => toggleCard("billing", isOpen)}
+          />
         </div>
 
         {/* Hourly Activity (full width) */}
@@ -1067,31 +420,7 @@ function DashboardContent() {
           onToggle={(isOpen) => setIsDetailedLogOpen(isOpen)}
         >
           <TimelineTable
-            data={
-              filter
-                ? timeline.filter((item: TimelineItem) => {
-                    const matchProject =
-                      !filter.project ||
-                      (item.project || "Uncategorized") === filter.project
-                    const matchCategory =
-                      !filter.category ||
-                      (item.category || "Other") === filter.category
-
-                    let clientName = "Non-billable"
-                    if (
-                      item.metadata?.client &&
-                      report.clients &&
-                      report.clients[item.metadata.client]
-                    ) {
-                      clientName = report.clients[item.metadata.client].name
-                    }
-
-                    const matchClient =
-                      !filter.client || clientName === filter.client
-                    return matchProject && matchCategory && matchClient
-                  })
-                : timeline
-            }
+            data={filteredTimeline}
             clients={report.clients}
             onCreateRule={handleCreateRule}
           />

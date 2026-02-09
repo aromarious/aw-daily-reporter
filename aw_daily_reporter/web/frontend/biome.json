@@ -15,13 +15,22 @@
       "!.out",
       "!out",
       "!build",
+      "!coverage",
       "!next-env.d.ts"
     ]
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": {
+            "maxAllowedComplexity": 20
+          }
+        }
+      }
     }
   },
   "javascript": {

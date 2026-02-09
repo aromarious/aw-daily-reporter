@@ -1,13 +1,13 @@
 "use client"
 
 import type { EChartsOption } from "echarts"
+import EChartsWrapper from "@/components/echarts/EChartsWrapper"
 import { useChartTheme } from "@/hooks/useChartTheme"
 import {
   getCategoryColor,
   getProjectColor,
   isUncategorized,
 } from "@/lib/colors"
-import EChartsWrapper from "./EChartsWrapper"
 
 interface CategoryData {
   name: string

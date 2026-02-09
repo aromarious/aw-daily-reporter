@@ -8,5 +8,7 @@
   "biome.suggestInstallingGlobally": false,
   "biome.configurationPath": "aw_daily_reporter/web/frontend/biome.json",
   "biome.requireConfiguration": true,
-  "biome.lsp.bin": "./aw_daily_reporter/web/frontend/node_modules/.bin/biome"
+  "biome.lsp.bin": "./aw_daily_reporter/web/frontend/node_modules/.bin/biome",
+  "vitest.enable": true,
+  "vitest.commandLine": "pnpm --filter frontend exec vitest"
 }

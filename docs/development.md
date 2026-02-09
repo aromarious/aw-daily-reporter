@@ -24,6 +24,34 @@ poetry run mypy .
 poetry run black .
 ```
 
+# フロントエンド (React/Next.js)
+
+## プロジェクトルートから実行する場合 (推奨)
+
+```bash
+# 全テスト実行
+pnpm test
+
+# フロントエンドのみテスト実行
+pnpm test:frontend
+
+# フロントエンドのカバレッジ計測
+pnpm test:frontend:coverage
+```
+
+## サブディレクトリで実行する場合
+
+```bash
+cd aw_daily_reporter/web/frontend
+npm run test    # テスト実行
+npm run type-check # 型チェック
+npm run lint    # Linter (Biome)
+npm run check:rules # 品質監査 (Biome + Custom Rules)
+```
+
+詳細なテスト方針については、[frontend-testing-strategy.md](frontend-testing-strategy.md) を参照してください。
+品質監査ルールの詳細は、[frontend-audit.md](frontend-audit.md) を参照してください。
+
 ## 開発環境のセットアップ
 
 ```bash

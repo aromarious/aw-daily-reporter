@@ -13,7 +13,7 @@ const ReactECharts = dynamic(
   { ssr: false },
 )
 
-interface EChartsWrapperProps {
+export interface EChartsWrapperProps {
   option: EChartsOption
   style?: React.CSSProperties
   className?: string

@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import "./globals.css"
 
+import { NoSSRHeader } from "@/app/_components/NoSSRHeader"
+import { ToastContainer } from "@/app/_components/ToastContainer"
 import { ConfigInitializer } from "@/components/ConfigInitializer"
-import { NoSSRHeader } from "@/components/NoSSRHeader"
-import { ToastContainer } from "@/components/ToastContainer"
 import { I18nProvider } from "@/contexts/I18nContext"
 import { ToastProvider } from "@/contexts/ToastContext"
 import { ThemeProvider } from "@/providers/ThemeProvider"

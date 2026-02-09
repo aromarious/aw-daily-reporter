@@ -83,6 +83,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -112,8 +115,19 @@ jobs:
           pnpm install
           poetry install --no-interaction --no-root
 
-      - name: Run Tests
-        run: pnpm run test
+      - name: Run Python Tests
+        run: pnpm run test:py
+
+      - name: Run Frontend Tests & Coverage
+        run: pnpm run test:frontend:coverage
+
+      - name: Report Frontend Coverage
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: always()
+        with:
+          working-directory: aw_daily_reporter/web/frontend
+          json-summary-path: coverage/coverage-summary.json
+          json-final-path: coverage/coverage-final.json
 
   build:
     needs: [lint, typecheck, test]
