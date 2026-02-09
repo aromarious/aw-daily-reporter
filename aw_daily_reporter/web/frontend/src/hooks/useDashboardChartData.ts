@@ -1,21 +1,24 @@
 import { useMemo } from "react"
 import { getProjectColor, isUncategorized } from "@/lib/colors"
-
-interface TimelineItem {
-  timestamp: string
-  duration: number
-  category?: string
-  project?: string
-  metadata?: {
-    client?: string
-  }
-}
+import type { TimelineItem } from "@/types"
 
 interface ReportData {
   timeline?: TimelineItem[]
   report?: {
     clients?: Record<string, { name: string }>
   }
+}
+
+function sortWithUncategorizedLast(
+  items: string[],
+  valueMap: Map<string, number>,
+) {
+  return items.sort((a, b) => {
+    const isUncatA = isUncategorized(a)
+    const isUncatB = isUncategorized(b)
+    if (isUncatA !== isUncatB) return isUncatA ? 1 : -1
+    return (valueMap.get(b) || 0) - (valueMap.get(a) || 0)
+  })
 }
 
 export function useDashboardChartData(data: ReportData | undefined) {

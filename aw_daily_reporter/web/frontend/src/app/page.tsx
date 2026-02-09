@@ -13,16 +13,21 @@ import {
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useEffect, useMemo, useState } from "react"
-import useSWR, { mutate } from "swr"
+import { Suspense, useEffect, useState } from "react"
+import useSWR from "swr"
 import { Card } from "@/components/Card"
 import { RendererOutputViewer } from "@/components/RendererOutputViewer"
 import TimelineTable from "@/components/TimelineTable"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useToast } from "@/contexts/ToastContext"
+import { useDashboardCards } from "@/hooks/useDashboardCards"
 import { useDashboardChartData } from "@/hooks/useDashboardChartData"
-import { api, fetcher } from "@/lib/api"
-import { loadConstants } from "@/lib/colors"
+import { useDateNavigation } from "@/hooks/useDateNavigation"
+import { useFilteredTimeline } from "@/hooks/useFilteredTimeline"
+import { useRuleManagement } from "@/hooks/useRuleManagement"
+import { useTimeRange } from "@/hooks/useTimeRange"
+import { fetcher } from "@/lib/api"
+import { isUncategorized, loadConstants } from "@/lib/colors"
 
 // Dynamic imports for SSR safety
 const CategoryPieChart = dynamic(
@@ -45,28 +50,7 @@ const RuleModal = dynamic(() => import("@/components/RuleModal"), {
   ssr: false,
 })
 
-interface TimelineItem {
-  timestamp: string
-  duration: number
-  app: string
-  title: string
-  category?: string
-  project?: string
-  url?: string
-  metadata?: {
-    client?: string
-    matched_rule?: {
-      keyword: string
-      target: string
-    }
-  }
-}
-
-const formatDuration = (seconds: number) => {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return `${h}h ${m}m`
-}
+import { formatDuration } from "@/lib/date"
 
 interface SettingsConfig {
   system?: {
@@ -83,18 +67,6 @@ function DashboardContent() {
   const { t } = useTranslation()
   const { showToast } = useToast()
 
-  // Rule Modal State
-  const [ruleModalOpen, setRuleModalOpen] = useState(false)
-  const [initialRule, setInitialRule] = useState<{
-    keyword: string | string[]
-    category: string
-    project: string
-    target?: string
-    app?: string
-  } | null>(null)
-  const [suggestedKeyword, setSuggestedKeyword] = useState("")
-
-  // Detailed Log open/close state
   const [isDetailedLogOpen, setIsDetailedLogOpen] = useState(true)
 
   // Fetch settings for day start configuration
@@ -111,6 +83,16 @@ function DashboardContent() {
     isToday,
   } = useDateNavigation(settings)
 
+  // Rule actions
+  const {
+    ruleModalOpen,
+    setRuleModalOpen,
+    initialRule,
+    suggestedKeyword,
+    handleCreateRule,
+    handleSaveRule,
+  } = useRuleManagement(date)
+
   const { data, error, isLoading } = useSWR(`/api/report?date=${date}`, fetcher)
 
   useEffect(() => {
@@ -119,149 +101,22 @@ function DashboardContent() {
     }
   }, [error, showToast, t])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const timeRange = useMemo(() => {
-    const report = data?.report
-    const workStats = report?.work_stats
-
-    const format = (iso: string) =>
-      new Date(iso).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-
-    // Try to use actual activity range first
-    if (workStats?.start && workStats?.end) {
-      return {
-        start: format(workStats.start),
-        end: format(workStats.end),
-      }
-    }
-
-    if (report?.start_time && report?.end_time) {
-      return {
-        start: format(report.start_time),
-        end: format(report.end_time),
-      }
-    }
-    return null
-  }, [data?.report])
-
-  // チャートカードの識別子
-  type ChartCard =
-    | "categoryPie"
-    | "projectPie"
-    | "clientPie"
-    | "billing"
-    | "hourly"
-    | "heatmap"
-  const ALL_CARDS: ChartCard[] = [
-    "categoryPie",
-    "projectPie",
-    "clientPie",
-    "billing",
-    "hourly",
-    "heatmap",
-  ]
-
-  // Filter state for chart clicks
-  const [filter, setFilter] = useState<{
-    project?: string
-    category?: string
-    client?: string
-    source?: ChartCard
-  } | null>(null)
-
-  // カード開閉状態
-  const [openCards, setOpenCards] = useState<Set<ChartCard>>(new Set(ALL_CARDS))
-
-  // フィルタ適用時：クリック元以外のカードを閉じる
-  const applyFilterWithCollapse = (
-    filterValue: { project?: string; category?: string; client?: string },
-    sourceCard: ChartCard,
-  ) => {
-    setFilter({ ...filterValue, source: sourceCard })
-    setOpenCards(new Set([sourceCard]))
-  }
-
-  // フィルタ解除：全カードを開く
-  const clearFilter = () => {
-    setFilter(null)
-    setOpenCards(new Set(ALL_CARDS))
-  }
-
-  // カードのトグル（手動での開閉）
-  const toggleCard = (card: ChartCard, isOpen: boolean) => {
-    setOpenCards((prev) => {
-      const next = new Set(prev)
-      if (isOpen) {
-        next.add(card)
-      } else {
-        next.delete(card)
-      }
-      return next
-    })
-  }
-
   // APIから定数を読み込む（初回のみ）
   useEffect(() => {
     loadConstants()
   }, [])
 
-  // Esc キーでフィルタ解除
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // モーダルが開いている場合は処理しない（モーダル側のESCハンドラに任せる）
-      if (ruleModalOpen) return
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const timeRange = useTimeRange(data)
 
-      if (e.key === "Escape" && filter) {
-        setFilter(null)
-        setOpenCards(new Set(ALL_CARDS))
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [filter, ruleModalOpen])
-
-  // Rule actions
-  const handleCreateRule = (item: TimelineItem) => {
-    // Escape special regex characters in title
-    const keyword = item.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    setInitialRule({
-      keyword: [], // Empty keyword list so it doesn't show as a chip
-      category: item.category || "",
-      project: item.project || "",
-      target: "title",
-      app: item.app,
-    })
-    setSuggestedKeyword(keyword) // Pass as suggested input
-    setRuleModalOpen(true)
-  }
-
-  const handleSaveRule = async (rule: {
-    keyword: string | string[]
-    category: string
-    project: string
-    target?: string
-    app?: string
-  }) => {
-    try {
-      // Get current config first to append
-      const config = await api.get("/api/settings").then((res) => res.data)
-      const newRules = [rule, ...(config.rules || [])]
-
-      await api.post("/api/settings", { ...config, rules: newRules })
-
-      setRuleModalOpen(false)
-      // Refresh data
-      mutate(`/api/report?date=${date}`)
-      alert(t("Rule created successfully!")) // Simple alert for now
-    } catch (e) {
-      console.error("Failed to save rule", e)
-      alert(t("Failed to save rule."))
-    }
-  }
+  const {
+    filter,
+    openCards,
+    applyFilterWithCollapse,
+    clearFilter,
+    toggleCard,
+  } = useDashboardCards(ruleModalOpen)
 
   // Generate chart data
   const {
@@ -272,6 +127,9 @@ function DashboardContent() {
     heatmapData,
     clientColors,
   } = useDashboardChartData(data)
+
+  const { report, timeline } = data || {}
+  const filteredTimeline = useFilteredTimeline(timeline, filter, report)
 
   if (error)
     return (
@@ -288,8 +146,6 @@ function DashboardContent() {
     )
 
   if (!data) return null
-
-  const { report, timeline } = data
 
   if (!report) {
     return (
@@ -329,11 +185,11 @@ function DashboardContent() {
 
   const breakSeconds = work_stats.break_seconds || 0
   const afkSeconds = work_stats.afk_seconds || 0
-  const nonWorkSeconds = Math.max(0, breakSeconds - afkSeconds)
 
   const totalDurationStr = formatDuration(totalSeconds)
   const workDurationStr = formatDuration(workingSeconds)
   const afkDurationStr = formatDuration(afkSeconds)
+  const nonWorkSeconds = Math.max(0, breakSeconds - afkSeconds)
   const nonWorkDurationStr = formatDuration(nonWorkSeconds)
 
   return (
@@ -708,31 +564,7 @@ function DashboardContent() {
           onToggle={(isOpen) => setIsDetailedLogOpen(isOpen)}
         >
           <TimelineTable
-            data={
-              filter
-                ? timeline.filter((item: TimelineItem) => {
-                    const matchProject =
-                      !filter.project ||
-                      (item.project || "Uncategorized") === filter.project
-                    const matchCategory =
-                      !filter.category ||
-                      (item.category || "Other") === filter.category
-
-                    let clientName = "Non-billable"
-                    if (
-                      item.metadata?.client &&
-                      report.clients &&
-                      report.clients[item.metadata.client]
-                    ) {
-                      clientName = report.clients[item.metadata.client].name
-                    }
-
-                    const matchClient =
-                      !filter.client || clientName === filter.client
-                    return matchProject && matchCategory && matchClient
-                  })
-                : timeline
-            }
+            data={filteredTimeline}
             clients={report.clients}
             onCreateRule={handleCreateRule}
           />

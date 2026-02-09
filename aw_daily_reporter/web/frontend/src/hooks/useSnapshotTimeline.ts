@@ -5,10 +5,9 @@ import type {
 } from "echarts"
 import { useTheme } from "next-themes"
 import { useMemo } from "react"
-import type {
-  Snapshot,
-  TimelineItem,
-} from "@/components/pipeline/SnapshotTimeline"
+import type { Snapshot } from "@/components/pipeline/SnapshotTimeline"
+import { formatTime } from "@/lib/date"
+import type { TimelineItem } from "@/types"
 
 // Categories
 const CATEGORY_COLORS: Record<string, string> = {
@@ -75,10 +74,6 @@ function getColor(item: TimelineItem): string {
   }
 
   return `hsl(${hashCode(seed) % 360}, 65%, ${category === "Source: Window" ? "60%" : "50%"})`
-}
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 }
 
 // Render tooltip sections

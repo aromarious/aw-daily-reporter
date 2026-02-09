@@ -8,21 +8,8 @@ const EChartsWrapper = dynamic(() => import("../echarts/EChartsWrapper"), {
   ssr: false,
 })
 
-export interface TimelineItem {
-  timestamp: string
-  duration: number
-  app: string
-  title: string
-  category?: string
-  project?: string
-  url?: string
-  file?: string
-  status?: string
-  language?: string
-  metadata?: {
-    client?: string
-  }
-}
+import type { TimelineItem } from "@/types"
+export type { TimelineItem }
 
 export interface Snapshot {
   name: string
