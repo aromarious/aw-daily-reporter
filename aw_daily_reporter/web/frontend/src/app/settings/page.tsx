@@ -20,6 +20,7 @@ import GeneralTab from "./tabs/GeneralTab"
 import PluginsTab from "./tabs/PluginsTab"
 import ProjectsTab from "./tabs/ProjectsTab"
 import RulesTab from "./tabs/RulesTab"
+import type { Tab } from "./types"
 
 // Helpers
 export default function SettingsPage() {

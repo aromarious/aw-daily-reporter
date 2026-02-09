@@ -32,7 +32,7 @@ function isValidRegex(pattern: string): boolean {
   }
 }
 
-import { Combobox } from "@/components/ui/Combobox"
+import { Combobox } from "./Combobox"
 
 export default function RuleModal({
   isOpen,

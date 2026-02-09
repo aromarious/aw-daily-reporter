@@ -36,11 +36,11 @@ import { formatDuration } from "@/lib/date"
 
 // Dynamic imports for SSR safety
 const CategoryPieChart = dynamic(
-  () => import("@/components/echarts/CategoryPieChart"),
+  () => import("@/app/_components/CategoryPieChart"),
   { ssr: false },
 )
 const HourlyActivityChart = dynamic(
-  () => import("@/components/echarts/HourlyActivityChart"),
+  () => import("@/app/_components/HourlyActivityChart"),
   { ssr: false },
 )
 const ProjectCategoryHeatmap = dynamic(
@@ -48,7 +48,7 @@ const ProjectCategoryHeatmap = dynamic(
   { ssr: false },
 )
 const DualLaneTimeline = dynamic(
-  () => import("@/components/echarts/DualLaneTimeline"),
+  () => import("@/app/_components/DualLaneTimeline"),
   { ssr: false },
 )
 const RuleModal = dynamic(() => import("@/components/rules/RuleModal"), {

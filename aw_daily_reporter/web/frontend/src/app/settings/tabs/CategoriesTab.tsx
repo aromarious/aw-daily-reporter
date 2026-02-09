@@ -6,10 +6,11 @@ import { Card } from "@/components/Card"
 import { useTranslation } from "@/contexts/I18nContext"
 import type { FullConfig, Rule } from "../types"
 
-// Dynamic Component
-const CategoryList = dynamic(() => import("@/components/CategoryList"), {
-  ssr: false,
-})
+// Dynamic Components
+const CategoryList = dynamic(
+  () => import("@/app/settings/_components/CategoryList"),
+  { ssr: false },
+)
 
 interface CategoriesTabProps {
   config: FullConfig | undefined

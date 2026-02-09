@@ -1,7 +1,7 @@
 "use client"
 
+import EChartsWrapper from "@/components/echarts/EChartsWrapper"
 import { useHeatmap } from "@/hooks/useHeatmap"
-import EChartsWrapper from "./EChartsWrapper"
 
 export interface ProjectCategoryData {
   projects: string[]

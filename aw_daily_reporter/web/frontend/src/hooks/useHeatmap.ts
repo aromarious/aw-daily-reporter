@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts"
 import { useMemo } from "react"
-import type { ProjectCategoryData } from "@/components/echarts/ProjectCategoryHeatmap"
+import type { ProjectCategoryData } from "@/app/_components/ProjectCategoryHeatmap"
 import { useChartTheme } from "@/hooks/useChartTheme"
 import { isUncategorized } from "@/lib/colors"
 

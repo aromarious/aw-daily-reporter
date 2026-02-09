@@ -1,9 +1,9 @@
 "use client"
 
 import type { EChartsOption } from "echarts"
+import EChartsWrapper from "@/components/echarts/EChartsWrapper"
 import { useChartTheme } from "@/hooks/useChartTheme"
 import { getCategoryColor, isUncategorized } from "@/lib/colors"
-import EChartsWrapper from "./EChartsWrapper"
 
 interface HourlyData {
   hour: number // 0-23

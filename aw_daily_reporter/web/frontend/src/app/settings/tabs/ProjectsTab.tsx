@@ -6,16 +6,22 @@ import { useTranslation } from "@/contexts/I18nContext"
 import type { FullConfig } from "../types"
 
 // Dynamic Components for Projects Tab
-const ProjectMapList = dynamic(() => import("@/components/ProjectMapList"), {
-  ssr: false,
-})
+const ProjectMapList = dynamic(
+  () => import("@/app/settings/_components/ProjectMapList"),
+  {
+    ssr: false,
+  },
+)
 const ExtractionPatternList = dynamic(
-  () => import("@/components/ExtractionPatternList"),
+  () => import("@/app/settings/_components/ExtractionPatternList"),
   { ssr: false },
 )
-const ClientList = dynamic(() => import("@/components/ClientList"), {
-  ssr: false,
-})
+const ClientList = dynamic(
+  () => import("@/app/settings/_components/ClientList"),
+  {
+    ssr: false,
+  },
+)
 
 interface ProjectsTabProps {
   config: FullConfig | undefined

@@ -5,7 +5,7 @@ import type {
 } from "echarts"
 import { useTheme } from "next-themes"
 import { useMemo } from "react"
-import type { Snapshot } from "@/components/pipeline/SnapshotTimeline"
+import type { Snapshot } from "@/app/debugger/_components/SnapshotTimeline"
 import { formatTime } from "@/lib/date"
 import type { TimelineItem } from "@/types"
 

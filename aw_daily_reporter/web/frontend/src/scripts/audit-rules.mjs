@@ -40,13 +40,21 @@ function countImports(targetFile, allFiles) {
     `import\\s+{.*\\b${targetName}\\b.*}\\s+from`,
     "g",
   )
+  const dynamicImportRegex = new RegExp(
+    `import\\s*\\(\\s*['"].*${targetName}['"]\\s*\\)`,
+    "g",
+  )
 
   let count = 0
   for (const file of allFiles) {
     if (file === targetFile) continue
 
     const content = fs.readFileSync(file, "utf-8")
-    if (importRegex.test(content) || namedImportRegex.test(content)) {
+    if (
+      importRegex.test(content) ||
+      namedImportRegex.test(content) ||
+      dynamicImportRegex.test(content)
+    ) {
       count++
     }
   }
