@@ -8,7 +8,7 @@ import gettext
 import os
 from gettext import NullTranslations
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 from .logging import get_logger
 
@@ -48,9 +48,21 @@ def get_translator(lang: Optional[str] = None) -> NullTranslations:
         return gettext.NullTranslations()
 
 
-# Single global instance for easy import
-# In a real app you might want dynamic language switching,
-# but for CLI verified at startup, this is fine.
+# Single global instance
 _translator = get_translator()
 logger.debug(f"initialized with translator: {_translator}")
-_: Callable[[str], str] = _translator.gettext
+
+
+def setup_i18n(lang: str):
+    """
+    Initialize the global translator with the specified language.
+    Should be called after loading configuration.
+    """
+    global _translator
+    logger.debug(f"Setting up i18n for language: {lang}")
+    _translator = get_translator(lang)
+
+
+# Proxy function to ensure we always use the current translator
+def _(message: str) -> str:
+    return _translator.gettext(message)

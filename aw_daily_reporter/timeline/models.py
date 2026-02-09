@@ -6,36 +6,43 @@ TypedDictベースのデータ構造を定義します。
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel, ConfigDict
 
 
-class CategoryRule(TypedDict):
-    keyword: str
-    category: Optional[str]
-    project: Optional[str]
-    app: Optional[str]  # If set, this rule only applies to this app
-    target: Optional[str]  # "app", "title", "url", or None (any)
+class CategoryRule(BaseModel):
+    keyword: Union[str, List[str]]
+    category: Optional[str] = None
+    project: Optional[str] = None
+    app: Optional[str] = None
+    target: Optional[str] = None
+    model_config = ConfigDict(extra="ignore")
 
 
-class TimelineItem(TypedDict, total=False):
+class TimelineItem(BaseModel):
     timestamp: datetime
     duration: float
     app: str
     title: str
-    context: List[str]
-    category: Optional[str]  # Added in categorization step
-    source: Optional[str]  # Data source identifier (e.g. "AFK", "Window")
-    project: Optional[str]  # Explicit project name (extracted or propagated)
-    url: Optional[str]
-    file: Optional[str]
-    language: Optional[str]
-    status: Optional[str]
-    metadata: Dict[str, Any]  # Plugin specific metadata
+    context: List[str] = []
+    category: Optional[str] = None
+    source: Optional[str] = None
+    project: Optional[str] = None
+    url: Optional[str] = None
+    file: Optional[str] = None
+    language: Optional[str] = None
+    status: Optional[str] = None
+    # Flexible metadata field using Dict[str, Any]
+    metadata: Dict[str, Any] = {}
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow plugins to add extra fields freely if needed, though metadata is preferred.
 
 
-class WorkStats(TypedDict):
+class WorkStats(BaseModel):
     start: datetime
     end: datetime
     working_seconds: float
     break_seconds: float
-    afk_seconds: Optional[float]
+    afk_seconds: Optional[float] = 0.0

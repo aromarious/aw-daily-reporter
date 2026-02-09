@@ -26,6 +26,7 @@ flask = "<4.0.0"
 waitress = "*"
 importlib-resources = {version = "*", python = "<3.9"}
 pandera = "^0.29.0"
+pydantic = "^2.12.5"
 
 [tool.poetry.scripts]
 aw-daily-reporter = "aw_daily_reporter.__main__:main"

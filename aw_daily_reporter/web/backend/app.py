@@ -10,7 +10,9 @@ import os
 
 from flask import Flask
 
+from aw_daily_reporter.shared.i18n import setup_i18n
 from aw_daily_reporter.shared.logging import get_logger
+from aw_daily_reporter.shared.settings_manager import SettingsManager
 
 from .routes import bp as main_bp
 
@@ -18,6 +20,15 @@ logger = get_logger(__name__, scope="Server")
 
 
 def create_app(test_config=None):
+    # Initialize i18n based on config
+    try:
+        config = SettingsManager.get_instance().load()
+        # Handle dict or Pydantic object
+        lang = config.system.language if hasattr(config, "system") else config.get("system", {}).get("language", "en")
+        setup_i18n(lang)
+    except Exception as e:
+        logger.warning(f"Failed to load config for i18n setup: {e}")
+
     logger.info("Initializing Flask app...")
     # ../frontend/out works relative to this file's directory (web/backend)
     # But it's safer to resolve it absolutely relative to __file__

@@ -48,7 +48,7 @@ class JSONRendererPlugin(RendererPlugin):
                 "projects": report_data.get("project_stats"),
                 "clients": report_data.get("client_stats"),
             },
-            "timeline": timeline,
+            "timeline": [t.model_dump() for t in timeline],
             "scan_summary": report_data.get("scan_summary"),
         }
 

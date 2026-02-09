@@ -22,9 +22,10 @@ def cmd_report(args) -> None:
     from .shared.settings_manager import SettingsManager
 
     config = SettingsManager.get_instance().load()
-    system_config = config.get("system", {})
-    day_start_source = system_config.get("day_start_source", "manual")
-    manual_start_of_day = system_config.get("start_of_day", "00:00")
+    # config is now AppConfig Pydantic model
+    system_config = config.system
+    day_start_source = system_config.day_start_source
+    manual_start_of_day = system_config.start_of_day
 
     # Fallback for old config using day_start_hour (int) - Removed as SettingsManager handles migration
     # Logic simplified to rely on start_of_day
@@ -71,7 +72,7 @@ def cmd_report(args) -> None:
     from .shared.settings_manager import SettingsManager
 
     config = SettingsManager.get_instance().load()
-    default_renderer = config.get("settings", {}).get("default_renderer")
+    default_renderer = config.settings.default_renderer
 
     selected_output = None
 
@@ -301,6 +302,18 @@ def main() -> None:
     サブコマンド: report, serve, plugin
     """
     setup_logging()
+
+    # Initialize i18n from config
+    try:
+        from .shared.i18n import setup_i18n
+        from .shared.settings_manager import SettingsManager
+
+        config = SettingsManager.get_instance().load()
+        lang = config.system.language if hasattr(config, "system") else config.get("system", {}).get("language", "en")
+        setup_i18n(lang)
+    except Exception as e:
+        # Fallback to default/system locale if config loading fails
+        logger.debug(f"Failed to load config for i18n: {e}")
 
     # バージョン情報の取得
     try:

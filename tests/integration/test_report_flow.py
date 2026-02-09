@@ -74,7 +74,7 @@ class TestReportFlowIntegration(unittest.TestCase):
 
         # タイムラインが生成されているか
         assert len(timeline) > 0
-        assert timeline[0]["app"] == "Code"
+        assert timeline[0].app == "Code"
 
         # レポートデータ（統計）の検証
         report_data.get("category_stats", {})

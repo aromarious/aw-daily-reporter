@@ -109,11 +109,11 @@ class TestTimelineMerger(unittest.TestCase):
         # Should be split into 2 items corresponding to VSCode events
         assert len(timeline) == 2
 
-        assert "file1.py" in timeline[0]["context"][0]
-        assert "file2.py" in timeline[1]["context"][0]
+        assert "file1.py" in timeline[0].context[0]
+        assert "file2.py" in timeline[1].context[0]
 
-        assert timeline[0]["duration"] == 900.0  # 15 mins
-        assert timeline[1]["duration"] == 900.0
+        assert timeline[0].duration == 900.0  # 15 mins
+        assert timeline[1].duration == 900.0
 
     def test_filter_and_clip_by_segments(self):
         # Arrange
@@ -171,7 +171,7 @@ class TestTimelineMerger(unittest.TestCase):
 
         # Assert
         assert "MyProject" in active_projects
-        assert timeline[0]["project"] == "MyProject"
+        assert timeline[0].project == "MyProject"
 
     def test_merge_timeline_web_overlays(self):
         # Arrange
@@ -199,9 +199,9 @@ class TestTimelineMerger(unittest.TestCase):
         # Assert
         # Check Web overlay
         # Since Web covers 10:05-10:25, we expect a segment with the URL.
-        web_segments = [t for t in timeline if t.get("url") == "https://github.com/PR"]
+        web_segments = [t for t in timeline if t.url == "https://github.com/PR"]
         assert len(web_segments) > 0
-        assert web_segments[0]["url"] == "https://github.com/PR"
+        assert web_segments[0].url == "https://github.com/PR"
 
 
 if __name__ == "__main__":

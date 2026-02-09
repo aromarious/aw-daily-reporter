@@ -13,12 +13,11 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from ..shared.i18n import _
 from .base import ProcessorPlugin, RendererPlugin, ScannerPlugin
 
 if TYPE_CHECKING:
     from ..timeline.models import TimelineItem
-
-from ..shared.i18n import _
 
 logger = logging.getLogger(__name__)
 
@@ -436,8 +435,9 @@ class PluginManager:
 
         import pandas as pd
 
-        # List[dict] → DataFrame に変換（最初のみ）
-        current_df = pd.DataFrame(timeline) if timeline else pd.DataFrame()
+        # List[TimelineItem] → DataFrame に変換（最初のみ）
+        # model_dump() handles serialization of nested models if any
+        current_df = pd.DataFrame([t.model_dump() for t in timeline]) if timeline else pd.DataFrame()
         snapshots = []
         scan_summary = []
 
@@ -463,7 +463,7 @@ class PluginManager:
                     if scan_result:
                         # 戻り値の型によって振り分け (Mixed types supported)
                         scanner_summary_added = False
-                        new_items = []
+                        new_items: list[dict[str, Any]] = []
                         for item in scan_result:
                             if isinstance(item, str):
                                 if not scanner_summary_added:
@@ -512,7 +512,9 @@ class PluginManager:
                 current_df["timestamp"] = current_df["timestamp"].apply(
                     lambda x: x.to_pydatetime() if hasattr(x, "to_pydatetime") else x
                 )
-            final_timeline = current_df.to_dict("records")
+            from ..timeline.models import TimelineItem
+
+            final_timeline = [TimelineItem(**rec) for rec in current_df.to_dict("records")]
         return final_timeline, snapshots, scan_summary
 
     def run_renderers(

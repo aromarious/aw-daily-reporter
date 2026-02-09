@@ -11,6 +11,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from aw_daily_reporter.shared.settings_manager import AppConfig, SettingsConfig, SystemConfig
+
 
 class TestCmdReport(unittest.TestCase):
     """cmd_report 関数のテストケース"""
@@ -23,10 +25,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "00:00", "day_start_source": "manual"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
+            settings=SettingsConfig(),
+        )
         mock_generator.return_value.run.return_value = (
             {},
             [],
@@ -49,10 +51,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "00:00", "day_start_source": "manual"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
+            settings=SettingsConfig(),
+        )
         mock_generator.return_value.run.return_value = (
             {},
             [],
@@ -77,10 +79,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "00:00", "day_start_source": "manual"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
+            settings=SettingsConfig(),
+        )
         mock_generator.return_value.run.return_value = (
             {},
             [],
@@ -109,10 +111,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "00:00", "day_start_source": "manual"},
-            "settings": {"default_renderer": "AI Context Renderer"},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
+            settings=SettingsConfig(default_renderer="AI Context Renderer"),
+        )
         mock_generator.return_value.run.return_value = (
             {},
             [],
@@ -135,10 +137,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "00:00", "day_start_source": "manual"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
+            settings=SettingsConfig(),
+        )
         mock_generator.return_value.run.return_value = (
             {},
             [],
@@ -159,10 +161,10 @@ class TestCmdReport(unittest.TestCase):
         """無効な日付でsys.exit(1)"""
         from aw_daily_reporter.core import cmd_report
 
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "00:00", "day_start_source": "manual"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
+            settings=SettingsConfig(),
+        )
         mock_date_range.side_effect = ValueError("Invalid date")
 
         args = Namespace(date="invalid", output=None, renderer="markdown", verbose=False)
@@ -180,10 +182,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "00:00", "day_start_source": "aw"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="00:00", day_start_source="aw"),
+            settings=SettingsConfig(),
+        )
         mock_client.return_value.get_setting.return_value = "04:00"
         mock_generator.return_value.run.return_value = ({}, [], [], {})
 
@@ -202,10 +204,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "06:00", "day_start_source": "aw"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="06:00", day_start_source="aw"),
+            settings=SettingsConfig(),
+        )
         mock_client.return_value.get_setting.return_value = None  # AW returns None
         mock_generator.return_value.run.return_value = ({}, [], [], {})
 
@@ -226,10 +228,10 @@ class TestCmdReport(unittest.TestCase):
         from aw_daily_reporter.core import cmd_report
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
-        mock_settings.get_instance.return_value.load.return_value = {
-            "system": {"start_of_day": "07:00", "day_start_source": "aw"},
-            "settings": {},
-        }
+        mock_settings.get_instance.return_value.load.return_value = AppConfig(
+            system=SystemConfig(start_of_day="07:00", day_start_source="aw"),
+            settings=SettingsConfig(),
+        )
         mock_client.return_value.get_setting.side_effect = Exception("Connection failed")
         mock_generator.return_value.run.return_value = ({}, [], [], {})
 

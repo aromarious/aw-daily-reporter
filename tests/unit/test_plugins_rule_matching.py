@@ -24,9 +24,9 @@ class TestRuleMatchingProcessor(unittest.TestCase):
         """TimelineItemのリストをDataFrameに変換"""
         if not items:
             return pd.DataFrame()
-        return pd.DataFrame(items)
+        return pd.DataFrame([item.model_dump() for item in items])
 
-    def test_categorize_timeline(self):
+    def test_categorize_timeline(self) -> None:
         rules = [
             {"keyword": "VSCode", "category": "Coding"},
             {"keyword": "Slack", "category": "Communication"},
@@ -35,30 +35,51 @@ class TestRuleMatchingProcessor(unittest.TestCase):
 
         # Mock timeline items
         timeline: list[TimelineItem] = [
-            {
-                "timestamp": datetime.now(),
-                "duration": 60,
-                "app": "Code",
-                "title": "project - VSCode",
-                "context": [],
-                "category": None,
-            },
-            {
-                "timestamp": datetime.now(),
-                "duration": 30,
-                "app": "Slack",
-                "title": "General",
-                "context": [],
-                "category": None,
-            },
-            {
-                "timestamp": datetime.now(),
-                "duration": 10,
-                "app": "Unknown",
-                "title": "Something",
-                "context": [],
-                "category": None,
-            },
+            TimelineItem(
+                timestamp=datetime.now(),
+                duration=60,
+                app="Code",
+                title="project - VSCode",
+                context=[],
+                category=None,
+                metadata={},
+                project=None,
+                file=None,
+                language=None,
+                url=None,
+                source=None,
+                status=None,
+            ),
+            TimelineItem(
+                timestamp=datetime.now(),
+                duration=30,
+                app="Slack",
+                title="General",
+                context=[],
+                category=None,
+                metadata={},
+                project=None,
+                file=None,
+                language=None,
+                url=None,
+                source=None,
+                status=None,
+            ),
+            TimelineItem(
+                timestamp=datetime.now(),
+                duration=10,
+                app="Unknown",
+                title="Something",
+                context=[],
+                category=None,
+                metadata={},
+                project=None,
+                file=None,
+                language=None,
+                url=None,
+                source=None,
+                status=None,
+            ),
         ]
 
         df = self._to_df(timeline)

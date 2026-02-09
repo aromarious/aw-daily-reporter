@@ -112,8 +112,8 @@ class TestGitScanner(unittest.TestCase):
 
         # Assert
         assert len(commits) == 2
-        assert commits[0]["title"] == "[repo] Fix bug (a1b2c3d)"
-        assert commits[1]["title"] == "[repo] Add feature (e5f6g7h)"
+        assert commits[0].title == "[repo] Fix bug (a1b2c3d)"
+        assert commits[1].title == "[repo] Add feature (e5f6g7h)"
 
     @patch("aw_daily_reporter.plugins.scanner_git.subprocess.run")
     def test_get_commits_empty_output_returns_empty_list(self, mock_run):

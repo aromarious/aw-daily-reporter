@@ -105,21 +105,21 @@ class TimelineMerger:
                 title = NO_TITLE
 
             items.append(
-                {
-                    "timestamp": ts,
-                    "duration": float(val_dur),
-                    "app": str(getattr(row, "app", UNKNOWN_APP)),
-                    "title": title,
-                    "context": [],
-                    "url": self._safe_val(getattr(row, "url", None)),
-                    "file": self._safe_val(getattr(row, "file", None)),
-                    "language": self._safe_val(getattr(row, "language", None)),
-                    "status": self._safe_val(getattr(row, "status", None)),
-                    "metadata": {},
-                    "category": f"Source: {source_name}" if use_category else None,
-                    "source": source_name,
-                    "project": self._safe_val(getattr(row, "project", None)),
-                }
+                TimelineItem(
+                    timestamp=ts,
+                    duration=float(val_dur),
+                    app=str(getattr(row, "app", UNKNOWN_APP)),
+                    title=title,
+                    context=[],
+                    url=self._safe_val(getattr(row, "url", None)),
+                    file=self._safe_val(getattr(row, "file", None)),
+                    language=self._safe_val(getattr(row, "language", None)),
+                    status=self._safe_val(getattr(row, "status", None)),
+                    metadata={},
+                    category=f"Source: {source_name}" if use_category else None,
+                    source=source_name,
+                    project=self._safe_val(getattr(row, "project", None)),
+                )
             )
         return items
 
@@ -227,20 +227,21 @@ class TimelineMerger:
                 app_name = str(getattr(row, "app", "")).lower()
                 str(getattr(row, "title", "")).lower()
 
-                base_item: TimelineItem = {
-                    "timestamp": curr_start,
-                    "duration": 0.0,
-                    "app": getattr(row, "app", UNKNOWN_APP),
-                    "title": getattr(row, "title", NO_TITLE),
-                    "context": [],
-                    "category": None,
-                    "source": "Window",
-                    "project": None,
-                    "url": None,
-                    "file": None,
-                    "language": None,
-                    "status": None,
-                }
+                base_item = TimelineItem(
+                    timestamp=curr_start,
+                    duration=0.0,
+                    app=getattr(row, "app", UNKNOWN_APP),
+                    title=getattr(row, "title", NO_TITLE),
+                    context=[],
+                    category=None,
+                    source="Window",
+                    project=None,
+                    url=None,
+                    file=None,
+                    language=None,
+                    status=None,
+                    metadata={},
+                )
 
                 # Find Overlays
                 overlays = self._find_overlays(
@@ -261,7 +262,7 @@ class TimelineMerger:
         if not df_afk.empty:
             timeline.extend(self._df_to_items(df_afk, "AFK"))
 
-        timeline.sort(key=lambda x: x["timestamp"])
+        timeline.sort(key=lambda x: x.timestamp)
         return timeline, [], active_projects
 
     def _create_raw_snapshot(self, df_window, df_vscode, df_web, df_afk, name="Raw Data Sources"):
@@ -270,7 +271,7 @@ class TimelineMerger:
         snapshot_raw.extend(self._df_to_items(df_vscode, "VSCode", use_category=True))
         snapshot_raw.extend(self._df_to_items(df_web, "Web", use_category=True))
         snapshot_raw.extend(self._df_to_items(df_afk, "AFK", use_category=True))
-        snapshot_raw.sort(key=lambda x: x["timestamp"])
+        snapshot_raw.sort(key=lambda x: x.timestamp)
         self.debug_snapshots.append({"name": name, "timeline": snapshot_raw, "plugin": "Data Sources"})
 
     def _flood_fill_gap(self, df: pd.DataFrame, end_time: datetime = None) -> pd.DataFrame:
@@ -430,33 +431,33 @@ class TimelineMerger:
 
             active_ovs = [ov for ov in overlays if ov["start"] <= seg_mid <= ov["end"]]
 
-            item = base_item.copy()
-            item["timestamp"] = seg_start
-            item["duration"] = (seg_end - seg_start).total_seconds()
-            item["context"] = []
+            item = base_item.model_copy()
+            item.timestamp = seg_start
+            item.duration = (seg_end - seg_start).total_seconds()
+            item.context = []
 
-            if item["duration"] < 0.1:
+            if item.duration < 0.1:
                 continue
 
             for ov in active_ovs:
                 data = ov["data"]
                 if ov["type"] == "vscode":
-                    item["context"].append(f"[VSCode] {data.get('file')} ({data.get('language')})")
+                    item.context.append(f"[VSCode] {data.get('file')} ({data.get('language')})")
                     if data.get("file"):
-                        item["file"] = data.get("file")
+                        item.file = data.get("file")
                     if pd.notna(data.get("language")):
-                        item["language"] = data.get("language")
+                        item.language = data.get("language")
                     proj = data.get("project")
                     if pd.notna(proj) and proj:
-                        item["project"] = proj
-                        item["context"].append(f"Project: {proj}")
+                        item.project = proj
+                        item.context.append(f"Project: {proj}")
                         active_projects.add(proj)
                 elif ov["type"] == "web":
                     url = data.get("url")
                     if url:
                         cleaned_url = self.clean_url(url)
-                        item["url"] = cleaned_url
-                        item["context"].append(f"URL: {cleaned_url} ({data.get('title')})")
+                        item.url = cleaned_url
+                        item.context.append(f"URL: {cleaned_url} ({data.get('title')})")
             segments.append(item)
 
         return segments, active_projects

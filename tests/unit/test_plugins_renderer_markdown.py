@@ -8,6 +8,7 @@ import unittest
 from datetime import datetime, timezone
 
 from aw_daily_reporter.plugins.renderer_markdown import MarkdownRendererPlugin
+from aw_daily_reporter.timeline.models import TimelineItem
 
 
 class TestMarkdownRendererPlugin(unittest.TestCase):
@@ -109,15 +110,16 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
     def test_timeline_items_rendered(self):
         """タイムラインアイテムがレンダリングされる"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 120,
-                "category": "Coding",
-                "app": "VS Code",
-                "title": "main.py",
-                "project": None,
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=120,
+                category="Coding",
+                app="VS Code",
+                title="main.py",
+                project=None,
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "VS Code" in result
@@ -126,24 +128,26 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
     def test_timeline_skips_short_non_git_items(self):
         """5秒未満の非Gitアイテムはスキップ"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 3,  # 3秒
-                "category": "Coding",
-                "app": "VS Code",
-                "title": "short.py",
-                "project": None,
-                "context": [],
-            },
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 31, tzinfo=timezone.utc),
-                "duration": 3,  # 3秒だがGit
-                "category": "Git",
-                "app": "Git",
-                "title": "commit",
-                "project": None,
-                "context": [],
-            },
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=3,  # 3秒
+                category="Coding",
+                app="VS Code",
+                title="short.py",
+                project=None,
+                context=[],
+                source="test",
+            ),
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 31, tzinfo=timezone.utc),
+                duration=3,  # 3秒だがGit
+                category="Git",
+                app="Git",
+                title="commit",
+                project=None,
+                context=[],
+                source="test",
+            ),
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "short.py" not in result
@@ -152,15 +156,16 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
     def test_timeline_shows_project_in_context(self):
         """プロジェクトがあればcontextに表示"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 60,
-                "category": "Coding",
-                "app": "VS Code",
-                "title": "file.py",
-                "project": "MyProject",
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=60,
+                category="Coding",
+                app="VS Code",
+                title="file.py",
+                project="MyProject",
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "Project: MyProject" in result
@@ -168,15 +173,16 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
     def test_icon_mapping_git(self):
         """Gitカテゴリには🌱アイコン"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 10,
-                "category": "Git",
-                "app": "Git",
-                "title": "commit",
-                "project": None,
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=10,
+                category="Git",
+                app="Git",
+                title="commit",
+                project=None,
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "🌱" in result
@@ -184,15 +190,16 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
     def test_icon_mapping_project(self):
         """プロジェクトがあれば🚀アイコン"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 60,
-                "category": "Coding",
-                "app": "VS Code",
-                "title": "file.py",
-                "project": "MyProject",
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=60,
+                category="Coding",
+                app="VS Code",
+                title="file.py",
+                project="MyProject",
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "🚀" in result
@@ -200,15 +207,16 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
     def test_icon_mapping_meeting(self):
         """ミーティングカテゴリには📹アイコン"""
         timeline = [
-            {
-                "timestamp": datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
-                "duration": 60,
-                "category": "ミーティング",
-                "app": "Zoom",
-                "title": "Call",
-                "project": None,
-                "context": [],
-            }
+            TimelineItem(
+                timestamp=datetime(2025, 1, 15, 10, 30, tzinfo=timezone.utc),
+                duration=60,
+                category="ミーティング",
+                app="Zoom",
+                title="Call",
+                project=None,
+                context=[],
+                source="test",
+            )
         ]
         result = self.renderer.render(timeline, self.base_report_data, self.base_config)
         assert "📹" in result
