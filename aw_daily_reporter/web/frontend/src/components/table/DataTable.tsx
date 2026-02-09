@@ -42,66 +42,10 @@ export default function DataTable<TData>({
   enablePagination = true,
   onRowClick,
 }: DataTableProps<TData>) {
-  const [tableState, setTableState] = useState({
-    sorting: [] as SortingState,
-    columnFilters: [] as ColumnFiltersState,
-    columnVisibility: {} as VisibilityState,
-    globalFilter: "",
-  })
-  const [showColumnMenu, setShowColumnMenu] = useState(false)
-
-  // Wrapper handlers for React Table
-  const setSorting = (
-    updaterOrValue: SortingState | ((old: SortingState) => SortingState),
-  ) => {
-    setTableState((prev) => ({
-      ...prev,
-      sorting:
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(prev.sorting)
-          : updaterOrValue,
-    }))
-  }
-
-  const setColumnFilters = (
-    updaterOrValue:
-      | ColumnFiltersState
-      | ((old: ColumnFiltersState) => ColumnFiltersState),
-  ) => {
-    setTableState((prev) => ({
-      ...prev,
-      columnFilters:
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(prev.columnFilters)
-          : updaterOrValue,
-    }))
-  }
-
-  const setColumnVisibility = (
-    updaterOrValue:
-      | VisibilityState
-      | ((old: VisibilityState) => VisibilityState),
-  ) => {
-    setTableState((prev) => ({
-      ...prev,
-      columnVisibility:
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(prev.columnVisibility)
-          : updaterOrValue,
-    }))
-  }
-
-  const setGlobalFilter = (
-    updaterOrValue: string | ((old: string) => string),
-  ) => {
-    setTableState((prev) => ({
-      ...prev,
-      globalFilter:
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(prev.globalFilter)
-          : updaterOrValue,
-    }))
-  }
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [globalFilter, setGlobalFilter] = useState("")
 
   const table = useReactTable({
     data,
@@ -115,10 +59,10 @@ export default function DataTable<TData>({
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
     state: {
-      sorting: tableState.sorting,
-      columnFilters: tableState.columnFilters,
-      columnVisibility: tableState.columnVisibility,
-      globalFilter: tableState.globalFilter,
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
     },
     initialState: {
       pagination: {
@@ -142,7 +86,7 @@ export default function DataTable<TData>({
             <input
               type="text"
               placeholder="Search..."
-              value={tableState.globalFilter ?? ""}
+              value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-white/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all"
             />
@@ -150,36 +94,28 @@ export default function DataTable<TData>({
         )}
 
         {enableColumnVisibility && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowColumnMenu(!showColumnMenu)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg bg-white/60 hover:bg-white/80 transition-colors"
-            >
+          <details className="relative">
+            <summary className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg bg-white/60 hover:bg-white/80 transition-colors cursor-pointer list-none">
               <Columns size={16} />
               Columns
-            </button>
-            {showColumnMenu && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-2">
-                {allColumns.map((column) => (
-                  <label
-                    key={column.id}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={column.getIsVisible()}
-                      onChange={(e) =>
-                        column.toggleVisibility(e.target.checked)
-                      }
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    {column.id}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
+            </summary>
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-2">
+              {allColumns.map((column) => (
+                <label
+                  key={column.id}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={column.getIsVisible()}
+                    onChange={(e) => column.toggleVisibility(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  {column.id}
+                </label>
+              ))}
+            </div>
+          </details>
         )}
 
         <div className="ml-auto text-sm text-slate-500">

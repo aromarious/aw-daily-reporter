@@ -16,7 +16,10 @@
       "!out",
       "!build",
       "!coverage",
-      "!next-env.d.ts"
+      "!next-env.d.ts",
+      "!playwright-report",
+      "!test-results",
+      "!*.txt"
     ]
   },
   "linter": {
@@ -28,6 +31,13 @@
           "level": "warn",
           "options": {
             "maxAllowedComplexity": 20
+          }
+        },
+        "noExcessiveLinesPerFunction": {
+          "level": "warn",
+          "options": {
+            "maxLines": 150,
+            "skipBlankLines": true
           }
         }
       }
