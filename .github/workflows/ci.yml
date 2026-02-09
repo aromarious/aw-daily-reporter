@@ -115,8 +115,8 @@ jobs:
           pnpm install
           poetry install --no-interaction --no-root
 
-      - name: Run Python Tests
-        run: pnpm run test:py
+      - name: Run Python Unit Tests
+        run: poetry run pytest tests/unit
 
       - name: Run Frontend Tests & Coverage
         run: pnpm run test:frontend:coverage

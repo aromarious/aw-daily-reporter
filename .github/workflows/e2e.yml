@@ -1,0 +1,41 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'poetry'
+
+      - name: Install Dependencies
+        run: |
+          pnpm install
+          poetry install --no-interaction --no-root
+
+      - name: Run Integration Tests (E2E)
+        run: poetry run pytest tests/integration
