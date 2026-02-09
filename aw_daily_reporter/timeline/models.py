@@ -8,7 +8,7 @@ TypedDictベースのデータ構造を定義します。
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class CategoryRule(BaseModel):
@@ -39,6 +39,22 @@ class TimelineItem(BaseModel):
         extra="allow"
     )  # Allow plugins to add extra fields freely if needed, though metadata is preferred.
 
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def convert_pandas_timestamp(cls, v: Any) -> datetime:
+        """
+        pandas Timestamp を Python datetime に変換する
+
+        pandas Timestamp の astimezone() は引数が必要だが、
+        Python datetime の astimezone() は引数なしで呼べる。
+        この不整合を解決するため、pandas Timestamp を検出して
+        Python datetime に変換する。
+        """
+        if hasattr(v, "to_pydatetime"):
+            # pandas Timestamp の場合は Python datetime に変換
+            return v.to_pydatetime()
+        return v
+
 
 class WorkStats(BaseModel):
     start: datetime
@@ -46,3 +62,19 @@ class WorkStats(BaseModel):
     working_seconds: float
     break_seconds: float
     afk_seconds: Optional[float] = 0.0
+
+    @field_validator("start", "end", mode="before")
+    @classmethod
+    def convert_pandas_timestamp(cls, v: Any) -> datetime:
+        """
+        pandas Timestamp を Python datetime に変換する
+
+        pandas Timestamp の astimezone() は引数が必要だが、
+        Python datetime の astimezone() は引数なしで呼べる。
+        この不整合を解決するため、pandas Timestamp を検出して
+        Python datetime に変換する。
+        """
+        if hasattr(v, "to_pydatetime"):
+            # pandas Timestamp の場合は Python datetime に変換
+            return v.to_pydatetime()
+        return v
