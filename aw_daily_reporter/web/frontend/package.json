@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@tanstack/react-table": "^8.21.3",
-    "axios": "^1.13.4",
+    "axios": "^1.13.5",
     "clsx": "^2.1.1",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
