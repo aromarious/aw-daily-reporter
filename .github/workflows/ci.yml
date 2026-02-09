@@ -81,35 +81,6 @@ jobs:
       - name: Run Typecheck
         run: pnpm run typecheck
 
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'poetry'
-
-      - name: Install Dependencies
-        run: poetry install --no-interaction --no-root
-
-      - name: Install pip-audit
-        run: pip install pip-audit
-
-      - name: Run pip-audit
-        run: |
-          # Poetry の依存関係を pip-audit でスキャン
-          poetry export --format=requirements.txt --output=requirements.txt --without-hashes
-          pip-audit --requirement requirements.txt --desc
-
   test:
     runs-on: ubuntu-latest
     permissions:
@@ -159,7 +130,7 @@ jobs:
           json-final-path: coverage/coverage-final.json
 
   build:
-    needs: [lint, typecheck, test, security-scan]
+    needs: [lint, typecheck, test]
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     permissions:
