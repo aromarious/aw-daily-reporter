@@ -22,6 +22,9 @@
     "test:frontend:coverage": "pnpm --filter frontend test:coverage",
     "check:rules": "pnpm --filter frontend check:rules",
     "test": "pnpm run test:py && pnpm run test:frontend:coverage",
+    "security:py": "poetry export -f requirements.txt -o requirements.txt --without-hashes && pip-audit -r requirements.txt --desc",
+    "security:npm": "pnpm audit --audit-level moderate",
+    "security": "pnpm run security:py && pnpm run security:npm",
     "prepare": "husky"
   },
   "repository": {
