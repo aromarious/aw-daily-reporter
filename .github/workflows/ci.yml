@@ -119,12 +119,15 @@ jobs:
         run: pnpm run test:py
 
       - name: Run Frontend Tests & Coverage
+        run: pnpm run test:frontend:coverage
+
+      - name: Report Frontend Coverage
         uses: davelosert/vitest-coverage-report-action@v2
+        if: always()
         with:
           working-directory: aw_daily_reporter/web/frontend
           json-summary-path: coverage/coverage-summary.json
           json-final-path: coverage/coverage-final.json
-          package-manager: pnpm
 
   build:
     needs: [lint, typecheck, test]
