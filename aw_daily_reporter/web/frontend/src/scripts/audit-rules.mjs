@@ -11,6 +11,7 @@ const SRC_DIR = path.join(PROJECT_ROOT, "src")
 
 // Configuration
 const STATE_HOOK_LIMIT = 5
+const FILE_LENGTH_LIMIT = 300 // If file > 300 lines, likely too big
 
 // Helpers
 function getFiles(dir, ext = []) {
@@ -58,17 +59,8 @@ function checkStateUsage(file) {
   return stateHooks
 }
 
-async function main() {
-  console.log("🔍 Starting React Rules Audit...\n")
-
-  const allSrcFiles = getFiles(SRC_DIR, [".tsx", ".ts"])
-  const componentFiles = fs.existsSync(COMPONENTS_DIR)
-    ? getFiles(COMPONENTS_DIR, [".tsx"])
-    : []
-
+function checkPrematureAbstraction(componentFiles, allSrcFiles) {
   let issues = 0
-
-  // 1. Check for Premature Abstraction (YAGNI)
   console.log(
     "--- Checking for Premature Abstraction (Single-use Shared Components) ---",
   )
@@ -101,8 +93,11 @@ async function main() {
   } else {
     console.log("No shared component directory found or empty.")
   }
+  return issues
+}
 
-  // 2. Check for State Overload
+function checkStateOverload(allSrcFiles) {
+  let issues = 0
   console.log("\n--- Checking for State Overload (>5 hooks) ---")
   for (const file of allSrcFiles) {
     const hooksCount = checkStateUsage(file)
@@ -116,10 +111,12 @@ async function main() {
       issues++
     }
   }
+  return issues
+}
 
-  // 3. Check for File Length (Heuristic for Component Length)
+function checkFileLength(allSrcFiles) {
+  let issues = 0
   console.log("\n--- Checking for File Length (Heuristic) ---")
-  const FILE_LENGTH_LIMIT = 300 // If file > 300 lines, likely too big
   for (const file of allSrcFiles) {
     const content = fs.readFileSync(file, "utf-8")
     const lines = content.split("\n").length
@@ -133,6 +130,27 @@ async function main() {
       issues++
     }
   }
+  return issues
+}
+
+async function main() {
+  console.log("🔍 Starting React Rules Audit...\n")
+
+  const allSrcFiles = getFiles(SRC_DIR, [".tsx", ".ts"])
+  const componentFiles = fs.existsSync(COMPONENTS_DIR)
+    ? getFiles(COMPONENTS_DIR, [".tsx"])
+    : []
+
+  let issues = 0
+
+  // 1. Check for Premature Abstraction (YAGNI)
+  issues += checkPrematureAbstraction(componentFiles, allSrcFiles)
+
+  // 2. Check for State Overload
+  issues += checkStateOverload(allSrcFiles)
+
+  // 3. Check for File Length (Heuristic for Component Length)
+  issues += checkFileLength(allSrcFiles)
 
   if (issues === 0) {
     console.log("\n✅ No custom rule violations found.")

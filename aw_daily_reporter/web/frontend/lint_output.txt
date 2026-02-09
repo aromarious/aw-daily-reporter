@@ -1,0 +1,231 @@
+
+> frontend@0.1.0 lint /Volumes/ExtremePro/Users/aromarious/Garage/ActivityWatch/aw-daily-reporter/aw_daily_reporter/web/frontend
+> ultracite check .
+
+src/app/page.tsx:216:10 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  ! Excessive complexity of 22 detected (max: 20).
+  
+    214 │ }
+    215 │ 
+  > 216 │ function DashboardContent() {
+        │          ^^^^^^^^^^^^^^^^
+    217 │   const router = useRouter()
+    218 │   const pathname = usePathname()
+  
+  i Please refactor this function to reduce its complexity score from 22 to the max allowed complexity 20.
+  
+
+src/app/page.tsx:529:29 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  ! Excessive complexity of 24 detected (max: 20).
+  
+    527 │     const clientProjectMap = new Map<string, Map<string, number>>()
+    528 │ 
+  > 529 │     timeline.forEach((item) => {
+        │                             ^^^
+    530 │       let project = item.project || "Uncategorized"
+    531 │       if (isUncategorized(project)) project = "Uncategorized"
+  
+  i Please refactor this function to reduce its complexity score from 24 to the max allowed complexity 20.
+  
+
+src/components/pipeline/PipelineSteps.tsx:89:10 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  ! Excessive complexity of 22 detected (max: 20).
+  
+    87 │ }
+    88 │ 
+  > 89 │ function PipelineStageNode({
+       │          ^^^^^^^^^^^^^^^^^
+    90 │   stage,
+    91 │   isActive,
+  
+  i Please refactor this function to reduce its complexity score from 22 to the max allowed complexity 20.
+  
+
+src/hooks/useSnapshotTimeline.ts:88:28 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  ! Excessive complexity of 28 detected (max: 20).
+  
+    86 │ // Helper to generate tooltip HTML
+    87 │ function getTooltipFormatter(isDark: boolean) {
+  > 88 │   return (params: unknown) => {
+       │                            ^^^
+    89 │     const p = params as {
+    90 │       data: {
+  
+  i Please refactor this function to reduce its complexity score from 28 to the max allowed complexity 20.
+  
+
+src/hooks/useSnapshotTimeline.ts:192:37 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  ! Excessive complexity of 34 detected (max: 20).
+  
+    190 │         const end = start + item.duration * 1000
+    191 │ 
+  > 192 │         attrMap.forEach((attr, idx) => {
+        │                                     ^^^
+    193 │           if (attr.key === "separator") return // Skip separator lane
+    194 │ 
+  
+  i Please refactor this function to reduce its complexity score from 34 to the max allowed complexity 20.
+  
+
+src/hooks/useSnapshotTimeline.ts:330:44 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  ! Excessive complexity of 21 detected (max: 20).
+  
+    328 │   const actualHeight = Math.max(height, categories.length * 30 + 50)
+    329 │ 
+  > 330 │   const option = useMemo<EChartsOption>(() => {
+        │                                            ^^^
+    331 │     if (chartData.length === 0) return {}
+    332 │ 
+  
+  i Please refactor this function to reduce its complexity score from 21 to the max allowed complexity 20.
+  
+
+src/hooks/useSnapshotTimeline.ts:87:30 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+  
+    86 │ // Helper to generate tooltip HTML
+  > 87 │ function getTooltipFormatter(isDark: boolean) {
+       │                              ^^^^^^
+    88 │   return (params: unknown) => {
+    89 │     const p = params as {
+  
+  i Unused parameters might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: If this is intentional, prepend isDark with an underscore.
+  
+     85  85 │   
+     86  86 │   // Helper to generate tooltip HTML
+     87     │ - function·getTooltipFormatter(isDark:·boolean)·{
+         87 │ + function·getTooltipFormatter(_isDark:·boolean)·{
+     88  88 │     return (params: unknown) => {
+     89  89 │       const p = params as {
+  
+
+src/hooks/useSnapshotTimeline.ts format ━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    184 184 │       })
+    185 185 │     } else {
+    186     │ - ······//·Other·stages:·fixed·attribute·lanes
+    187     │ - ······items.forEach((item)·=>·{
+    188     │ - ········const·start·=·new·Date(item.timestamp).getTime()
+    189     │ - ········if·(Number.isNaN(start))·return
+    190     │ - ········const·end·=·start·+·item.duration·*·1000
+        186 │ + ····//·Other·stages:·fixed·attribute·lanes
+        187 │ + ····items.forEach((item)·=>·{
+        188 │ + ······const·start·=·new·Date(item.timestamp).getTime()
+        189 │ + ······if·(Number.isNaN(start))·return
+        190 │ + ······const·end·=·start·+·item.duration·*·1000
+    191 191 │   
+    192     │ - ········attrMap.forEach((attr,·idx)·=>·{
+    193     │ - ··········if·(attr.key·===·"separator")·return·//·Skip·separator·lane
+        192 │ + ······attrMap.forEach((attr,·idx)·=>·{
+        193 │ + ········if·(attr.key·===·"separator")·return·//·Skip·separator·lane
+    194 194 │   
+    195     │ - ··········//·Handle·nested·metadata.client
+    196     │ - ··········const·val·=
+    197     │ - ············attr.key·===·"client"
+    198     │ - ··············?·item.metadata?.client
+    199     │ - ··············:·item[attr.key·as·keyof·TimelineItem]
+        195 │ + ········//·Handle·nested·metadata.client
+        196 │ + ········const·val·=
+        197 │ + ··········attr.key·===·"client"
+        198 │ + ············?·item.metadata?.client
+        199 │ + ············:·item[attr.key·as·keyof·TimelineItem]
+    200 200 │   
+    201     │ - ··········if·(
+    202     │ - ············val·&&
+    203     │ - ············val·!==·"None"·&&
+    204     │ - ············val·!==·"Unknown"·&&
+    205     │ - ············val·!==·"No·Title"
+    206     │ - ··········)·{
+    207     │ - ············let·color·=·"#cbd5e1"
+    208     │ - ············if·(attr.key·===·"category")·{
+    209     │ - ··············color·=·getColor(item)
+    210     │ - ············}·else·if·(attr.key·===·"app")·{
+    211     │ - ··············color·=·`hsl(${hashCode(String(val))·%·360},·65%,·50%)`
+    212     │ - ············}·else·if·(attr.key·===·"project")·{
+    213     │ - ··············color·=·`hsl(${hashCode(String(val))·%·360},·70%,·45%)`
+    214     │ - ············}·else·if·(attr.key·===·"client")·{
+    215     │ - ··············color·=·`hsl(${hashCode(String(val))·%·360},·55%,·60%)`
+    216     │ - ············}·else·{
+    217     │ - ··············color·=·`hsl(${hashCode(String(val))·%·360},·60%,·55%)`
+    218     │ - ············}
+    219     │ - ············
+    220     │ - ············data.push({
+    221     │ - ··············value:·[idx,·start,·end,·item.duration],
+    222     │ - ··············itemStyle:·{·color·},
+    223     │ - ··············item,
+    224     │ - ············})
+    225     │ - ··········}
+    226     │ - ········})
+    227     │ - ······})
+        201 │ + ········if·(val·&&·val·!==·"None"·&&·val·!==·"Unknown"·&&·val·!==·"No·Title")·{
+        202 │ + ··········let·color·=·"#cbd5e1"
+        203 │ + ··········if·(attr.key·===·"category")·{
+        204 │ + ············color·=·getColor(item)
+        205 │ + ··········}·else·if·(attr.key·===·"app")·{
+        206 │ + ············color·=·`hsl(${hashCode(String(val))·%·360},·65%,·50%)`
+        207 │ + ··········}·else·if·(attr.key·===·"project")·{
+        208 │ + ············color·=·`hsl(${hashCode(String(val))·%·360},·70%,·45%)`
+        209 │ + ··········}·else·if·(attr.key·===·"client")·{
+        210 │ + ············color·=·`hsl(${hashCode(String(val))·%·360},·55%,·60%)`
+        211 │ + ··········}·else·{
+        212 │ + ············color·=·`hsl(${hashCode(String(val))·%·360},·60%,·55%)`
+        213 │ + ··········}
+        214 │ + 
+        215 │ + ··········data.push({
+        216 │ + ············value:·[idx,·start,·end,·item.duration],
+        217 │ + ············itemStyle:·{·color·},
+        218 │ + ············item,
+        219 │ + ··········})
+        220 │ + ········}
+        221 │ + ······})
+        222 │ + ····})
+    228 223 │     }
+    229 224 │     return data
+    ······· │ 
+    316 311 │       }
+    317 312 │   
+    318     │ - ····const·data·=·processTimelineItems(items,·isSourceStage,·categoryToIndex,·attrMap)
+        313 │ + ····const·data·=·processTimelineItems(
+        314 │ + ······items,
+        315 │ + ······isSourceStage,
+        316 │ + ······categoryToIndex,
+        317 │ + ······attrMap,
+        318 │ + ····)
+    319 319 │   
+    320 320 │       return {
+    ······· │ 
+    427 427 │         ],
+    428 428 │       }
+    429     │ - ··},·[
+    430     │ - ····chartData,
+    431     │ - ····categories,
+    432     │ - ····timeRange,
+    433     │ - ····isDark,
+    434     │ - ····isSourceStage,
+    435     │ - ····attrMap,
+    436     │ - ··])
+        429 │ + ··},·[chartData,·categories,·timeRange,·isDark,·isSourceStage,·attrMap])
+    437 430 │   
+    438 431 │     return { option, actualHeight }
+  
+
+Checked 71 files in 37ms. No fixes applied.
+Found 1 error.
+Found 7 warnings.
+check ━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+ ELIFECYCLE  Command failed with exit code 1.

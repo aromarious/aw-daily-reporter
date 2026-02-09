@@ -1,8 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
-  "extends": [
-    "ultracite/biome/react"
-  ],
+  "extends": ["ultracite/biome/react"],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

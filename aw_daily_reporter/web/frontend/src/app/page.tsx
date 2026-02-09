@@ -13,14 +13,16 @@ import {
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import useSWR, { mutate } from "swr"
 import { Card } from "@/components/Card"
+import { RendererOutputViewer } from "@/components/RendererOutputViewer"
 import TimelineTable from "@/components/TimelineTable"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useToast } from "@/contexts/ToastContext"
+import { useDashboardChartData } from "@/hooks/useDashboardChartData"
 import { api, fetcher } from "@/lib/api"
-import { getProjectColor, isUncategorized, loadConstants } from "@/lib/colors"
+import { loadConstants } from "@/lib/colors"
 
 // Dynamic imports for SSR safety
 const CategoryPieChart = dynamic(
@@ -74,149 +76,10 @@ interface SettingsConfig {
   }
 }
 
-const getAdjustedDate = (config: SettingsConfig | undefined) => {
-  const d = new Date()
-  if (!config) return d
-
-  const system = config.system || {}
-  const source = system.day_start_source || "manual"
-  let offset = system.start_of_day || "00:00"
-
-  if (source === "aw" && system.aw_start_of_day) {
-    offset = system.aw_start_of_day
-  }
-
-  // offset format is "HH:MM"
-  // If current time < offset, it's considered the previous day
-  const [offsetHour, offsetMinute] = offset.split(":").map(Number)
-  const currentHour = d.getHours()
-  const currentMinute = d.getMinutes()
-
-  if (
-    currentHour < offsetHour ||
-    (currentHour === offsetHour && currentMinute < offsetMinute)
-  ) {
-    d.setDate(d.getDate() - 1)
-  }
-  return d
-}
-
-function RendererOutputViewer({
-  outputs,
-  rendererNames,
-}: {
-  outputs: Record<string, string>
-  rendererNames?: Record<string, string>
-}) {
-  const keys = useMemo(() => Object.keys(outputs), [outputs])
-  const [activeKey, setActiveKey] = useState(keys[0])
-  const { data: config } = useSWR("/api/settings", fetcher)
-  const { t } = useTranslation()
-
-  // Load initial active key from settings or default to first available
-  useEffect(() => {
-    if (
-      config?.settings?.default_renderer &&
-      keys.includes(config.settings.default_renderer)
-    ) {
-      setActiveKey(config.settings.default_renderer)
-    }
-  }, [config, keys])
-
-  // Update active key if keys change and current is invalid
-  useEffect(() => {
-    if (!keys.includes(activeKey) && keys.length > 0) {
-      setActiveKey(keys[0])
-    }
-  }, [keys, activeKey])
-
-  const handleTabChange = async (
-    key: string,
-    _outputs: Record<string, string>,
-  ) => {
-    setActiveKey(key)
-    // Persist selection
-    try {
-      // Optimistic update mechanism could be added here if we want to reflect change immediately in SWR cache
-      // But for now, just save to backend.
-      // fetching current config to merge is safer but expensive?
-      // We can assume 'config' from SWR is fresh enough or use PATCH.
-      // We are using PATCH now, so we don't need to fetch full config!
-
-      await api.patch("/api/settings", {
-        settings: {
-          default_renderer: key,
-        },
-      })
-      // create mutated config for SWR update
-      if (config) {
-        mutate(
-          "/api/settings",
-          {
-            ...config,
-            settings: {
-              ...config.settings,
-              default_renderer: key,
-            },
-          },
-          false,
-        )
-      }
-    } catch (e) {
-      console.error("Failed to save default renderer", e)
-    }
-  }
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(outputs[activeKey])
-    alert(t("Copied to clipboard!"))
-  }
-
-  if (keys.length === 0) return null
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between border-b border-base-200 pb-2">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {keys.map((key) => {
-            const name = rendererNames?.[key] || key
-            return (
-              <button
-                type="button"
-                key={key}
-                onClick={() => handleTabChange(key, outputs)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                  activeKey === key
-                    ? "bg-primary/10 text-primary"
-                    : "text-base-content/70 hover:bg-base-200"
-                }`}
-              >
-                {name}
-              </button>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="text-xs px-3 py-1.5 bg-base-200 hover:bg-base-300 text-base-content/80 rounded-md transition-colors font-medium ml-2 shrink-0"
-        >
-          {t("Copy")}
-        </button>
-      </div>
-      <div className="relative">
-        <pre className="p-4 bg-[#1e293b] text-slate-50 rounded-lg overflow-x-auto text-xs font-mono min-h-50 max-h-150 custom-scrollbar selection:bg-primary/30">
-          {outputs[activeKey]}
-        </pre>
-      </div>
-    </div>
-  )
-}
-
 function DashboardContent() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const _router = useRouter()
+  const _pathname = usePathname()
+  const _searchParams = useSearchParams()
   const { t } = useTranslation()
   const { showToast } = useToast()
 
@@ -234,44 +97,19 @@ function DashboardContent() {
   // Detailed Log open/close state
   const [isDetailedLogOpen, setIsDetailedLogOpen] = useState(true)
 
-  // Date state
-  const dateInputRef = useRef<HTMLInputElement>(null)
   // Fetch settings for day start configuration
   const { data: settings } = useSWR<SettingsConfig>("/api/settings", fetcher)
 
-  const [date, setDate] = useState(() => {
-    const dateParam = searchParams.get("date")
-    if (dateParam) return dateParam
-
-    // Initial load might not have settings yet, defaulting to calendar day
-    // This will be updated by useEffect once settings are loaded
-    const d = new Date()
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    return `${year}-${month}-${day}`
-  })
-
-  // Update date on initial load when settings become available and no date param was provided
-  useEffect(() => {
-    if (settings && !searchParams.get("date")) {
-      const adjusted = getAdjustedDate(settings)
-      const year = adjusted.getFullYear()
-      const month = String(adjusted.getMonth() + 1).padStart(2, "0")
-      const day = String(adjusted.getDate()).padStart(2, "0")
-      const formatted = `${year}-${month}-${day}`
-
-      // Only update if different to avoid unnecessary re-renders/fetches
-      setDate((prev) => (prev !== formatted ? formatted : prev))
-    }
-  }, [settings, searchParams])
-
-  const updateDate = (newDate: string) => {
-    setDate(newDate)
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("date", newDate)
-    router.replace(`${pathname}?${params.toString()}`)
-  }
+  // Date Navigation
+  const {
+    date,
+    dateInputRef,
+    handlePrevDay,
+    handleNextDay,
+    handleDateChange,
+    handleToday,
+    isToday,
+  } = useDateNavigation(settings)
 
   const { data, error, isLoading } = useSWR(`/api/report?date=${date}`, fetcher)
 
@@ -425,37 +263,6 @@ function DashboardContent() {
     }
   }
 
-  // Date handlers
-  const handlePrevDay = () => {
-    const d = new Date(date)
-    d.setDate(d.getDate() - 1)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    updateDate(`${year}-${month}-${day}`)
-  }
-
-  const handleNextDay = () => {
-    const d = new Date(date)
-    d.setDate(d.getDate() + 1)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    updateDate(`${year}-${month}-${day}`)
-  }
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateDate(e.target.value)
-  }
-
-  const handleToday = () => {
-    const d = getAdjustedDate(settings)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    updateDate(`${year}-${month}-${day}`)
-  }
-
   // Generate chart data
   const {
     categoryData,
@@ -464,166 +271,7 @@ function DashboardContent() {
     categories,
     heatmapData,
     clientColors,
-  } = useMemo(() => {
-    if (!data?.timeline) {
-      return {
-        categoryData: [],
-        projectData: [],
-        hourlyData: [],
-        categories: [],
-        heatmapData: { projects: [], categories: [], matrix: [] },
-        clientColors: {},
-      }
-    }
-
-    const timeline = data.timeline as TimelineItem[]
-
-    // Category aggregation
-    const categoryMap = new Map<string, number>()
-    timeline.forEach((item) => {
-      const cat = item.category || "Other"
-      categoryMap.set(cat, (categoryMap.get(cat) || 0) + item.duration)
-    })
-    const categoryData = Array.from(categoryMap.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-
-    // Hourly aggregation
-    const hourlyMap = new Map<number, Record<string, number>>()
-    timeline.forEach((item) => {
-      const hour = new Date(item.timestamp).getHours()
-      const cat = item.category || "Other"
-      if (!hourlyMap.has(hour)) {
-        hourlyMap.set(hour, {})
-      }
-      const hourData = hourlyMap.get(hour)
-      if (hourData) {
-        hourData[cat] = (hourData[cat] || 0) + item.duration
-      }
-    })
-    const hourlyData = Array.from(hourlyMap.entries())
-      .map(([hour, categories]) => ({ hour, categories }))
-      .sort((a, b) => a.hour - b.hour)
-
-    // Project aggregation
-    const projectMap = new Map<string, number>()
-    timeline.forEach((item) => {
-      let proj = item.project || "Uncategorized"
-      if (isUncategorized(proj)) proj = "Uncategorized"
-      projectMap.set(proj, (projectMap.get(proj) || 0) + item.duration)
-    })
-    const projectData = Array.from(projectMap.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-
-    // Unique categories
-    const categories = Array.from(
-      new Set(timeline.map((i) => i.category || "Other")),
-    )
-
-    // Project x Category heatmap data
-    const projectCategoryMap = new Map<string, Map<string, number>>()
-    // Client Project Aggregation
-    const clientProjectMap = new Map<string, Map<string, number>>()
-
-    timeline.forEach((item) => {
-      let project = item.project || "Uncategorized"
-      if (isUncategorized(project)) project = "Uncategorized"
-      const category = item.category || "Other"
-
-      // Project x Category
-      if (!projectCategoryMap.has(project)) {
-        projectCategoryMap.set(project, new Map())
-      }
-      const catMap = projectCategoryMap.get(project)
-      if (catMap) {
-        catMap.set(category, (catMap.get(category) || 0) + item.duration)
-      }
-
-      // Client x Project
-      const client = item.metadata?.client
-      if (client) {
-        if (!clientProjectMap.has(client)) {
-          clientProjectMap.set(client, new Map())
-        }
-        const cpMap = clientProjectMap.get(client)
-        if (cpMap) {
-          cpMap.set(project, (cpMap.get(project) || 0) + item.duration)
-        }
-      }
-    })
-
-    // Calculate Client colors (based on dominant project)
-    const clientColors: Record<string, string> = {}
-    const clientsConfig = data.report?.clients || {}
-    clientProjectMap.forEach((projMap, clientId) => {
-      let maxDuration = -1
-      let dominantProject = ""
-      projMap.forEach((duration, project) => {
-        if (duration > maxDuration) {
-          maxDuration = duration
-          dominantProject = project
-        }
-      })
-      if (dominantProject) {
-        // Resolve Client ID to Name
-        const clientName = clientsConfig[clientId]?.name || clientId
-        clientColors[clientName] = getProjectColor(dominantProject)
-      }
-    })
-
-    const sortWithUncategorizedLast = (
-      items: string[],
-      valueMap: Map<string, number>,
-    ) => {
-      return items.sort((a, b) => {
-        const aUncat = isUncategorized(a)
-        const bUncat = isUncategorized(b)
-        // Both uncategorized or both categorized -> sort by value desc
-        if (aUncat === bUncat) {
-          const valA = valueMap.get(a) || 0
-          const valB = valueMap.get(b) || 0
-          return valB - valA
-        }
-        // One is uncategorized -> push to end
-        return aUncat ? 1 : -1
-      })
-    }
-
-    const projectsList = sortWithUncategorizedLast(
-      Array.from(projectCategoryMap.keys()),
-      projectMap,
-    )
-    const categoriesList = sortWithUncategorizedLast(
-      Array.from(
-        new Set(
-          Array.from(projectCategoryMap.values()).flatMap((m) =>
-            Array.from(m.keys()),
-          ),
-        ),
-      ),
-      categoryMap,
-    )
-    const matrix = projectsList.map((proj) => {
-      const catMap = projectCategoryMap.get(proj)
-      return categoriesList.map((cat) => catMap?.get(cat) ?? 0)
-    })
-
-    const heatmapData = {
-      projects: projectsList,
-      categories: categoriesList,
-      matrix,
-    }
-
-    return {
-      categoryData,
-      projectData,
-      hourlyData,
-      categories,
-      heatmapData,
-      clientColors,
-    }
-  }, [data])
+  } = useDashboardChartData(data)
 
   if (error)
     return (
@@ -742,14 +390,7 @@ function DashboardContent() {
                 <ChevronRight size={18} />
               </button>
 
-              {date !==
-                (() => {
-                  const d = getAdjustedDate(settings)
-                  const year = d.getFullYear()
-                  const month = String(d.getMonth() + 1).padStart(2, "0")
-                  const day = String(d.getDate()).padStart(2, "0")
-                  return `${year}-${month}-${day}`
-                })() && (
+              {!isToday && (
                 <button
                   type="button"
                   onClick={handleToday}
