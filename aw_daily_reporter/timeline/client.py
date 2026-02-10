@@ -81,30 +81,15 @@ class AWClient:
             # 設定で指定されたバケットIDのみを返す
             for bucket_id in enabled_bucket_ids:
                 if bucket_id in all_buckets:
-                    # バケットIDをキーとして使用（後方互換性のため、既知のタイプはマッピング）
-                    if bucket_id == f"aw-watcher-window_{self.hostname}":
-                        relevant_buckets["window"] = bucket_id
-                    elif bucket_id == f"aw-watcher-afk_{self.hostname}":
-                        relevant_buckets["afk"] = bucket_id
-                    elif bucket_id == f"aw-watcher-vscode_{self.hostname}":
-                        relevant_buckets["vscode"] = bucket_id
-                    else:
-                        # その他のバケットはバケットIDをそのままキーとして使用
-                        relevant_buckets[bucket_id] = bucket_id
+                    # バケットIDをそのままキーとして使用
+                    relevant_buckets[bucket_id] = bucket_id
         else:
             # 設定が空の場合は、現在のホスト名に関連する全バケットを返す
             for bid in all_buckets:
                 # ホスト名でフィルタリング（ホスト名を含むバケット、またはホスト名なしのバケット）
                 if f"_{self.hostname}" in bid or "_" not in bid:
-                    # 既知のタイプはマッピング、それ以外はバケットIDをそのままキーとして使用
-                    if bid == f"aw-watcher-window_{self.hostname}":
-                        relevant_buckets["window"] = bid
-                    elif bid == f"aw-watcher-afk_{self.hostname}":
-                        relevant_buckets["afk"] = bid
-                    elif bid == f"aw-watcher-vscode_{self.hostname}":
-                        relevant_buckets["vscode"] = bid
-                    else:
-                        relevant_buckets[bid] = bid
+                    # バケットIDをそのままキーとして使用
+                    relevant_buckets[bid] = bid
 
         return relevant_buckets
 

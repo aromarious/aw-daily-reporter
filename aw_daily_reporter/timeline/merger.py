@@ -165,9 +165,14 @@ class TimelineMerger:
         self.debug_snapshots = []
 
         # 1. Convert to DF
-        df_window = events_to_df(events_map.get("window", []))
-        df_afk = events_to_df(events_map.get("afk", []))
-        df_vscode = events_to_df(events_map.get("vscode", []))
+        # バケットIDから対応するイベントを検索
+        window_events = next((events for key, events in events_map.items() if key.startswith("aw-watcher-window_")), [])
+        afk_events = next((events for key, events in events_map.items() if key.startswith("aw-watcher-afk_")), [])
+        vscode_events = next((events for key, events in events_map.items() if key.startswith("aw-watcher-vscode_")), [])
+
+        df_window = events_to_df(window_events)
+        df_afk = events_to_df(afk_events)
+        df_vscode = events_to_df(vscode_events)
 
         # Web イベントは統合版と個別版の両方を保持
         web_list = []
@@ -298,7 +303,7 @@ class TimelineMerger:
 
         # 各バケットを個別に処理（VSCode 以外）
         for bucket_key, events in events_map.items():
-            if bucket_key == "vscode":
+            if bucket_key.startswith("aw-watcher-vscode_"):
                 continue  # VSCode は Flood Fill 済みの df を使用
             df = events_to_df(events)
             if not df.empty:
@@ -320,11 +325,11 @@ class TimelineMerger:
 
     def _get_bucket_label(self, bucket_key: str) -> str:
         """バケットキーを読みやすいラベルに変換"""
-        if bucket_key == "window":
+        if bucket_key.startswith("aw-watcher-window_"):
             return "Window"
-        elif bucket_key == "afk":
+        elif bucket_key.startswith("aw-watcher-afk_"):
             return "AFK"
-        elif bucket_key == "vscode":
+        elif bucket_key.startswith("aw-watcher-vscode_"):
             return "VSCode"
         elif bucket_key.startswith("aw-watcher-input"):
             return "Input"

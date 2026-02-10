@@ -100,7 +100,10 @@ class TestTimelineMerger(unittest.TestCase):
             self._create_event(15, 15, {"app": "Code", "file": "file2.py", "language": "python"}),
         ]
 
-        events_map = {"window": window_events, "vscode": vscode_events}
+        events_map = {
+            "aw-watcher-window_test-host": window_events,
+            "aw-watcher-vscode_test-host": vscode_events,
+        }
 
         # Act
         timeline, _, _ = self.merger.merge_timeline(events_map)
@@ -164,7 +167,10 @@ class TestTimelineMerger(unittest.TestCase):
             )
         ]
 
-        events_map = {"window": window_events, "vscode": vscode_events}
+        events_map = {
+            "aw-watcher-window_test-host": window_events,
+            "aw-watcher-vscode_test-host": vscode_events,
+        }
 
         # Act
         timeline, _, active_projects = self.merger.merge_timeline(events_map)
@@ -191,7 +197,10 @@ class TestTimelineMerger(unittest.TestCase):
             )
         ]
 
-        events_map = {"window": window_events, "aw-watcher-web": web_events}
+        events_map = {
+            "aw-watcher-window_test-host": window_events,
+            "aw-watcher-web-chrome_test-host": web_events,
+        }
 
         # Act
         timeline, _, _ = self.merger.merge_timeline(events_map)
