@@ -33,7 +33,7 @@ export default function CategoriesTab({
 }: CategoriesTabProps) {
   const { t } = useTranslation()
 
-  if (!config?.settings) return null
+  if (!config?.system) return null
 
   return (
     <div className="h-full overflow-y-auto pr-4 space-y-6">
@@ -57,8 +57,8 @@ export default function CategoriesTab({
                   handleSaveConfig(
                     {
                       ...config,
-                      settings: {
-                        ...config.settings,
+                      system: {
+                        ...config.system,
                         category_list: newCategories,
                       },
                     },
@@ -83,8 +83,8 @@ export default function CategoriesTab({
                 await handleSaveConfig(
                   {
                     ...config,
-                    settings: {
-                      ...config.settings,
+                    system: {
+                      ...config.system,
                       category_list: newCategories,
                       category_colors: newColors,
                       break_categories: newBreaks,
@@ -94,8 +94,8 @@ export default function CategoriesTab({
                 )
               }
             }}
-            initialColors={config?.settings?.category_colors}
-            initialBreakCategories={config?.settings?.break_categories}
+            initialColors={config?.system?.category_colors}
+            initialBreakCategories={config?.system?.break_categories}
           />
         </div>
       </Card>

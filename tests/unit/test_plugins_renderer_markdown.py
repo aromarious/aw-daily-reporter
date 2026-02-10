@@ -20,7 +20,7 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
             del os.environ["AW_SUPPRESS_TIMELINE"]
 
         self.renderer = MarkdownRendererPlugin()
-        self.base_config = {"settings": {"break_categories": []}}
+        self.base_config = {"system": {"break_categories": []}}
         self.base_report_data = {
             "date": "2025-01-15",
             "work_stats": {
@@ -81,7 +81,7 @@ class TestMarkdownRendererPlugin(unittest.TestCase):
 
     def test_break_categories_excluded(self):
         """break_categoriesに含まれるカテゴリは除外"""
-        config = {"settings": {"break_categories": ["Break", "Lunch"]}}
+        config = {"system": {"break_categories": ["Break", "Lunch"]}}
         report_data = {
             **self.base_report_data,
             "category_stats": {"Coding": 1800, "Lunch": 900},

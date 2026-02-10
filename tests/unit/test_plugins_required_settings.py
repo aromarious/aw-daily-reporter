@@ -54,12 +54,12 @@ class TestProcessorPluginRequiredSettings(unittest.TestCase):
     """各プロセッサプラグインの required_settings テスト"""
 
     def test_afk_processor_requires_settings(self):
-        """AFKProcessor は settings キーを必要とする"""
+        """AFKProcessor は plugins キーを必要とする"""
         # Arrange
         plugin = AFKProcessor()
 
         # Act & Assert
-        assert plugin.required_settings == ["settings"]
+        assert plugin.required_settings == ["plugins"]
 
     def test_compression_processor_requires_apps(self):
         """CompressionProcessor は apps キーを必要とする"""
@@ -70,12 +70,12 @@ class TestProcessorPluginRequiredSettings(unittest.TestCase):
         assert plugin.required_settings == ["apps"]
 
     def test_project_extraction_processor_requires_settings(self):
-        """ProjectExtractionProcessor は settings キーを必要とする"""
+        """ProjectExtractionProcessor は plugins キーを必要とする"""
         # Arrange
         plugin = ProjectExtractionProcessor()
 
         # Act & Assert
-        assert plugin.required_settings == ["settings"]
+        assert plugin.required_settings == ["plugins"]
 
     def test_project_mapping_processor_requires_maps(self):
         """ProjectMappingProcessor は project_map, client_map, clients キーを必要とする"""
@@ -111,12 +111,12 @@ class TestRendererPluginRequiredSettings(unittest.TestCase):
     """レンダラプラグインの required_settings テスト"""
 
     def test_markdown_renderer_requires_settings(self):
-        """MarkdownRendererPlugin は settings キーを必要とする"""
+        """MarkdownRendererPlugin は system キーを必要とする"""
         # Arrange
         plugin = MarkdownRendererPlugin()
 
         # Act & Assert
-        assert plugin.required_settings == ["settings"]
+        assert plugin.required_settings == ["system"]
 
     def test_json_renderer_requires_nothing(self):
         """JSONRendererPlugin は設定を必要としない"""
@@ -127,12 +127,12 @@ class TestRendererPluginRequiredSettings(unittest.TestCase):
         assert plugin.required_settings == []
 
     def test_ai_renderer_requires_settings(self):
-        """AIRendererPlugin は settings キーを必要とする"""
+        """AIRendererPlugin は plugins キーを必要とする"""
         # Arrange
         plugin = AIRendererPlugin()
 
         # Act & Assert
-        assert plugin.required_settings == ["settings"]
+        assert plugin.required_settings == ["plugins"]
 
 
 class TestRequiredSettingsConsistency(unittest.TestCase):
@@ -141,7 +141,7 @@ class TestRequiredSettingsConsistency(unittest.TestCase):
     def test_all_required_settings_are_valid_config_keys(self):
         """すべてのプラグインの required_settings が有効な AppConfig キーである"""
         # Arrange
-        valid_keys = {"system", "settings", "rules", "project_map", "client_map", "apps", "clients"}
+        valid_keys = {"system", "plugins", "rules", "project_map", "client_map", "apps", "clients"}
         all_plugins = [
             AFKProcessor(),
             CompressionProcessor(),

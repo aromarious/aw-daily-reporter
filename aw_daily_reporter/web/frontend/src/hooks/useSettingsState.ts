@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import useSWR, { mutate } from "swr"
 import type { FullConfig, Rule, Tab } from "@/app/settings/types"
+import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useToast } from "@/contexts/ToastContext"
 import { fetcher } from "@/lib/api"
@@ -61,8 +62,10 @@ export function useSettingsState() {
         rules: config.rules || [],
         projectMap: config.project_map || {},
         clientMap: config.client_map || {},
-        extractionPatterns: config.settings?.project_extraction_patterns || [],
-        categoryList: config.settings?.category_list || [],
+        extractionPatterns:
+          config.plugins?.[PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR]
+            ?.project_extraction_patterns || [],
+        categoryList: config.system?.category_list || [],
       })
     }
   }, [config])

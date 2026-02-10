@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from aw_daily_reporter.shared.settings_manager import AppConfig, PluginParams, SystemConfig
+from aw_daily_reporter.shared.settings_manager import AppConfig, PluginsConfig, SystemConfig
 
 
 class TestCmdReport(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -53,7 +53,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -81,7 +81,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -112,8 +112,12 @@ class TestCmdReport(unittest.TestCase):
 
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
-            system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            plugin_params=PluginParams(default_renderer="AI Context Renderer"),
+            system=SystemConfig(
+                start_of_day="00:00",
+                day_start_source="manual",
+                default_renderer="AI Context Renderer",
+            ),
+            plugins=PluginsConfig(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -139,7 +143,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -163,7 +167,7 @@ class TestCmdReport(unittest.TestCase):
 
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_date_range.side_effect = ValueError("Invalid date")
 
@@ -184,7 +188,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="aw"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_client.return_value.get_setting.return_value = "04:00"
         mock_generator.return_value.run.return_value = ({}, [], [], {})
@@ -206,7 +210,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="06:00", day_start_source="aw"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_client.return_value.get_setting.return_value = None  # AW returns None
         mock_generator.return_value.run.return_value = ({}, [], [], {})
@@ -230,7 +234,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="07:00", day_start_source="aw"),
-            plugin_params=PluginParams(),
+            plugins=PluginsConfig(),
         )
         mock_client.return_value.get_setting.side_effect = Exception("Connection failed")
         mock_generator.return_value.run.return_value = ({}, [], [], {})

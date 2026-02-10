@@ -17,9 +17,10 @@ class TestProjectExtractionProcessor(unittest.TestCase):
 
     def setUp(self):
         self.processor = ProjectExtractionProcessor()
+        plugin_id = self.processor.plugin_id
         self.base_config = {
             "apps": {"editors": ["code", "vim", "emacs"]},
-            "settings": {"project_extraction_patterns": [r"^(?P<project>.+?)\s*\|"]},
+            "plugins": {plugin_id: {"project_extraction_patterns": [r"^(?P<project>.+?)\s*\|"]}},
         }
 
     def _to_df(self, items: list) -> pd.DataFrame:
@@ -40,7 +41,7 @@ class TestProjectExtractionProcessor(unittest.TestCase):
 
     def test_no_editor_apps_config_extracts_with_default(self):
         """editor設定がなくてもデフォルト設定で抽出される"""
-        config = {"apps": {}, "settings": {}}
+        config = {"apps": {}, "plugins": {}}
         item = {"app": "VS Code", "title": "MyProject | file.py", "project": None}
         df = self._to_df([item])
         result = self.processor.process(df, config)
@@ -89,7 +90,7 @@ class TestProjectExtractionProcessor(unittest.TestCase):
         """パターン未設定時はデフォルトパターンを使用"""
         config = {
             "apps": {"editors": ["code"]},
-            "settings": {},  # no patterns
+            "plugins": {},  # no patterns
         }
         item = {"app": "VS Code", "title": "FallbackProject|file.py", "project": None}
         df = self._to_df([item])
@@ -98,13 +99,16 @@ class TestProjectExtractionProcessor(unittest.TestCase):
 
     def test_invalid_regex_pattern_is_skipped(self):
         """無効な正規表現パターンはスキップされる"""
+        plugin_id = self.processor.plugin_id
         config = {
             "apps": {"editors": ["code"]},
-            "settings": {
-                "project_extraction_patterns": [
-                    r"[invalid(",  # 無効なパターン
-                    r"^(?P<project>.+?)\|",  # 有効なパターン
-                ]
+            "plugins": {
+                plugin_id: {
+                    "project_extraction_patterns": [
+                        r"[invalid(",  # 無効なパターン
+                        r"^(?P<project>.+?)\|",  # 有効なパターン
+                    ]
+                }
             },
         }
         item = {"app": "VS Code", "title": "ValidProject|file.py", "project": None}
@@ -114,12 +118,15 @@ class TestProjectExtractionProcessor(unittest.TestCase):
 
     def test_pattern_without_project_group_is_skipped(self):
         """'project'グループがないパターンはスキップ"""
+        plugin_id = self.processor.plugin_id
         config = {
             "apps": {"editors": ["code"]},
-            "settings": {
-                "project_extraction_patterns": [
-                    r"^(.+?)\|",  # 'project'グループなし
-                ]
+            "plugins": {
+                plugin_id: {
+                    "project_extraction_patterns": [
+                        r"^(.+?)\|",  # 'project'グループなし
+                    ]
+                }
             },
         }
         item = {"app": "VS Code", "title": "SomeProject|file.py", "project": None}

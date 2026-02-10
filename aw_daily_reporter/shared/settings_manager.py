@@ -31,14 +31,18 @@ class SystemConfig(BaseModel):
     day_start_source: str = "manual"  # "manual" or "aw"
     start_of_day: str = "00:00"  # HH:MM format
     enabled_bucket_ids: List[str] = Field(default_factory=list)  # 空の場合は全バケット有効
+    # システム全体の設定
+    default_renderer: Optional[str] = None
+    category_list: List[str] = Field(default_factory=list)
+    category_colors: Dict[str, str] = Field(default_factory=dict)
+    break_categories: List[str] = Field(default_factory=list)
     # Legacy fields support if needed, but we migrate them away.
     model_config = ConfigDict(extra="allow")
 
 
-class PluginParams(BaseModel):
-    """プラグイン固有のパラメータを格納するモデル（extra="allow" で任意キーを許容）"""
+class PluginsConfig(BaseModel):
+    """プラグイン固有のパラメータを格納（プラグインID: Dict[str, Any]）"""
 
-    default_renderer: Optional[str] = None
     model_config = ConfigDict(extra="allow")
 
 
@@ -53,13 +57,13 @@ class CategoryRule(BaseModel):
 
 class AppConfig(BaseModel):
     system: SystemConfig = Field(default_factory=SystemConfig)
-    plugin_params: PluginParams = Field(default_factory=PluginParams, alias="settings")
+    plugins: PluginsConfig = Field(default_factory=PluginsConfig)
     rules: List[CategoryRule] = Field(default_factory=list)
     project_map: Dict[str, str] = Field(default_factory=dict)
     client_map: Dict[str, str] = Field(default_factory=dict)
     apps: Dict[str, Any] = Field(default_factory=dict)
     clients: Dict[str, Any] = Field(default_factory=dict)
-    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+    model_config = ConfigDict(extra="ignore")
 
 
 class ConfigStore:
@@ -159,8 +163,12 @@ class ConfigStore:
                 "activitywatch": {"host": "127.0.0.1", "port": 5600},
                 "day_start_source": "manual",
                 "start_of_day": "00:00",
+                "default_renderer": None,
+                "category_list": [],
+                "category_colors": {},
+                "break_categories": [],
             },
-            "settings": {},
+            "plugins": {},
             "rules": [],
             "project_map": {},
             "client_map": {},
@@ -176,8 +184,8 @@ class ConfigStore:
                 # プリセットの内容をマージ（systemは個別にマージして上書き防止）
                 if "system" in preset:
                     cast(Dict[str, Any], default_config["system"]).update(preset["system"])
-                if "settings" in preset:
-                    default_config["settings"] = preset["settings"]
+                if "plugins" in preset:
+                    default_config["plugins"] = preset["plugins"]
                 if "rules" in preset:
                     default_config["rules"] = preset["rules"]
                 if "apps" in preset:
@@ -228,9 +236,8 @@ class ConfigStore:
             delattr(system, "day_start_hour")
             modified = True
 
-        # レガシーレンダラー名をIDに移行
-        plugin_params = self.config.plugin_params
-        default_renderer = plugin_params.default_renderer
+        # レガシーレンダラー名をIDに移行（system.default_renderer を参照）
+        default_renderer = system.default_renderer
         legacy_map = {
             "Markdown Renderer": "aw_daily_reporter.plugins.renderer_markdown.MarkdownRendererPlugin",
             "Markdown レンダラー": "aw_daily_reporter.plugins.renderer_markdown.MarkdownRendererPlugin",
@@ -239,7 +246,7 @@ class ConfigStore:
 
         if default_renderer and default_renderer in legacy_map:
             new_id = legacy_map[default_renderer]
-            plugin_params.default_renderer = new_id
+            system.default_renderer = new_id
             logger.info(f"Migrated default_renderer from '{default_renderer}' to '{new_id}'")
             modified = True
 

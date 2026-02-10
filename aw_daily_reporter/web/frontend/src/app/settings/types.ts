@@ -38,11 +38,23 @@ export interface SystemConfig {
   start_of_day?: string
   aw_start_of_day?: string // Injected from backend
   enabled_bucket_ids?: string[] // Data source bucket filter
+  // システム全体の設定
+  default_renderer?: string
+  category_list?: string[]
+  category_colors?: Record<string, string>
+  break_categories?: string[]
   report?: {
     output_dir?: string
   }
 }
 
+// プラグイン設定のコンテナ型（プラグインID: 設定オブジェクト）
+export interface PluginConfig {
+  [pluginId: string]: any
+}
+
+// 後方互換性のため SettingsConfig を残すが、使用は非推奨
+/** @deprecated Use system.* or plugins[pluginId].* instead */
 export interface SettingsConfig {
   afk_system_apps?: string[]
   break_categories?: string[]
@@ -55,7 +67,8 @@ export interface SettingsConfig {
 
 export interface FullConfig {
   system: SystemConfig
-  settings: SettingsConfig
+  plugins: PluginConfig
+  settings?: SettingsConfig // 後方互換性のため残す
   rules: Rule[]
   categories: Record<string, string>
   project_map: Record<string, string>

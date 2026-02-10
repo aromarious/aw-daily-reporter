@@ -30,7 +30,7 @@ class AIRendererPlugin(RendererPlugin):
 
     @property
     def required_settings(self) -> list[str]:
-        return ["settings"]
+        return ["plugins"]
 
     def render(
         self,
@@ -41,18 +41,11 @@ class AIRendererPlugin(RendererPlugin):
         logger.info(f"[Plugin] Running: {self.name}")
         lines = []
 
-        # 0. System Prompt (from Settings)
-        # config layout is assumed to be { "settings": { "ai_prompt": "..." } } or flattened by manager?
-        # Based on settings_manager.py, config passed here is likely the full unified config.
-        # But wait, Manager calls plugin.render(..., config).
-        # In manager.py: renderer.render(..., config=self.config_manager.load())
-        # So config is the full dict.
-
-        settings = config.get("settings", {})
-        ai_prompt = settings.get("ai_prompt", "")
-        if not ai_prompt:
-            # Fallback: check root (in case of manual config edit)
-            ai_prompt = config.get("ai_prompt", "")
+        # 0. System Prompt (from plugin config)
+        # config layout is the full unified config dict
+        # プラグイン固有の設定を取得
+        plugin_config = config.get("plugins", {}).get(self.plugin_id, {})
+        ai_prompt = plugin_config.get("ai_prompt", "")
         if ai_prompt:
             lines.append(ai_prompt)
             lines.append("")
