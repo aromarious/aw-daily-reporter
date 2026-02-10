@@ -2,7 +2,7 @@
 設定管理モジュール
 
 アプリケーションの設定ファイル(config.json)の読み込み・保存を行う
-シングルトンクラスを提供します。
+シングルトンクラス(ConfigStore)を提供します。
 """
 
 import json
@@ -34,9 +34,11 @@ class SystemConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class SettingsConfig(BaseModel):
+class PluginParams(BaseModel):
+    """プラグイン固有のパラメータを格納するモデル（extra="allow" で任意キーを許容）"""
+
     default_renderer: Optional[str] = None
-    model_config = ConfigDict(extra="allow")  # Allow plugin specific settings
+    model_config = ConfigDict(extra="allow")
 
 
 class CategoryRule(BaseModel):
@@ -50,16 +52,18 @@ class CategoryRule(BaseModel):
 
 class AppConfig(BaseModel):
     system: SystemConfig = Field(default_factory=SystemConfig)
-    settings: SettingsConfig = Field(default_factory=SettingsConfig)
+    plugin_params: PluginParams = Field(default_factory=PluginParams, alias="settings")
     rules: List[CategoryRule] = Field(default_factory=list)
     project_map: Dict[str, str] = Field(default_factory=dict)
     client_map: Dict[str, str] = Field(default_factory=dict)
     apps: Dict[str, Any] = Field(default_factory=dict)
     clients: Dict[str, Any] = Field(default_factory=dict)
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
 
-class SettingsManager:
+class ConfigStore:
+    """config.json の読み書きを担うシングルトンクラス"""
+
     _instance = None
 
     def __init__(self):
@@ -69,7 +73,7 @@ class SettingsManager:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = SettingsManager()
+            cls._instance = ConfigStore()
         return cls._instance
 
     def load(self) -> AppConfig:
@@ -117,7 +121,7 @@ class SettingsManager:
             with tempfile.NamedTemporaryFile("w", dir=CONFIG_DIR, delete=False, encoding="utf-8") as tf:
                 # Dump model to dict/json.
                 # model_dump(mode='json') handles serialization better than json.dump(model.dict())
-                json_data = self.config.model_dump(mode="json")
+                json_data = self.config.model_dump(mode="json", by_alias=True)
                 json.dump(json_data, tf, indent=2, ensure_ascii=False)
                 temp_name = tf.name
 
@@ -189,7 +193,7 @@ class SettingsManager:
             os.makedirs(CONFIG_DIR, exist_ok=True)
             with open(CONFIG_PATH, "w", encoding="utf-8") as f:
                 # Use model_dump to get clean dict
-                json.dump(app_config.model_dump(mode="json"), f, indent=2, ensure_ascii=False)
+                json.dump(app_config.model_dump(mode="json", by_alias=True), f, indent=2, ensure_ascii=False)
             logger.info("Created default config.json")
         except Exception as e:
             logger.error(f"Failed to save default config.json: {e}")
@@ -223,9 +227,9 @@ class SettingsManager:
             delattr(system, "day_start_hour")
             modified = True
 
-        # Migrate legacy renderer names to IDs
-        settings = self.config.settings
-        default_renderer = settings.default_renderer
+        # レガシーレンダラー名をIDに移行
+        plugin_params = self.config.plugin_params
+        default_renderer = plugin_params.default_renderer
         legacy_map = {
             "Markdown Renderer": "aw_daily_reporter.plugins.renderer_markdown.MarkdownRendererPlugin",
             "Markdown レンダラー": "aw_daily_reporter.plugins.renderer_markdown.MarkdownRendererPlugin",
@@ -234,9 +238,8 @@ class SettingsManager:
 
         if default_renderer and default_renderer in legacy_map:
             new_id = legacy_map[default_renderer]
-            settings.default_renderer = new_id
+            plugin_params.default_renderer = new_id
             logger.info(f"Migrated default_renderer from '{default_renderer}' to '{new_id}'")
-            # self.config.settings is already a reference, so modification reflects in self.config
             modified = True
 
         return modified

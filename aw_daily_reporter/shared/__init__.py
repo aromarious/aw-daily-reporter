@@ -16,7 +16,7 @@ from .constants import (
 from .date_utils import get_date_range
 from .i18n import _, get_translator
 from .logging import setup_logging
-from .settings_manager import SettingsManager
+from .settings_manager import ConfigStore
 
 __all__ = [
     "setup_logging",
@@ -29,5 +29,5 @@ __all__ = [
     "get_date_range",
     "_",
     "get_translator",
-    "SettingsManager",
+    "ConfigStore",
 ]

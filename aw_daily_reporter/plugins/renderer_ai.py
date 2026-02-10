@@ -28,6 +28,10 @@ class AIRendererPlugin(RendererPlugin):
     def description(self) -> str:
         return _("Renders a token-efficient, dense text log optimized for AI summarization.")
 
+    @property
+    def required_settings(self) -> list[str]:
+        return ["settings"]
+
     def render(
         self,
         timeline: List[TimelineItem],

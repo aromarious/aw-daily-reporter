@@ -15,7 +15,7 @@ class TestReportFlowIntegration(unittest.TestCase):
     """レポート生成フロー全体の統合テスト"""
 
     @patch("aw_daily_reporter.timeline.generator.AWClient")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     def test_generator_run_flow(self, mock_settings, mock_client):
         """
         データ取得 -> マージ -> レンダリング までの一連の流れを検証

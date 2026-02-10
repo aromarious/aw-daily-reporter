@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from aw_daily_reporter.shared.date_utils import get_date_range
 
 
-# Mock SettingsManager since importing it might trigger file loads
-class MockSettingsManager:
+# Mock ConfigStore since importing it might trigger file loads
+class MockConfigStore:
     _instance = None
 
     def __init__(self):
@@ -20,7 +20,7 @@ class MockSettingsManager:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = MockSettingsManager()
+            cls._instance = MockConfigStore()
         return cls._instance
 
     def load(self):
@@ -31,9 +31,9 @@ class TestDateUtils(unittest.TestCase):
     def setUp(self):
         # We need to patch where it is IMPORTED in date_utils, not where it is defined
         # But wait, date_utils imports it inside the function.
-        # So we patch 'aw_daily_reporter.date_utils.SettingsManager'
+        # So we patch 'aw_daily_reporter.date_utils.ConfigStore'
 
-        self.settings_patcher = patch("aw_daily_reporter.settings_manager.SettingsManager")
+        self.settings_patcher = patch("aw_daily_reporter.settings_manager.ConfigStore")
         self.mock_settings_cls = self.settings_patcher.start()
         self.mock_settings_instance = MagicMock()
         self.mock_settings_cls.get_instance.return_value = self.mock_settings_instance

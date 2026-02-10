@@ -35,6 +35,10 @@ class ProjectMappingProcessor(ProcessorPlugin):
     def description(self) -> str:
         return _("Maps project names and assigns clients based on regular expressions.")
 
+    @property
+    def required_settings(self) -> list[str]:
+        return ["project_map", "client_map", "clients"]
+
     def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
 

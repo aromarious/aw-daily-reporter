@@ -18,7 +18,7 @@ from aw_daily_reporter.shared.logging import get_logger
 
 from ...shared.constants import DEFAULT_CATEGORY, DEFAULT_PROJECT, UNCATEGORIZED_KEYWORDS
 from ...shared.date_utils import get_date_range
-from ...shared.settings_manager import SettingsManager
+from ...shared.settings_manager import ConfigStore
 from ...timeline.generator import TimelineGenerator
 
 bp = Blueprint("main", __name__)
@@ -102,10 +102,10 @@ def get_report():
     system_config = {}
 
     try:
-        from ...shared.settings_manager import SettingsManager
+        from ...shared.settings_manager import ConfigStore
 
-        config_obj = SettingsManager.get_instance().load()
-        config = config_obj.model_dump(mode="json") if hasattr(config_obj, "model_dump") else config_obj
+        config_obj = ConfigStore.get_instance().load()
+        config = config_obj.model_dump(mode="json", by_alias=True) if hasattr(config_obj, "model_dump") else config_obj
         system_config = config.get("system", {})
         day_start_source = system_config.get("day_start_source", "manual")
         manual_start_of_day = system_config.get("start_of_day", "00:00")
@@ -255,11 +255,11 @@ def pipeline_preview():
         system_config = {}
 
         try:
-            from ...shared.settings_manager import SettingsManager
+            from ...shared.settings_manager import ConfigStore
 
-            loaded_config_obj = SettingsManager.get_instance().load()
+            loaded_config_obj = ConfigStore.get_instance().load()
             loaded_config = (
-                loaded_config_obj.model_dump(mode="json")
+                loaded_config_obj.model_dump(mode="json", by_alias=True)
                 if hasattr(loaded_config_obj, "model_dump")
                 else loaded_config_obj
             )
@@ -389,11 +389,11 @@ def pipeline_preview():
 @bp.route("/api/settings", methods=["GET", "POST", "PATCH"])
 def handle_settings():
 
-    manager = SettingsManager.get_instance()
+    manager = ConfigStore.get_instance()
 
     if request.method == "GET":
         config_obj = manager.load()
-        config = config_obj.model_dump(mode="json") if hasattr(config_obj, "model_dump") else config_obj
+        config = config_obj.model_dump(mode="json", by_alias=True) if hasattr(config_obj, "model_dump") else config_obj
 
         # Inject current AW setting for UI display
         if config.get("system", {}).get("day_start_source") == "aw":
@@ -427,7 +427,7 @@ def handle_settings():
             patch_data = request.json
             current_config_obj = manager.load()
             current_config = (
-                current_config_obj.model_dump(mode="json")
+                current_config_obj.model_dump(mode="json", by_alias=True)
                 if hasattr(current_config_obj, "model_dump")
                 else current_config_obj
             )

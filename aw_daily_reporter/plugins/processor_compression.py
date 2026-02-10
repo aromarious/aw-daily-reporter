@@ -34,6 +34,10 @@ class CompressionProcessor(ProcessorPlugin):
     def description(self) -> str:
         return _("Compresses and aggregates consecutive similar timeline items.")
 
+    @property
+    def required_settings(self) -> list[str]:
+        return ["apps"]
+
     def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
 

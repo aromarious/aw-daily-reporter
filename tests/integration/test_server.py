@@ -48,7 +48,7 @@ class TestServerIntegration(unittest.TestCase):
         assert data[0]["name"] == "Test Processor"
 
     @patch("aw_daily_reporter.web.backend.routes.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     def test_timeline_generation(self, mock_settings, mock_generator):
         """/api/report エンドポイントのテスト (Timeline Generation)"""
         # URLパラメータで日付を指定

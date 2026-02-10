@@ -39,6 +39,11 @@ class BasePlugin(ABC):
         """プラグインの説明"""
         return ""
 
+    @property
+    def required_settings(self) -> list[str]:
+        """プラグインが必要とする設定キーのリスト（AppConfigのトップレベルキー）"""
+        return []
+
 
 class ProcessorPlugin(BasePlugin):
     """タイムラインデータを加工するプラグイン"""

@@ -332,9 +332,9 @@ class TestLoadBuiltinConfig(unittest.TestCase):
 class TestLoadConfig(unittest.TestCase):
     """load_config 関数のテスト"""
 
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
-    def test_load_config_delegates_to_settings_manager(self, mock_settings):
-        """load_config が SettingsManager に委譲される"""
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
+    def test_load_config_delegates_to_config_store(self, mock_settings):
+        """load_config が ConfigStore に委譲される"""
         from aw_daily_reporter.timeline.generator import load_config
 
         mock_settings.get_instance.return_value.load.return_value = {"test": "config"}
