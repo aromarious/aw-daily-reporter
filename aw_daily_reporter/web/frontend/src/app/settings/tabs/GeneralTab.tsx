@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card } from "@/components/Card"
 import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useTranslation } from "@/contexts/I18nContext"
@@ -34,6 +35,32 @@ export default function GeneralTab({
 
   // AI Renderer プラグインの有効状態を確認
   const isAIRendererEnabled = isPluginEnabled(PLUGIN_IDS.RENDERER_AI)
+
+  // ローカル state で入力値を管理（controlled component の問題を回避）
+  const [localTimezone, setLocalTimezone] = useState(
+    config.system?.timezone || "",
+  )
+  const [localHost, setLocalHost] = useState(
+    config.system?.activitywatch?.host || "",
+  )
+  const [localPort, setLocalPort] = useState(
+    config.system?.activitywatch?.port || 5600,
+  )
+  const [localDayStartHour, setLocalDayStartHour] = useState(
+    config.system?.day_start_hour ?? 4,
+  )
+  const [localReportDir, setLocalReportDir] = useState(
+    config.system?.report?.output_dir || "",
+  )
+
+  // config が変更されたらローカル state を同期
+  useEffect(() => {
+    setLocalTimezone(config.system?.timezone || "")
+    setLocalHost(config.system?.activitywatch?.host || "")
+    setLocalPort(config.system?.activitywatch?.port || 5600)
+    setLocalDayStartHour(config.system?.day_start_hour ?? 4)
+    setLocalReportDir(config.system?.report?.output_dir || "")
+  }, [config])
 
   if (!config.system) return null
 
@@ -108,8 +135,9 @@ export default function GeneralTab({
               id="sys-timezone"
               type="text"
               className="input input-bordered w-full"
-              value={config.system.timezone || ""}
-              onChange={(e) =>
+              value={localTimezone}
+              onChange={(e) => {
+                setLocalTimezone(e.target.value)
                 handleSaveConfig({
                   ...config,
                   rules: localRules,
@@ -118,7 +146,7 @@ export default function GeneralTab({
                     timezone: e.target.value,
                   },
                 })
-              }
+              }}
             />
           </div>
 
@@ -135,8 +163,9 @@ export default function GeneralTab({
                 type="text"
                 className="input input-bordered flex-1"
                 placeholder="localhost"
-                value={config.system.activitywatch?.host || ""}
-                onChange={(e) =>
+                value={localHost}
+                onChange={(e) => {
+                  setLocalHost(e.target.value)
                   handleSaveConfig({
                     ...config,
                     system: {
@@ -147,14 +176,15 @@ export default function GeneralTab({
                       },
                     },
                   })
-                }
+                }}
               />
               <input
                 type="number"
                 className="input input-bordered w-32"
                 placeholder="5600"
-                value={config.system.activitywatch?.port || 5600}
-                onChange={(e) =>
+                value={localPort}
+                onChange={(e) => {
+                  setLocalPort(Number(e.target.value))
                   handleSaveConfig({
                     ...config,
                     system: {
@@ -165,7 +195,7 @@ export default function GeneralTab({
                       },
                     },
                   })
-                }
+                }}
               />
             </div>
           </div>
@@ -231,8 +261,9 @@ export default function GeneralTab({
               min={0}
               max={23}
               disabled={config.system.day_start_source === "aw"}
-              value={config.system.day_start_hour ?? 4}
-              onChange={(e) =>
+              value={localDayStartHour}
+              onChange={(e) => {
+                setLocalDayStartHour(Number(e.target.value))
                 handleSaveConfig({
                   ...config,
                   system: {
@@ -240,7 +271,7 @@ export default function GeneralTab({
                     day_start_hour: Number(e.target.value),
                   },
                 })
-              }
+              }}
             />
           </div>
 
@@ -255,8 +286,9 @@ export default function GeneralTab({
               id="report-dir"
               type="text"
               className="input input-bordered w-full"
-              value={config.system.report?.output_dir || ""}
-              onChange={(e) =>
+              value={localReportDir}
+              onChange={(e) => {
+                setLocalReportDir(e.target.value)
                 handleSaveConfig({
                   ...config,
                   system: {
@@ -267,7 +299,7 @@ export default function GeneralTab({
                     },
                   },
                 })
-              }
+              }}
             />
           </div>
         </div>
