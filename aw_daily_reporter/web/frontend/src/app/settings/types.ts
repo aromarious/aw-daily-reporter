@@ -5,6 +5,7 @@ export type Tab =
   | "rules"
   | "apps"
   | "plugins"
+  | "datasources"
   | "advanced"
 
 export interface Rule {
@@ -36,6 +37,7 @@ export interface SystemConfig {
   day_start_source?: "manual" | "aw"
   start_of_day?: string
   aw_start_of_day?: string // Injected from backend
+  enabled_bucket_ids?: string[] // Data source bucket filter
   report?: {
     output_dir?: string
   }

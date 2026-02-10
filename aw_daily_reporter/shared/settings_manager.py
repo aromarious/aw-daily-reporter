@@ -30,6 +30,7 @@ class SystemConfig(BaseModel):
     activitywatch: AWPeerConfig = Field(default_factory=AWPeerConfig)
     day_start_source: str = "manual"  # "manual" or "aw"
     start_of_day: str = "00:00"  # HH:MM format
+    enabled_bucket_ids: List[str] = Field(default_factory=list)  # 空の場合は全バケット有効
     # Legacy fields support if needed, but we migrate them away.
     model_config = ConfigDict(extra="allow")
 

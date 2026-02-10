@@ -3,6 +3,7 @@
 import clsx from "clsx"
 import {
   Cpu,
+  Database,
   FileJson,
   FolderGit2,
   ListFilter,
@@ -16,6 +17,7 @@ import { useTranslation } from "@/contexts/I18nContext"
 import { useSettingsState } from "@/hooks/useSettingsState"
 import AdvancedTab from "./tabs/AdvancedTab"
 import CategoriesTab from "./tabs/CategoriesTab"
+import DataSourcesTab from "./tabs/DataSourcesTab"
 import GeneralTab from "./tabs/GeneralTab"
 import PluginsTab from "./tabs/PluginsTab"
 import ProjectsTab from "./tabs/ProjectsTab"
@@ -121,6 +123,13 @@ export default function SettingsPage() {
               activeTab={activeTab}
               onClick={setActiveTab}
             />
+            <TabButton
+              id="datasources"
+              icon={Database}
+              label={t("Data Sources")}
+              activeTab={activeTab}
+              onClick={setActiveTab}
+            />
             <div className="flex-1" />
             <TabButton
               id="advanced"
@@ -178,6 +187,13 @@ export default function SettingsPage() {
             )}
 
             {activeTab === "plugins" && <PluginsTab />}
+
+            {activeTab === "datasources" && (
+              <DataSourcesTab
+                config={config}
+                handleSaveConfig={handleSaveConfig}
+              />
+            )}
 
             {activeTab === "advanced" && (
               <AdvancedTab

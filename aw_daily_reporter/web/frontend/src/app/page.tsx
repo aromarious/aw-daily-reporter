@@ -182,7 +182,7 @@ function DashboardContent() {
         <DashboardCharts
           categoryData={categoryData}
           projectData={projectData}
-          clientStats={report.client_stats || {}}
+          _clientStats={report.client_stats || {}}
           clientColors={clientColors}
           report={report}
           openCards={openCards}

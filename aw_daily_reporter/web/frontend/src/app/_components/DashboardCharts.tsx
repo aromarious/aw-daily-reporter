@@ -13,7 +13,7 @@ const CategoryPieChart = dynamic(() => import("./CategoryPieChart"), {
 interface DashboardChartsProps {
   categoryData: Array<{ name: string; value: number }>
   projectData: Array<{ name: string; value: number }>
-  clientStats: Record<string, number>
+  _clientStats: Record<string, number>
   clientColors: Record<string, string>
   report: {
     client_stats?: Record<string, number>
@@ -29,7 +29,7 @@ interface DashboardChartsProps {
 export function DashboardCharts({
   categoryData,
   projectData,
-  clientStats,
+  _clientStats,
   clientColors,
   report,
   openCards,

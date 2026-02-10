@@ -31,15 +31,15 @@ class TestReportFlowIntegration(unittest.TestCase):
         # 2. AWClientのデータモック
         base_time = datetime(2025, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
 
-        # バケット一覧
+        # バケット一覧（ホスト名込みのバケットID）
         mock_client.return_value.get_buckets.return_value = {
             "aw-watcher-window_test": {"type": "currentwindow"},
             "aw-watcher-afk_test": {"type": "afk"},
         }
 
-        # イベントデータ
+        # イベントデータ（バケットIDをキーとして使用）
         mock_client.return_value.fetch_events.return_value = {
-            "window": [
+            "aw-watcher-window_test": [
                 Event(
                     **{
                         "timestamp": base_time,
@@ -48,7 +48,7 @@ class TestReportFlowIntegration(unittest.TestCase):
                     }
                 )
             ],
-            "afk": [],
+            "aw-watcher-afk_test": [],
         }
 
         # 3. Generatorの実行

@@ -4,7 +4,7 @@ AWClient モジュールのユニットテスト
 
 import unittest
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from aw_daily_reporter.timeline.client import AWClient
 
@@ -55,9 +55,15 @@ class TestAWClient(unittest.TestCase):
 
         assert result is None
 
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.timeline.client.ActivityWatchClient")
-    def test_get_buckets_filters_by_hostname(self, mock_aw_client):
+    def test_get_buckets_filters_by_hostname(self, mock_aw_client, mock_config_store):
         """バケットがホスト名でフィルタリングされる"""
+        # ConfigStore のモック設定
+        mock_config = Mock()
+        mock_config.system.enabled_bucket_ids = []
+        mock_config_store.get_instance.return_value.load.return_value = mock_config
+
         mock_aw_client.return_value.get_buckets.return_value = {
             "aw-watcher-window_testhost": {},
             "aw-watcher-afk_testhost": {},
@@ -68,14 +74,20 @@ class TestAWClient(unittest.TestCase):
         client = AWClient(hostname="testhost")
         buckets = client.get_buckets()
 
-        assert "window" in buckets
-        assert "afk" in buckets
+        assert "aw-watcher-window_testhost" in buckets
+        assert "aw-watcher-afk_testhost" in buckets
         assert "aw-watcher-web-chrome_testhost" in buckets
         assert "aw-watcher-window_otherhost" not in buckets
 
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.timeline.client.ActivityWatchClient")
-    def test_get_buckets_vscode(self, mock_aw_client):
+    def test_get_buckets_vscode(self, mock_aw_client, mock_config_store):
         """VSCode バケットが正しく取得される"""
+        # ConfigStore のモック設定
+        mock_config = Mock()
+        mock_config.system.enabled_bucket_ids = []
+        mock_config_store.get_instance.return_value.load.return_value = mock_config
+
         mock_aw_client.return_value.get_buckets.return_value = {
             "aw-watcher-vscode_testhost": {},
         }
@@ -83,12 +95,18 @@ class TestAWClient(unittest.TestCase):
         client = AWClient(hostname="testhost")
         buckets = client.get_buckets()
 
-        assert "vscode" in buckets
-        assert buckets["vscode"] == "aw-watcher-vscode_testhost"
+        assert "aw-watcher-vscode_testhost" in buckets
+        assert buckets["aw-watcher-vscode_testhost"] == "aw-watcher-vscode_testhost"
 
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.timeline.client.ActivityWatchClient")
-    def test_fetch_events_returns_events_map(self, mock_aw_client):
+    def test_fetch_events_returns_events_map(self, mock_aw_client, mock_config_store):
         """イベントを正しく取得する"""
+        # ConfigStore のモック設定
+        mock_config = Mock()
+        mock_config.system.enabled_bucket_ids = []
+        mock_config_store.get_instance.return_value.load.return_value = mock_config
+
         mock_event = MagicMock()
         mock_aw_client.return_value.get_buckets.return_value = {
             "aw-watcher-window_testhost": {},
@@ -101,12 +119,18 @@ class TestAWClient(unittest.TestCase):
 
         events_map = client.fetch_events(start, end)
 
-        assert "window" in events_map
-        assert events_map["window"] == [mock_event]
+        assert "aw-watcher-window_testhost" in events_map
+        assert events_map["aw-watcher-window_testhost"] == [mock_event]
 
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.timeline.client.ActivityWatchClient")
-    def test_fetch_events_handles_error(self, mock_aw_client):
+    def test_fetch_events_handles_error(self, mock_aw_client, mock_config_store):
         """バケット取得エラー時は空リストを返す"""
+        # ConfigStore のモック設定
+        mock_config = Mock()
+        mock_config.system.enabled_bucket_ids = []
+        mock_config_store.get_instance.return_value.load.return_value = mock_config
+
         mock_aw_client.return_value.get_buckets.return_value = {
             "aw-watcher-window_testhost": {},
         }
@@ -118,8 +142,8 @@ class TestAWClient(unittest.TestCase):
 
         events_map = client.fetch_events(start, end)
 
-        assert "window" in events_map
-        assert events_map["window"] == []
+        assert "aw-watcher-window_testhost" in events_map
+        assert events_map["aw-watcher-window_testhost"] == []
 
 
 if __name__ == "__main__":
