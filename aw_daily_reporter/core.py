@@ -19,15 +19,15 @@ logger = get_logger(__name__, scope="Core")
 def cmd_report(args) -> None:
     """レポートを生成"""
     # Load config to determine day start source
-    from .shared.settings_manager import SettingsManager
+    from .shared.settings_manager import ConfigStore
 
-    config = SettingsManager.get_instance().load()
+    config = ConfigStore.get_instance().load()
     # config is now AppConfig Pydantic model
     system_config = config.system
     day_start_source = system_config.day_start_source
     manual_start_of_day = system_config.start_of_day
 
-    # Fallback for old config using day_start_hour (int) - Removed as SettingsManager handles migration
+    # Fallback for old config using day_start_hour (int) - Removed as ConfigStore handles migration
     # Logic simplified to rely on start_of_day
     pass
 
@@ -69,10 +69,10 @@ def cmd_report(args) -> None:
     _, _, _, outputs = generator.run(start, end, suppress_timeline=not args.verbose, capture_renderers=True)
 
     # Load logic for CLI default
-    from .shared.settings_manager import SettingsManager
+    from .shared.settings_manager import ConfigStore
 
-    config = SettingsManager.get_instance().load()
-    default_renderer = config.settings.default_renderer
+    config = ConfigStore.get_instance().load()
+    default_renderer = config.plugin_params.default_renderer
 
     selected_output = None
 
@@ -306,9 +306,9 @@ def main() -> None:
     # Initialize i18n from config
     try:
         from .shared.i18n import setup_i18n
-        from .shared.settings_manager import SettingsManager
+        from .shared.settings_manager import ConfigStore
 
-        config = SettingsManager.get_instance().load()
+        config = ConfigStore.get_instance().load()
         lang = config.system.language if hasattr(config, "system") else config.get("system", {}).get("language", "en")
         setup_i18n(lang)
     except Exception as e:

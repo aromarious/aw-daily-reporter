@@ -11,14 +11,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from aw_daily_reporter.shared.settings_manager import AppConfig, SettingsConfig, SystemConfig
+from aw_daily_reporter.shared.settings_manager import AppConfig, PluginParams, SystemConfig
 
 
 class TestCmdReport(unittest.TestCase):
     """cmd_report 関数のテストケース"""
 
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_markdown_format(self, mock_date_range, mock_settings, mock_generator):
         """Markdown形式でレポートを出力"""
@@ -27,7 +27,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -44,7 +44,7 @@ class TestCmdReport(unittest.TestCase):
             assert "# Test Report" in output
 
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_json_format_stdout(self, mock_date_range, mock_settings, mock_generator):
         """JSON形式で標準出力に出力"""
@@ -53,7 +53,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -70,7 +70,7 @@ class TestCmdReport(unittest.TestCase):
             assert '{"test": "data"}' in output
 
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_json_format_to_file(self, mock_date_range, mock_settings, mock_generator):
         """JSON形式でファイルに出力"""
@@ -81,7 +81,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -104,7 +104,7 @@ class TestCmdReport(unittest.TestCase):
             os.unlink(temp_path)
 
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_uses_default_renderer(self, mock_date_range, mock_settings, mock_generator):
         """デフォルトレンダラーを使用"""
@@ -113,7 +113,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            settings=SettingsConfig(default_renderer="AI Context Renderer"),
+            plugin_params=PluginParams(default_renderer="AI Context Renderer"),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -130,7 +130,7 @@ class TestCmdReport(unittest.TestCase):
             assert "AI Output" in output
 
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_fallback_to_first_renderer(self, mock_date_range, mock_settings, mock_generator):
         """Markdownレンダラーがない場合は最初のレンダラーを使用"""
@@ -139,7 +139,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_generator.return_value.run.return_value = (
             {},
@@ -155,7 +155,7 @@ class TestCmdReport(unittest.TestCase):
             output = mock_stdout.getvalue()
             assert "Custom Output" in output
 
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_invalid_date_exits(self, mock_date_range, mock_settings):
         """無効な日付でsys.exit(1)"""
@@ -163,7 +163,7 @@ class TestCmdReport(unittest.TestCase):
 
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="manual"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_date_range.side_effect = ValueError("Invalid date")
 
@@ -175,7 +175,7 @@ class TestCmdReport(unittest.TestCase):
 
     @patch("aw_daily_reporter.timeline.client.AWClient")
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_aw_day_start_source(self, mock_date_range, mock_settings, mock_generator, mock_client):
         """ActivityWatchから開始時刻を取得"""
@@ -184,7 +184,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="00:00", day_start_source="aw"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_client.return_value.get_setting.return_value = "04:00"
         mock_generator.return_value.run.return_value = ({}, [], [], {})
@@ -197,7 +197,7 @@ class TestCmdReport(unittest.TestCase):
 
     @patch("aw_daily_reporter.timeline.client.AWClient")
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_aw_day_start_fallback_on_none(self, mock_date_range, mock_settings, mock_generator, mock_client):
         """AW設定がNoneの場合はマニュアル設定にフォールバック"""
@@ -206,7 +206,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="06:00", day_start_source="aw"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_client.return_value.get_setting.return_value = None  # AW returns None
         mock_generator.return_value.run.return_value = ({}, [], [], {})
@@ -219,7 +219,7 @@ class TestCmdReport(unittest.TestCase):
 
     @patch("aw_daily_reporter.timeline.client.AWClient")
     @patch("aw_daily_reporter.core.TimelineGenerator")
-    @patch("aw_daily_reporter.shared.settings_manager.SettingsManager")
+    @patch("aw_daily_reporter.shared.settings_manager.ConfigStore")
     @patch("aw_daily_reporter.core.get_date_range")
     def test_report_aw_day_start_fallback_on_exception(
         self, mock_date_range, mock_settings, mock_generator, mock_client
@@ -230,7 +230,7 @@ class TestCmdReport(unittest.TestCase):
         mock_date_range.return_value = (MagicMock(), MagicMock())
         mock_settings.get_instance.return_value.load.return_value = AppConfig(
             system=SystemConfig(start_of_day="07:00", day_start_source="aw"),
-            settings=SettingsConfig(),
+            plugin_params=PluginParams(),
         )
         mock_client.return_value.get_setting.side_effect = Exception("Connection failed")
         mock_generator.return_value.run.return_value = ({}, [], [], {})

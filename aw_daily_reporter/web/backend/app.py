@@ -12,7 +12,7 @@ from flask import Flask
 
 from aw_daily_reporter.shared.i18n import setup_i18n
 from aw_daily_reporter.shared.logging import get_logger
-from aw_daily_reporter.shared.settings_manager import SettingsManager
+from aw_daily_reporter.shared.settings_manager import ConfigStore
 
 from .routes import bp as main_bp
 
@@ -22,7 +22,7 @@ logger = get_logger(__name__, scope="Server")
 def create_app(test_config=None):
     # Initialize i18n based on config
     try:
-        config = SettingsManager.get_instance().load()
+        config = ConfigStore.get_instance().load()
         # Handle dict or Pydantic object
         lang = config.system.language if hasattr(config, "system") else config.get("system", {}).get("language", "en")
         setup_i18n(lang)

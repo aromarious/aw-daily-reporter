@@ -316,16 +316,16 @@ def load_builtin_config(lang: str = "ja") -> Dict[str, Any]:
 
 def load_config() -> Dict[str, Any]:
     """
-    設定を読み込みます (SettingsManagerへ委譲)。
+    設定を読み込みます (ConfigStoreへ委譲)。
 
     config.json を読み込み、統合された設定を返します。
 
     Returns:
         Unified Config Dictionary
     """
-    from ..shared.settings_manager import SettingsManager
+    from ..shared.settings_manager import ConfigStore
 
-    return SettingsManager.get_instance().load()
+    return ConfigStore.get_instance().load()
 
 
 def main() -> None:
@@ -360,9 +360,9 @@ def main() -> None:
     # Print outputs to stdout for CLI compatibility
     # Print outputs to stdout based on default_renderer setting
     # Load config to get preference
-    from ..settings_manager import SettingsManager
+    from ..shared.settings_manager import ConfigStore
 
-    config = SettingsManager.get_instance().load()
+    config = ConfigStore.get_instance().load()
     if hasattr(config, "model_dump"):
         config = config.model_dump(mode="json")
     default_renderer = config.get("settings", {}).get("default_renderer")
