@@ -162,16 +162,24 @@ aw_daily_reporter/plugins/
 
 ### 4.5 プラグイン開発
 
+各プラグインは `required_settings` プロパティで必要な設定キーを宣言できます。
+詳細は [設定モデルアーキテクチャ](settings-architecture.md) を参照してください。
+
 ```python
 from aw_daily_reporter.plugins.base import ProcessorPlugin
 
 class MyProcessor(ProcessorPlugin):
-    name = "my_processor"
-    description = "カスタム処理を行うプラグイン"
-    
-    def process(self, timeline, config):
-        # timeline を加工して返す
-        return timeline
+    @property
+    def name(self) -> str:
+        return "my_processor"
+
+    @property
+    def required_settings(self) -> list[str]:
+        return ["rules"]  # このプラグインが必要とする AppConfig のキー
+
+    def process(self, df, config):
+        # df を加工して返す
+        return df
 ```
 
 ---
@@ -184,23 +192,33 @@ class MyProcessor(ProcessorPlugin):
 
 ## 6. 設定ファイル
 
+設定モデルの詳細（クラス構成、フィールド定義、プラグインとの紐付け）については [設定モデルアーキテクチャ](settings-architecture.md) を参照してください。
+
 ### 6.1 メイン設定 (`~/.config/aw-daily-reporter/config.json`)
 
 ```json
 {
-  "general": {
+  "system": {
     "language": "ja",
-    "timezone": "Asia/Tokyo"
+    "activitywatch": {
+      "host": "127.0.0.1",
+      "port": 5600
+    },
+    "day_start_source": "manual",
+    "start_of_day": "00:00"
   },
-  "activitywatch": {
-    "host": "127.0.0.1",
-    "port": 5600
+  "settings": {
+    "default_renderer": null
   },
-  "report": {
-    "output_dir": "~/Documents/daily-reports"
-  }
+  "rules": [],
+  "project_map": {},
+  "client_map": {},
+  "apps": {},
+  "clients": {}
 }
 ```
+
+> **注意**: JSON 上の `"settings"` キーは、Python 側では `AppConfig.plugin_params`（`PluginParams` 型）に対応します。
 
 ### 6.2 言語別プリセット (`data/presets/{lang}.json`)
 
@@ -211,20 +229,26 @@ class MyProcessor(ProcessorPlugin):
 
 ## 7. モジュール構成
 
-```
+```text
 aw_daily_reporter/
 ├── __init__.py
-├── __main__.py           # CLI エントリーポイント
-├── core.py               # メインロジック
+├── __main__.py              # CLI エントリーポイント
+├── core.py                  # メインロジック
+├── shared/
+│   ├── settings_manager.py  # 設定管理 (ConfigStore, AppConfig 等)
+│   ├── constants.py         # 定数定義
+│   ├── date_utils.py        # 日付ユーティリティ
+│   ├── i18n.py              # 国際化
+│   └── logging.py           # ログ設定
 ├── timeline/
-│   ├── generator.py      # タイムライン生成
-│   └── models.py         # データモデル
-├── plugins/              # プラグイン
+│   ├── generator.py         # タイムライン生成
+│   └── models.py            # データモデル
+├── plugins/                 # プラグイン
 ├── web/
-│   ├── backend/          # Flask アプリケーション
-│   └── frontend/         # React アプリケーション
+│   ├── backend/             # Flask アプリケーション
+│   └── frontend/            # React アプリケーション
 └── data/
-    └── builtin_config.json
+    └── presets/             # 言語別プリセット設定
 ```
 
 ---
