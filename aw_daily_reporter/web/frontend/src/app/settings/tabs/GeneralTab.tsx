@@ -136,8 +136,8 @@ export default function GeneralTab({
               type="text"
               className="input input-bordered w-full"
               value={localTimezone}
-              onChange={(e) => {
-                setLocalTimezone(e.target.value)
+              onChange={(e) => setLocalTimezone(e.target.value)}
+              onBlur={(e) =>
                 handleSaveConfig({
                   ...config,
                   rules: localRules,
@@ -146,7 +146,7 @@ export default function GeneralTab({
                     timezone: e.target.value,
                   },
                 })
-              }}
+              }
             />
           </div>
 
@@ -164,8 +164,8 @@ export default function GeneralTab({
                 className="input input-bordered flex-1"
                 placeholder="localhost"
                 value={localHost}
-                onChange={(e) => {
-                  setLocalHost(e.target.value)
+                onChange={(e) => setLocalHost(e.target.value)}
+                onBlur={(e) =>
                   handleSaveConfig({
                     ...config,
                     system: {
@@ -176,15 +176,15 @@ export default function GeneralTab({
                       },
                     },
                   })
-                }}
+                }
               />
               <input
                 type="number"
                 className="input input-bordered w-32"
                 placeholder="5600"
                 value={localPort}
-                onChange={(e) => {
-                  setLocalPort(Number(e.target.value))
+                onChange={(e) => setLocalPort(Number(e.target.value))}
+                onBlur={(e) =>
                   handleSaveConfig({
                     ...config,
                     system: {
@@ -195,7 +195,7 @@ export default function GeneralTab({
                       },
                     },
                   })
-                }}
+                }
               />
             </div>
           </div>
@@ -262,8 +262,8 @@ export default function GeneralTab({
               max={23}
               disabled={config.system.day_start_source === "aw"}
               value={localDayStartHour}
-              onChange={(e) => {
-                setLocalDayStartHour(Number(e.target.value))
+              onChange={(e) => setLocalDayStartHour(Number(e.target.value))}
+              onBlur={(e) =>
                 handleSaveConfig({
                   ...config,
                   system: {
@@ -271,7 +271,7 @@ export default function GeneralTab({
                     day_start_hour: Number(e.target.value),
                   },
                 })
-              }}
+              }
             />
           </div>
 
@@ -287,8 +287,8 @@ export default function GeneralTab({
               type="text"
               className="input input-bordered w-full"
               value={localReportDir}
-              onChange={(e) => {
-                setLocalReportDir(e.target.value)
+              onChange={(e) => setLocalReportDir(e.target.value)}
+              onBlur={(e) =>
                 handleSaveConfig({
                   ...config,
                   system: {
@@ -299,7 +299,7 @@ export default function GeneralTab({
                     },
                   },
                 })
-              }}
+              }
             />
           </div>
         </div>
