@@ -31,6 +31,7 @@ class SystemConfig(BaseModel):
     day_start_source: str = "manual"  # "manual" or "aw"
     start_of_day: str = "00:00"  # HH:MM format
     enabled_bucket_ids: List[str] = Field(default_factory=list)  # 空の場合は全バケット有効
+    timezone: Optional[str] = None  # タイムゾーン (例: "Asia/Tokyo", "UTC")
     # システム全体の設定
     default_renderer: Optional[str] = None
     category_list: List[str] = Field(default_factory=list)
