@@ -212,4 +212,5 @@ https://github.com/users/aromarious/projects/6
 - **`/create-pr`**: プルリクエストを作成する
 - **`/complete-pr`**: PR をマージし、後処理を実行する
 - **`/merge-to-main`**: develop を main ブランチにマージする
+- **`/release-tag`**: バージョンタグを作成してリリースを公開する
 - **`/process-dependabot`**: Dependabot PR を処理する
