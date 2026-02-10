@@ -112,6 +112,7 @@ export default function GeneralTab({
               onChange={(e) =>
                 handleSaveConfig({
                   ...config,
+                  rules: localRules,
                   system: {
                     ...config.system,
                     timezone: e.target.value,
