@@ -13,8 +13,18 @@ interface ExtractionPatternListProps {
 interface Entry {
   id: string
   app: string // 空文字列 = 全アプリ、それ以外は正規表現
-  pattern: string // プロジェクト名抽出パターン
+  pattern: string // プロジェクト名抽出パターン（表示用・短縮記法）
   error?: string // パターンのバリデーションエラー
+}
+
+// 短縮記法 {project} を (?P<project>.+?) に展開
+const expandShorthand = (pattern: string): string => {
+  return pattern.replace(/\{project\}/g, "(?P<project>.+?)")
+}
+
+// (?P<project>.+?) を {project} に短縮（表示用）
+const collapseToShorthand = (pattern: string): string => {
+  return pattern.replace(/\(\?P<project>\.\+\?\)/g, "{project}")
 }
 
 const validatePattern = (pattern: string): string | undefined => {
@@ -22,14 +32,17 @@ const validatePattern = (pattern: string): string | undefined => {
   if (typeof pattern !== "string") return undefined
   if (!pattern) return undefined
 
+  // 短縮記法を展開してからバリデーション
+  const expanded = expandShorthand(pattern)
+
   // Check for required Python named group syntax first
-  if (!pattern.includes("?P<project>")) {
-    return "Must include named group (?P<project>...)"
+  if (!expanded.includes("?P<project>")) {
+    return "Must include named group (?P<project>...) or {project}"
   }
 
   // Validate regex syntax (ignoring Python-specific ?P)
   // Python's (?P<name>...) corresponds to JS's (?<name>...)
-  const jsPattern = pattern.replace(/\(\?P</g, "(?<")
+  const jsPattern = expanded.replace(/\(\?P</g, "(?<")
   try {
     new RegExp(jsPattern)
   } catch (_e) {
@@ -57,14 +70,16 @@ export default function ExtractionPatternList({
       for (const [app, patternList] of Object.entries(patterns)) {
         for (const pattern of patternList) {
           const appKey = app === "*" ? "" : app // "*" → 空文字列
-          const cacheKey = `${appKey}|${pattern}`
+          // 表示用に短縮記法に変換
+          const displayPattern = collapseToShorthand(pattern)
+          const cacheKey = `${appKey}|${displayPattern}`
           const id = existingMap.get(cacheKey) || crypto.randomUUID()
 
           newEntries.push({
             id,
             app: appKey,
-            pattern,
-            error: validatePattern(pattern),
+            pattern: displayPattern,
+            error: validatePattern(displayPattern),
           })
         }
       }
@@ -99,8 +114,8 @@ export default function ExtractionPatternList({
   }
 
   const handleAdd = () => {
-    // デフォルトのパターンを設定
-    const defaultPattern = "^(?P<project>.+?)\\|"
+    // デフォルトのパターンを設定（短縮記法）
+    const defaultPattern = "^{project}\\|"
     setEntries((prev) => [
       ...prev,
       { id: crypto.randomUUID(), app: "", pattern: defaultPattern },
@@ -117,10 +132,13 @@ export default function ExtractionPatternList({
 
       const appKey = entry.app.trim() || "*" // 空文字列 → "*"
 
+      // 保存時に短縮記法を展開
+      const expandedPattern = expandShorthand(pattern)
+
       if (!newPatterns[appKey]) {
         newPatterns[appKey] = []
       }
-      newPatterns[appKey].push(pattern)
+      newPatterns[appKey].push(expandedPattern)
     }
 
     onUpdate(newPatterns)
@@ -225,7 +243,7 @@ export default function ExtractionPatternList({
                       ? "border-error bg-error/10 focus:border-error focus:ring-error"
                       : "border-base-content/20",
                   )}
-                  placeholder={t("Regex (e.g. ^(?P<project>.+?)\\|)")}
+                  placeholder={t("Regex (e.g. ^{project}\\|)")}
                   value={entry.pattern}
                   onChange={(e) =>
                     handleUpdatePattern(entry.id, e.target.value)
