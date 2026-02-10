@@ -53,7 +53,8 @@ class AWClient:
 
     def get_buckets(self) -> Dict[str, str]:
         """
-        現在のホスト名に基づいて、関連するバケットIDを特定します。
+        設定に基づいてバケットIDを取得します。
+        enabled_bucket_ids が空の場合は、現在のホスト名に関連する全バケットを返します。
         """
         if not self.client:
             return {}
@@ -64,27 +65,46 @@ class AWClient:
             logger.warning(f"Warning: Failed to connect to ActivityWatch (get_buckets): {e}")
             return {}
 
+        # 設定から有効化するバケットIDのリストを取得
+        from ..shared.settings_manager import ConfigStore
+
+        config = ConfigStore.get_instance().load()
+        enabled_bucket_ids = config.system.enabled_bucket_ids if config.system else []
+
         relevant_buckets = {}
 
-        # Fixed mappings
-        type_prefix_map = {
-            "window": f"aw-watcher-window_{self.hostname}",
-            "afk": f"aw-watcher-afk_{self.hostname}",
-            "vscode": f"aw-watcher-vscode_{self.hostname}",
-        }
-
-        for btype, bid in type_prefix_map.items():
-            if bid in all_buckets:
-                relevant_buckets[btype] = bid
-
-        # Dynamic mapping for web watchers
-        for bid in all_buckets:
-            if bid.startswith("aw-watcher-web") and bid.endswith(f"_{self.hostname}"):
-                # e.g. aw-watcher-web-chrome_hostname -> web-chrome
-                # or just use the bid as keys, but we want to aggregate them later.
-                # Let's use the full bid as key for clarity in aggregation step,
-                # or map them to 'web-chrome', 'web-safari', etc.
-                relevant_buckets[bid] = bid
+        # "__DISABLED__" は全オフを表す特殊マーカー
+        if enabled_bucket_ids and len(enabled_bucket_ids) == 1 and enabled_bucket_ids[0] == "__DISABLED__":
+            # 全オフの場合は空の辞書を返す
+            return {}
+        elif enabled_bucket_ids:
+            # 設定で指定されたバケットIDのみを返す
+            for bucket_id in enabled_bucket_ids:
+                if bucket_id in all_buckets:
+                    # バケットIDをキーとして使用（後方互換性のため、既知のタイプはマッピング）
+                    if bucket_id == f"aw-watcher-window_{self.hostname}":
+                        relevant_buckets["window"] = bucket_id
+                    elif bucket_id == f"aw-watcher-afk_{self.hostname}":
+                        relevant_buckets["afk"] = bucket_id
+                    elif bucket_id == f"aw-watcher-vscode_{self.hostname}":
+                        relevant_buckets["vscode"] = bucket_id
+                    else:
+                        # その他のバケットはバケットIDをそのままキーとして使用
+                        relevant_buckets[bucket_id] = bucket_id
+        else:
+            # 設定が空の場合は、現在のホスト名に関連する全バケットを返す
+            for bid in all_buckets:
+                # ホスト名でフィルタリング（ホスト名を含むバケット、またはホスト名なしのバケット）
+                if f"_{self.hostname}" in bid or "_" not in bid:
+                    # 既知のタイプはマッピング、それ以外はバケットIDをそのままキーとして使用
+                    if bid == f"aw-watcher-window_{self.hostname}":
+                        relevant_buckets["window"] = bid
+                    elif bid == f"aw-watcher-afk_{self.hostname}":
+                        relevant_buckets["afk"] = bid
+                    elif bid == f"aw-watcher-vscode_{self.hostname}":
+                        relevant_buckets["vscode"] = bid
+                    else:
+                        relevant_buckets[bid] = bid
 
         return relevant_buckets
 

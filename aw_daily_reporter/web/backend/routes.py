@@ -450,6 +450,39 @@ def handle_settings():
             return jsonify({"error": str(e)}), 500
 
 
+@bp.route("/api/buckets", methods=["GET"])
+def get_all_buckets():
+    """
+    ActivityWatchから全バケット一覧を取得する
+    """
+    try:
+        from ...timeline.client import AWClient
+
+        client = AWClient()
+        all_buckets = client.client.get_buckets()
+
+        # バケット情報を整形して返す
+        bucket_list = []
+        for bucket_id, bucket_info in all_buckets.items():
+            bucket_list.append(
+                {
+                    "id": bucket_id,
+                    "name": bucket_info.get("name", bucket_id),
+                    "type": bucket_info.get("type", "unknown"),
+                    "hostname": bucket_info.get("hostname", ""),
+                    "created": bucket_info.get("created", ""),
+                }
+            )
+
+        # ID順にソート
+        bucket_list.sort(key=lambda x: x["id"])
+
+        return jsonify({"buckets": bucket_list})
+    except Exception as e:
+        logger.error(f"[API] Failed to fetch buckets: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
 @bp.route("/api/plugins", methods=["GET", "POST"])
 def handle_plugins():
     from ...plugins.config import save_plugin_config

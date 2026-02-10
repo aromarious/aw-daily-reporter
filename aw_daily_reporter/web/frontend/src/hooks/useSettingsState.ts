@@ -77,13 +77,22 @@ export function useSettingsState() {
       "projects",
       "rules",
       "plugins",
+      "datasources",
       "advanced",
     ]
     return VALID_TABS.includes(hash as Tab) ? (hash as Tab) : "general"
   }, [])
 
   useEffect(() => {
-    setActiveTabState(getTabFromHash())
+    // リロード後にローカルストレージから復元
+    const savedTab = localStorage.getItem("settings_active_tab")
+    if (savedTab) {
+      localStorage.removeItem("settings_active_tab")
+      setActiveTabState(savedTab as Tab)
+      window.location.hash = savedTab
+    } else {
+      setActiveTabState(getTabFromHash())
+    }
   }, [getTabFromHash])
 
   const setActiveTab = (tab: Tab) => {

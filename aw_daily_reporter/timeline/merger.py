@@ -169,19 +169,23 @@ class TimelineMerger:
         df_afk = events_to_df(events_map.get("afk", []))
         df_vscode = events_to_df(events_map.get("vscode", []))
 
+        # Web イベントは統合版と個別版の両方を保持
         web_list = []
+        web_buckets = {}
         for key, events in events_map.items():
             if key.startswith("aw-watcher-web"):
                 web_list.extend(events)
+                web_buckets[key] = events_to_df(events)
         df_web = events_to_df(web_list)
 
-        # 2. Snapshot
-        self._create_raw_snapshot(df_window, df_vscode, df_web, df_afk)
+        # 2. Snapshot（バケットごとに個別のレーンを作成）
+        self._create_raw_snapshot(events_map)
 
         # Flood Fill VSCode events
         if not df_vscode.empty:
             df_vscode = self._flood_fill_gap(df_vscode, end_time)
-            self._create_raw_snapshot(df_window, df_vscode, df_web, df_afk, name="Raw Data Sources (Filled)")
+            # df_vscode を events に戻す処理は複雑なので、直接 df を渡す
+            self._create_raw_snapshot_with_filled_vscode(events_map, df_vscode)
 
         # --- OPTIMIZATION START ---
         # Prepare IntervalIndex for fast lookup
@@ -265,14 +269,79 @@ class TimelineMerger:
         timeline.sort(key=lambda x: x.timestamp)
         return timeline, [], active_projects
 
-    def _create_raw_snapshot(self, df_window, df_vscode, df_web, df_afk, name="Raw Data Sources"):
+    def _create_raw_snapshot(self, events_map: Dict[str, List[Event]], name="Raw Data Sources"):
+        """各バケットごとに個別のレーン（カテゴリ）を持つスナップショットを作成"""
         snapshot_raw = []
-        snapshot_raw.extend(self._df_to_items(df_window, "Window", use_category=True))
-        snapshot_raw.extend(self._df_to_items(df_vscode, "VSCode", use_category=True))
-        snapshot_raw.extend(self._df_to_items(df_web, "Web", use_category=True))
-        snapshot_raw.extend(self._df_to_items(df_afk, "AFK", use_category=True))
+
+        # 各バケットを個別に処理
+        for bucket_key, events in events_map.items():
+            df = events_to_df(events)
+            bucket_label = self._get_bucket_label(bucket_key)
+            logger.debug(
+                f"[Merger] Bucket: {bucket_key} -> Label: {bucket_label}, Events: {len(events)}, DF rows: {len(df)}"
+            )
+            if not df.empty:
+                # バケット名を読みやすい形式に変換
+                items = self._df_to_items(df, bucket_label, use_category=True)
+                logger.debug(f"[Merger] -> Created {len(items)} timeline items for {bucket_label}")
+                snapshot_raw.extend(items)
+
+        logger.debug(f"[Merger] Total snapshot items: {len(snapshot_raw)}")
         snapshot_raw.sort(key=lambda x: x.timestamp)
         self.debug_snapshots.append({"name": name, "timeline": snapshot_raw, "plugin": "Data Sources"})
+
+    def _create_raw_snapshot_with_filled_vscode(
+        self, events_map: Dict[str, List[Event]], df_vscode_filled: pd.DataFrame
+    ):
+        """Flood Fill 後の VSCode を含むスナップショットを作成"""
+        snapshot_raw = []
+
+        # 各バケットを個別に処理（VSCode 以外）
+        for bucket_key, events in events_map.items():
+            if bucket_key == "vscode":
+                continue  # VSCode は Flood Fill 済みの df を使用
+            df = events_to_df(events)
+            if not df.empty:
+                bucket_label = self._get_bucket_label(bucket_key)
+                snapshot_raw.extend(self._df_to_items(df, bucket_label, use_category=True))
+
+        # Flood Fill 済み VSCode を追加
+        if not df_vscode_filled.empty:
+            snapshot_raw.extend(self._df_to_items(df_vscode_filled, "VSCode", use_category=True))
+
+        snapshot_raw.sort(key=lambda x: x.timestamp)
+        self.debug_snapshots.append(
+            {
+                "name": "Raw Data Sources (Filled)",
+                "timeline": snapshot_raw,
+                "plugin": "Data Sources",
+            }
+        )
+
+    def _get_bucket_label(self, bucket_key: str) -> str:
+        """バケットキーを読みやすいラベルに変換"""
+        if bucket_key == "window":
+            return "Window"
+        elif bucket_key == "afk":
+            return "AFK"
+        elif bucket_key == "vscode":
+            return "VSCode"
+        elif bucket_key.startswith("aw-watcher-input"):
+            return "Input"
+        elif bucket_key.startswith("aw-stopwatch"):
+            return "Stopwatch"
+        elif bucket_key.startswith("aw-watcher-web-"):
+            # aw-watcher-web-chrome_hostname -> Web: Chrome
+            parts = bucket_key.split("-")
+            if len(parts) >= 4:
+                browser = parts[3].split("_")[0]
+                return f"Web: {browser.capitalize()}"
+            return "Web"
+        elif bucket_key.startswith("aw-watcher-web"):
+            return "Web"
+        else:
+            # その他のバケットはそのまま表示
+            return bucket_key
 
     def _flood_fill_gap(self, df: pd.DataFrame, end_time: datetime = None) -> pd.DataFrame:
         """
