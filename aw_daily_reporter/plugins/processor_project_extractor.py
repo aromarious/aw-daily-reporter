@@ -45,10 +45,14 @@ class ProjectExtractionProcessor(ProcessorPlugin):
 
         # プラグイン固有の設定を取得
         plugin_config = config.get("plugins", {}).get(self.plugin_id, {})
-        extraction_patterns = plugin_config.get("project_extraction_patterns", [])
-        if not extraction_patterns:
-            # Fallback default if not in config? Use generic pipe pattern as a safe default
-            extraction_patterns = [r"^(?P<project>.+?)\|"]
+        extraction_patterns = plugin_config.get("project_extraction_patterns", {})
+
+        # 後方互換性: リスト形式の場合は辞書に変換（すべてのアプリに適用）
+        if isinstance(extraction_patterns, list):
+            extraction_patterns = {"*": extraction_patterns}
+        elif not extraction_patterns:
+            # デフォルトパターン（すべてのアプリに適用）
+            extraction_patterns = {"*": [r"^(?P<project>.+?)\|"]}
 
         # 最初に1回だけコピーを作成（以降は直接変更）
         df = df.copy()
@@ -62,10 +66,22 @@ class ProjectExtractionProcessor(ProcessorPlugin):
         if not mask.any():
             return df
 
-        # titleからプロジェクトを抽出
-        df.loc[mask, "project"] = df.loc[mask, "title"].apply(
-            lambda title: self._extract_project_from_title(title or "", extraction_patterns)
-        )
+        # アプリごとにパターンを適用
+        for app, patterns in extraction_patterns.items():
+            # パターンが文字列の場合はリストに変換
+            if isinstance(patterns, str):
+                patterns = [patterns]
+
+            # 対象行を絞り込み（app="*"の場合はすべて、それ以外は正規表現でマッチング）
+            app_mask = mask if app == "*" else mask & df["app"].str.contains(app, case=False, regex=True, na=False)
+
+            if not app_mask.any():
+                continue
+
+            # titleからプロジェクトを抽出
+            df.loc[app_mask, "project"] = df.loc[app_mask, "title"].apply(
+                lambda title, p=patterns: self._extract_project_from_title(title or "", p)
+            )
 
         return df
 

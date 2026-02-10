@@ -39,7 +39,8 @@ export function useDashboardChartData(data: ReportData | undefined) {
     // Category aggregation
     const categoryMap = new Map<string, number>()
     timeline.forEach((item) => {
-      const cat = item.category || "Other"
+      let cat = item.category || "Other"
+      if (isUncategorized(cat)) cat = "Other"
       categoryMap.set(cat, (categoryMap.get(cat) || 0) + item.duration)
     })
     const categoryData = Array.from(categoryMap.entries())
@@ -50,7 +51,8 @@ export function useDashboardChartData(data: ReportData | undefined) {
     const hourlyMap = new Map<number, Record<string, number>>()
     timeline.forEach((item) => {
       const hour = new Date(item.timestamp).getHours()
-      const cat = item.category || "Other"
+      let cat = item.category || "Other"
+      if (isUncategorized(cat)) cat = "Other"
       if (!hourlyMap.has(hour)) {
         hourlyMap.set(hour, {})
       }
@@ -76,7 +78,13 @@ export function useDashboardChartData(data: ReportData | undefined) {
 
     // Unique categories
     const categories = Array.from(
-      new Set(timeline.map((i) => i.category || "Other")),
+      new Set(
+        timeline.map((i) => {
+          let cat = i.category || "Other"
+          if (isUncategorized(cat)) cat = "Other"
+          return cat
+        }),
+      ),
     )
 
     // Project x Category and Client x Project Aggregation
@@ -132,7 +140,8 @@ function processTimelineData(timeline: TimelineItem[]) {
   timeline.forEach((item) => {
     let project = item.project || "Uncategorized"
     if (isUncategorized(project)) project = "Uncategorized"
-    const category = item.category || "Other"
+    let category = item.category || "Other"
+    if (isUncategorized(category)) category = "Other"
 
     // Project x Category
     if (!projectCategoryMap.has(project)) {

@@ -134,6 +134,71 @@ class TestProjectExtractionProcessor(unittest.TestCase):
         result = self.processor.process(df, config)
         assert pd.isna(result.iloc[0]["project"]) or result.iloc[0]["project"] is None
 
+    def test_app_specific_patterns(self):
+        """アプリごとのパターンが正しく適用されること"""
+        plugin_id = self.processor.plugin_id
+        config = {
+            "plugins": {
+                plugin_id: {
+                    "project_extraction_patterns": {
+                        "*": [r"^(?P<project>.+?)\|"],
+                        "vs.*code": [r"^(?P<project>.+?)\s*-\s*Visual Studio Code"],
+                        "chrome": [r"^(?P<project>.+?)\s*-\s*Google Chrome"],
+                    }
+                }
+            },
+        }
+
+        items = [
+            {"app": "VS Code", "title": "MyProject - Visual Studio Code", "project": None},
+            {"app": "Chrome", "title": "MyProject - Google Chrome", "project": None},
+            {"app": "Terminal", "title": "MyProject|zsh", "project": None},
+        ]
+        df = self._to_df(items)
+        result = self.processor.process(df, config)
+
+        # vs.*code pattern (正規表現でマッチ)
+        assert result.iloc[0]["project"] == "MyProject"
+        # chrome pattern
+        assert result.iloc[1]["project"] == "MyProject"
+        # * pattern
+        assert result.iloc[2]["project"] == "MyProject"
+
+    def test_app_filter_case_insensitive(self):
+        """アプリ名の正規表現マッチングが大文字小文字を区別しないこと"""
+        plugin_id = self.processor.plugin_id
+        config = {
+            "plugins": {plugin_id: {"project_extraction_patterns": {"vs.*code": [r"^(?P<project>.+?)\s*-"]}}},
+        }
+
+        items = [
+            {"app": "VS Code", "title": "MyProject - file", "project": None},
+            {"app": "vs code", "title": "MyProject - file", "project": None},
+            {"app": "VSCODE", "title": "MyProject - file", "project": None},
+        ]
+        df = self._to_df(items)
+        result = self.processor.process(df, config)
+
+        assert result.iloc[0]["project"] == "MyProject"
+        assert result.iloc[1]["project"] == "MyProject"
+        assert result.iloc[2]["project"] == "MyProject"
+
+    def test_backward_compatibility_list_format(self):
+        """旧形式（list）が自動的に変換されること"""
+        plugin_id = self.processor.plugin_id
+        config = {
+            "plugins": {
+                plugin_id: {
+                    "project_extraction_patterns": [r"^(?P<project>.+?)\|"]  # 旧形式
+                }
+            },
+        }
+
+        item = {"app": "VS Code", "title": "MyProject|file.py", "project": None}
+        df = self._to_df([item])
+        result = self.processor.process(df, config)
+        assert result.iloc[0]["project"] == "MyProject"
+
 
 if __name__ == "__main__":
     unittest.main()

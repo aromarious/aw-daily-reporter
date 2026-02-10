@@ -6,14 +6,15 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "@/contexts/I18nContext"
 
 interface ExtractionPatternListProps {
-  patterns: string[]
-  onUpdate: (newPatterns: string[]) => void
+  patterns: Record<string, string[]>
+  onUpdate: (newPatterns: Record<string, string[]>) => void
 }
 
 interface Entry {
   id: string
-  value: string
-  error?: string
+  app: string // 空文字列 = 全アプリ、それ以外は正規表現
+  pattern: string // プロジェクト名抽出パターン
+  error?: string // パターンのバリデーションエラー
 }
 
 const validatePattern = (pattern: string): string | undefined => {
@@ -47,20 +48,41 @@ export default function ExtractionPatternList({
 
   useEffect(() => {
     setEntries((prev) => {
-      const existingMap = new Map(prev.map((e) => [e.value, e.id]))
-      return patterns
-        .filter((p): p is string => typeof p === "string")
-        .map((p) => {
-          const id = existingMap.get(p) || crypto.randomUUID()
-          return { id, value: p, error: validatePattern(p) }
-        })
+      const existingMap = new Map(
+        prev.map((e) => [`${e.app}|${e.pattern}`, e.id]),
+      )
+
+      // Record<string, string[]> を Entry[] に変換
+      const newEntries: Entry[] = []
+      for (const [app, patternList] of Object.entries(patterns)) {
+        for (const pattern of patternList) {
+          const appKey = app === "*" ? "" : app // "*" → 空文字列
+          const cacheKey = `${appKey}|${pattern}`
+          const id = existingMap.get(cacheKey) || crypto.randomUUID()
+
+          newEntries.push({
+            id,
+            app: appKey,
+            pattern,
+            error: validatePattern(pattern),
+          })
+        }
+      }
+      return newEntries
     })
   }, [patterns])
 
-  const handleUpdate = (id: string, newValue: string) => {
+  const handleUpdateApp = (id: string, newApp: string) => {
+    const next = entries.map((entry) =>
+      entry.id === id ? { ...entry, app: newApp } : entry,
+    )
+    setEntries(next)
+  }
+
+  const handleUpdatePattern = (id: string, newPattern: string) => {
     const next = entries.map((entry) =>
       entry.id === id
-        ? { ...entry, value: newValue, error: validatePattern(newValue) }
+        ? { ...entry, pattern: newPattern, error: validatePattern(newPattern) }
         : entry,
     )
     setEntries(next)
@@ -77,14 +99,30 @@ export default function ExtractionPatternList({
   }
 
   const handleAdd = () => {
-    setEntries((prev) => [...prev, { id: crypto.randomUUID(), value: "" }])
+    // デフォルトのパターンを設定
+    const defaultPattern = "^(?P<project>.+?)\\|"
+    setEntries((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), app: "", pattern: defaultPattern },
+    ])
   }
 
   const notifyChange = (currentEntries: Entry[]) => {
-    // Filter out empty strings
-    const newPatterns = currentEntries
-      .map((e) => e.value)
-      .filter((v) => v.trim() !== "")
+    // Entry[] を Record<string, string[]> に変換
+    const newPatterns: Record<string, string[]> = {}
+
+    for (const entry of currentEntries) {
+      const pattern = entry.pattern.trim()
+      if (!pattern) continue // 空のパターンはスキップ
+
+      const appKey = entry.app.trim() || "*" // 空文字列 → "*"
+
+      if (!newPatterns[appKey]) {
+        newPatterns[appKey] = []
+      }
+      newPatterns[appKey].push(pattern)
+    }
+
     onUpdate(newPatterns)
   }
 
@@ -118,9 +156,13 @@ export default function ExtractionPatternList({
 
   return (
     <div className="flex flex-col gap-2">
+      {/* ヘッダー */}
       <div className="flex items-center p-1 mb-1 gap-2">
         <div className="w-6 shrink-0" />
-        <div className="flex-1 min-w-0 px-3 py-2 border border-transparent text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+        <div className="w-48 px-3 py-2 text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+          {t("App Name")}
+        </div>
+        <div className="flex-1 px-3 py-2 text-xs font-semibold text-base-content/40 uppercase tracking-wider">
           {t("Regex Pattern")}
         </div>
         <div className="w-8 shrink-0" />
@@ -150,6 +192,7 @@ export default function ExtractionPatternList({
                   "opacity-50 border-dashed border-primary/50 bg-primary/10",
               )}
             >
+              {/* ドラッグハンドル */}
               <div
                 className="w-6 flex justify-center shrink-0 cursor-move text-base-content/40 hover:text-base-content/80 mt-2"
                 title="Drag to reorder"
@@ -157,6 +200,22 @@ export default function ExtractionPatternList({
                 <GripVertical size={16} />
               </div>
 
+              {/* アプリ名入力 */}
+              <div className="w-48 flex flex-col gap-1">
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 text-sm border border-base-content/20 rounded-md focus:ring-2 focus:ring-primary focus:border-primary placeholder-base-content/40 bg-base-100"
+                  placeholder={t("All Apps")}
+                  value={entry.app}
+                  onChange={(e) => handleUpdateApp(entry.id, e.target.value)}
+                  onBlur={handleBlur}
+                />
+                <div className="text-[10px] text-base-content/40 px-1">
+                  {t("(e.g. vscode, chrome)")}
+                </div>
+              </div>
+
+              {/* パターン入力 */}
               <div className="flex-1 flex flex-col gap-1">
                 <input
                   type="text"
@@ -167,8 +226,10 @@ export default function ExtractionPatternList({
                       : "border-base-content/20",
                   )}
                   placeholder={t("Regex (e.g. ^(?P<project>.+?)\\|)")}
-                  value={entry.value}
-                  onChange={(e) => handleUpdate(entry.id, e.target.value)}
+                  value={entry.pattern}
+                  onChange={(e) =>
+                    handleUpdatePattern(entry.id, e.target.value)
+                  }
                   onBlur={handleBlur}
                 />
                 {entry.error && (
@@ -179,6 +240,7 @@ export default function ExtractionPatternList({
                 )}
               </div>
 
+              {/* 削除ボタン */}
               <button
                 type="button"
                 onClick={() => handleDelete(entry.id)}
@@ -192,6 +254,7 @@ export default function ExtractionPatternList({
         })}
       </ul>
 
+      {/* 追加ボタン */}
       <button
         type="button"
         onClick={handleAdd}

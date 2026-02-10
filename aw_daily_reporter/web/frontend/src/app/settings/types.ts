@@ -53,6 +53,14 @@ export interface PluginConfig {
   [pluginId: string]: any
 }
 
+// プロジェクト抽出パターンの型
+export type ExtractionPatterns = Record<string, string[]> | string[]
+
+// プロジェクト抽出プラグインの設定型
+export interface ProjectExtractorConfig {
+  project_extraction_patterns?: ExtractionPatterns
+}
+
 // 後方互換性のため SettingsConfig を残すが、使用は非推奨
 /** @deprecated Use system.* or plugins[pluginId].* instead */
 export interface SettingsConfig {

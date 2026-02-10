@@ -59,6 +59,7 @@ class CategoryRule(BaseModel):
 class AppConfig(BaseModel):
     system: SystemConfig = Field(default_factory=SystemConfig)
     plugins: PluginsConfig = Field(default_factory=PluginsConfig)
+    plugin_order: List[str] = Field(default_factory=list)  # プラグインIDの順序リスト
     rules: List[CategoryRule] = Field(default_factory=list)
     project_map: Dict[str, str] = Field(default_factory=dict)
     client_map: Dict[str, str] = Field(default_factory=dict)
