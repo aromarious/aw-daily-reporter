@@ -3,6 +3,7 @@
 import { Card } from "@/components/Card"
 import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useTranslation } from "@/contexts/I18nContext"
+import { usePlugins } from "../hooks/usePlugins"
 import type { FullConfig, Rule } from "../types"
 
 interface GeneralTabProps {
@@ -29,6 +30,10 @@ export default function GeneralTab({
   mounted,
 }: GeneralTabProps) {
   const { t } = useTranslation()
+  const { isPluginEnabled } = usePlugins()
+
+  // AI Renderer プラグインの有効状態を確認
+  const isAIRendererEnabled = isPluginEnabled(PLUGIN_IDS.RENDERER_AI)
 
   if (!config.system) return null
 
@@ -268,39 +273,41 @@ export default function GeneralTab({
       </Card>
 
       {/* AI Prompt Settings Block */}
-      <Card title={t("AI Report Settings")} className="mt-6">
-        <label
-          htmlFor="ai-prompt"
-          className="block text-sm font-medium text-base-content/80 mb-1"
-        >
-          {t("Custom Prompt")}
-        </label>
-        <p className="text-xs text-base-content/60 mb-2">
-          {t(
-            "Instructions for the AI when generating the daily report. You can define the tone, focus areas, or specific formatting requirements.",
-          )}
-        </p>
-        <textarea
-          id="ai-prompt"
-          className="textarea textarea-bordered w-full h-32 leading-relaxed"
-          placeholder={t(
-            "e.g., 'Focus on coding activities and provide a summary of the most used languages.'",
-          )}
-          value={config.plugins?.[PLUGIN_IDS.RENDERER_AI]?.ai_prompt || ""}
-          onChange={(e) =>
-            handleSaveConfig({
-              ...config,
-              plugins: {
-                ...config.plugins,
-                [PLUGIN_IDS.RENDERER_AI]: {
-                  ...config.plugins?.[PLUGIN_IDS.RENDERER_AI],
-                  ai_prompt: e.target.value,
+      {isAIRendererEnabled && (
+        <Card title={t("AI Report Settings")} className="mt-6">
+          <label
+            htmlFor="ai-prompt"
+            className="block text-sm font-medium text-base-content/80 mb-1"
+          >
+            {t("Custom Prompt")}
+          </label>
+          <p className="text-xs text-base-content/60 mb-2">
+            {t(
+              "Instructions for the AI when generating the daily report. You can define the tone, focus areas, or specific formatting requirements.",
+            )}
+          </p>
+          <textarea
+            id="ai-prompt"
+            className="textarea textarea-bordered w-full h-32 leading-relaxed"
+            placeholder={t(
+              "e.g., 'Focus on coding activities and provide a summary of the most used languages.'",
+            )}
+            value={config.plugins?.[PLUGIN_IDS.RENDERER_AI]?.ai_prompt || ""}
+            onChange={(e) =>
+              handleSaveConfig({
+                ...config,
+                plugins: {
+                  ...config.plugins,
+                  [PLUGIN_IDS.RENDERER_AI]: {
+                    ...config.plugins?.[PLUGIN_IDS.RENDERER_AI],
+                    ai_prompt: e.target.value,
+                  },
                 },
-              },
-            })
-          }
-        />
-      </Card>
+              })
+            }
+          />
+        </Card>
+      )}
     </div>
   )
 }
