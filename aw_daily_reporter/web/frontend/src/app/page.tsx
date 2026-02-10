@@ -15,8 +15,10 @@ import { DashboardStats } from "@/app/_components/DashboardStats"
 import { FilterBadge } from "@/app/_components/FilterBadge"
 import { NoReportData } from "@/app/_components/NoReportData"
 import { RendererOutputViewer } from "@/app/_components/RendererOutputViewer"
+import { usePlugins } from "@/app/settings/hooks/usePlugins"
 import { Card } from "@/components/Card"
 import TimelineTable from "@/components/TimelineTable"
+import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useToast } from "@/contexts/ToastContext"
 import { useDashboardCards } from "@/hooks/useDashboardCards"
@@ -60,11 +62,23 @@ function DashboardContent() {
   const _searchParams = useSearchParams()
   const { t } = useTranslation()
   const { showToast } = useToast()
+  const { isPluginEnabled } = usePlugins()
 
   const [isDetailedLogOpen, setIsDetailedLogOpen] = useState(true)
 
   // Fetch settings for day start configuration
   const { data: settings } = useSWR<SettingsConfig>("/api/settings", fetcher)
+
+  // プラグインの有効状態を確認
+  const isProjectExtractorEnabled = isPluginEnabled(
+    PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR,
+  )
+  const isProjectMappingEnabled = isPluginEnabled(
+    PLUGIN_IDS.PROCESSOR_PROJECT_MAPPING,
+  )
+
+  // プロジェクト関連機能が有効かどうか
+  const hasProjectFeature = isProjectExtractorEnabled || isProjectMappingEnabled
 
   // Date Navigation
   const {
@@ -208,27 +222,29 @@ function DashboardContent() {
         </Card>
 
         {/* Project x Category Heatmap */}
-        <Card
-          title={t("Project × Category Matrix")}
-          className="overflow-hidden"
-          icon={<Grid3X3 size={18} className="text-primary" />}
-          collapsible
-          isOpen={openCards.has("heatmap")}
-          onToggle={(isOpen) => toggleCard("heatmap", isOpen)}
-        >
-          <ProjectCategoryHeatmap
-            data={heatmapData}
-            onCellClick={(project, category) =>
-              applyFilterWithCollapse({ project, category }, "heatmap")
-            }
-            onProjectClick={(project) =>
-              applyFilterWithCollapse({ project }, "heatmap")
-            }
-            onCategoryClick={(category) =>
-              applyFilterWithCollapse({ category }, "heatmap")
-            }
-          />
-        </Card>
+        {hasProjectFeature && (
+          <Card
+            title={t("Project × Category Matrix")}
+            className="overflow-hidden"
+            icon={<Grid3X3 size={18} className="text-primary" />}
+            collapsible
+            isOpen={openCards.has("heatmap")}
+            onToggle={(isOpen) => toggleCard("heatmap", isOpen)}
+          >
+            <ProjectCategoryHeatmap
+              data={heatmapData}
+              onCellClick={(project, category) =>
+                applyFilterWithCollapse({ project, category }, "heatmap")
+              }
+              onProjectClick={(project) =>
+                applyFilterWithCollapse({ project }, "heatmap")
+              }
+              onCategoryClick={(category) =>
+                applyFilterWithCollapse({ category }, "heatmap")
+              }
+            />
+          </Card>
+        )}
 
         {/* Filter Badge */}
         <FilterBadge filter={filter} clearFilter={clearFilter} />
