@@ -24,170 +24,99 @@ logger = logging.getLogger(__name__)
 
 class PluginManager:
     def __init__(self):
-        from .config import load_plugin_config
+        from ..shared.settings_manager import ConfigStore
 
         self.processors: list[ProcessorPlugin] = []
         self.scanners: list[ScannerPlugin] = []
         self.renderers: list[RendererPlugin] = []
-        self.plugin_config = load_plugin_config()
+        self.config_store = ConfigStore.get_instance()
+        self.config_store.load()  # 設定をロード（マイグレーションも実行）
 
     def _get_ordered_plugins(self, plugins: list[Any]) -> list[Any]:
         """
         設定に基づいてプラグインを並び替え、無効なものを除外する。
         未設定のプラグインがある場合は、デフォルト位置に追加して設定ファイルを更新する。
         """
-        from .config import save_plugin_config
+        # config.json の plugins から設定を取得
+        plugins_model = self.config_store.config.plugins
+        plugins_config = plugins_model.model_dump() if hasattr(plugins_model, "model_dump") else {}
 
-        # 1. 既存の設定があれば、その順序で取り出す
-        # config keeps "plugin_id" (or "slug"/"name" for legacy)
+        # プラグインIDをキーとしたマップを作成（enabled 状態と順序を保持）
         config_map = {}
-        needs_migration = False  # Flag to force save if meaningful changes (like adding plugin_ids) are needed
+        plugin_order = []  # 設定での順序を保持
 
-        seen_ids_check = set()
-
-        if self.plugin_config:
-            for p in self.plugin_config:
-                # plugin_idがなければnameからプラグインを探して設定
-                if "plugin_id" not in p:
-                    found = next((pl for pl in plugins if pl.name == p.get("name")), None)
-                    if found:
-                        p["plugin_id"] = found.plugin_id
-                        needs_migration = True
-
-                # Check for duplicates
-                pid = p.get("plugin_id")
-                if pid:
-                    if pid in seen_ids_check:
-                        needs_migration = True
-                    seen_ids_check.add(pid)
-
-                # Map config by plugin_id (preferred) or legacy key
-                key = p.get("plugin_id") or p.get("name")
-                config_map[key] = p
+        for plugin_id, plugin_settings in plugins_config.items():
+            if isinstance(plugin_settings, dict):
+                config_map[plugin_id] = plugin_settings
+                plugin_order.append(plugin_id)
+            else:
+                # 古い形式（dictでない場合）はスキップ
+                logger.warning(f"Invalid plugin settings for {plugin_id}: {plugin_settings}")
 
         ordered_plugins = []
 
-        # 設定にあるものを追加
-        if self.plugin_config:
-            for cfg in self.plugin_config:
-                cfg_id = cfg.get("plugin_id")
-                cfg_slug = cfg.get("slug")  # Legacy
-                cfg_name = cfg.get("name")  # Legacy
+        # 1. 設定にあるプラグインを順序通りに追加（enabled のみ）
+        for plugin_id in plugin_order:
+            plugin_settings = config_map.get(plugin_id, {})
+            enabled = plugin_settings.get("enabled", True)
 
-                # Find matching plugin instance
-                found = None
-                if cfg_id:
-                    found = next((p for p in plugins if p.plugin_id == cfg_id), None)
-                elif cfg_slug:
-                    # Try to match by legacy slug map if we can't find by ID (though we should have migrated above)
-                    # Actually we removed slug from plugins, so we can only match by ID now.
-                    # But if we successfully migrated it in the loop above, cfg needs to be read from the updated p?
-                    # The loop above updated the dict objects in self.plugin_config references.
-                    # So cfg["plugin_id"] should be set if migration worked.
-                    pass
-                elif cfg_name:
-                    # Legacy fallback: match by name
-                    found = next((p for p in plugins if p.name == cfg_name), None)
-
-                if found and cfg.get("enabled", True):
+            if enabled:
+                # プラグインインスタンスを検索
+                found = next((p for p in plugins if p.plugin_id == plugin_id), None)
+                if found:
                     ordered_plugins.append(found)
 
         # 2. 設定にない（新規検出された）プラグインを特定
-        # Plugins that are NOT in config_map (checked by plugin_id)
-        new_plugins = []
-        for p in plugins:
-            if p.plugin_id not in config_map:
-                # Also check legacy keys in config_map just in case extraction failed but it's there
-                # (unlikely if migration logic is sound)
-                new_plugins.append(p)
+        new_plugins = [p for p in plugins if p.plugin_id not in config_map]
 
-        # 新規がある場合、または設定ファイル自体がない場合は設定を生成・更新
-        if new_plugins or not self.plugin_config or needs_migration:
+        # 新規プラグインがある場合、設定に追加
+        if new_plugins:
             # 新規プラグインのデフォルト順序決定
-            # AFK Processing は処理の性質上、先頭であることが望ましい
             afk_pid = "aw_daily_reporter.plugins.processor_afk.AFKProcessor"
             afk_plugin = next((p for p in new_plugins if p.plugin_id == afk_pid), None)
-
-            # リスト構築
-            new_config_list = list(self.plugin_config) if self.plugin_config else []
 
             # AFKが新規なら、設定の先頭に挿入
             if afk_plugin:
                 new_plugins.remove(afk_plugin)
-                new_config_list.insert(0, {"plugin_id": afk_plugin.plugin_id, "enabled": True})
+                plugins_config[afk_plugin.plugin_id] = {"enabled": True}
+                plugin_order.insert(0, afk_plugin.plugin_id)
                 if afk_plugin not in ordered_plugins:
                     ordered_plugins.insert(0, afk_plugin)
 
-            # Project Extraction が新規なら、Project Mapping の前に挿入を試みる
+            # Project Extraction が新規なら、Project Mapping の前に挿入
             extractor_pid = "aw_daily_reporter.plugins.processor_project_extractor.ProjectExtractionProcessor"
             extractor_plugin = next((p for p in new_plugins if p.plugin_id == extractor_pid), None)
-
             mapping_pid = "aw_daily_reporter.plugins.processor_project_mapping.ProjectMappingProcessor"
 
             if extractor_plugin:
                 new_plugins.remove(extractor_plugin)
+                plugins_config[extractor_plugin.plugin_id] = {"enabled": True}
 
-                # 挿入位置を探す
-                target_index = -1
-                for i, item in enumerate(new_config_list):
-                    # Check by ID
-                    pid = item.get("plugin_id")
-                    # Also check legacy name just in case
-                    n = item.get("name")
-                    if pid == mapping_pid or n in [
-                        "Project Mapping",
-                        "プロジェクトマッピング",
-                    ]:
-                        target_index = i
-                        break
-
-                if target_index >= 0:
-                    new_config_list.insert(
-                        target_index,
-                        {"plugin_id": extractor_plugin.plugin_id, "enabled": True},
-                    )
+                # Project Mapping の前に挿入
+                if mapping_pid in plugin_order:
+                    target_index = plugin_order.index(mapping_pid)
+                    plugin_order.insert(target_index, extractor_plugin.plugin_id)
                 else:
-                    new_config_list.append({"plugin_id": extractor_plugin.plugin_id, "enabled": True})
+                    plugin_order.append(extractor_plugin.plugin_id)
 
                 ordered_plugins.append(extractor_plugin)
 
-            # その他の新規は末尾に追加
+            # その他の新規プラグインは末尾に追加
             for p in new_plugins:
-                new_config_list.append({"plugin_id": p.plugin_id, "enabled": True})
+                plugins_config[p.plugin_id] = {"enabled": True}
+                plugin_order.append(p.plugin_id)
                 ordered_plugins.append(p)
 
-            # Dedup config list by plugin_id (keep first occurrence)
-            seen_ids = set()
-            deduped_config = []
-            for item in new_config_list:
-                s = item.get("plugin_id")
-                if s:
-                    if s in seen_ids:
-                        continue
-                    seen_ids.add(s)
-
-                # Cleanup legacy keys if plugin_id is present
-                if s:
-                    if "slug" in item:
-                        del item["slug"]
-                    if "name" in item:
-                        del item["name"]  # Cleanup name
-
-                deduped_config.append(item)
-            new_config_list = deduped_config
-
-            # 設定ファイルに書き込み (永続化)
+            # 設定を保存
             try:
-                save_plugin_config(new_config_list)
-                logger.info("Updated plugins.json with info.")
-                # メモリ上の設定も更新
-                self.plugin_config = new_config_list
-            except Exception as e:
-                logger.error(f"Failed to auto-update plugins.json: {e}")
+                # plugins_config を ConfigStore に反映
+                for plugin_id, settings in plugins_config.items():
+                    setattr(self.config_store.config.plugins, plugin_id, settings)
 
-        else:
-            # 新規がない場合でも、ordered_plugins には「設定で有効かつ存在するもの」しか入っていない。
-            pass
+                self.config_store.save()
+                logger.info("Updated plugin settings in config.json")
+            except Exception as e:
+                logger.error(f"Failed to auto-update plugin config: {e}")
 
         return ordered_plugins
 

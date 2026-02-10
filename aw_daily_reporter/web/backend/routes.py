@@ -485,52 +485,57 @@ def get_all_buckets():
 
 @bp.route("/api/plugins", methods=["GET", "POST"])
 def handle_plugins():
-    from ...plugins.config import save_plugin_config
     from ...plugins.manager import PluginManager
+    from ...shared.settings_manager import ConfigStore
 
     manager = PluginManager()
+    config_store = ConfigStore.get_instance()
+
     # Ensure all available plugins (built-in + user) are loaded and synced with config
     manager.sync_plugins()
 
     # Create map by plugin_id for easy lookup
     plugin_map = {p.plugin_id: p for p in manager.processors + manager.scanners + manager.renderers}
 
+    # config.json の plugins から設定を取得
+    plugins_model = config_store.config.plugins
+    plugins_config = plugins_model.model_dump() if hasattr(plugins_model, "model_dump") else {}
+
     if request.method == "GET":
         response_list = []
 
         # 1. Add plugins based on config order
         # This ensures the order from the config is respected
-        if manager.plugin_config:
-            for cfg_entry in manager.plugin_config:
-                plugin_id = cfg_entry.get("plugin_id")
+        for plugin_id, plugin_settings in plugins_config.items():
+            if not isinstance(plugin_settings, dict):
+                continue
 
-                if plugin_id and plugin_id in plugin_map:
-                    p = plugin_map[plugin_id]
+            if plugin_id in plugin_map:
+                p = plugin_map[plugin_id]
 
-                    # Determine plugin type
-                    p_type = "unknown"
-                    if p in manager.processors:
-                        p_type = "processor"
-                    elif p in manager.scanners:
-                        p_type = "scanner"
-                    elif p in manager.renderers:
-                        p_type = "renderer"
+                # Determine plugin type
+                p_type = "unknown"
+                if p in manager.processors:
+                    p_type = "processor"
+                elif p in manager.scanners:
+                    p_type = "scanner"
+                elif p in manager.renderers:
+                    p_type = "renderer"
 
-                    source_type = "Built-in" if p.__class__.__module__.startswith("aw_daily_reporter") else "User"
+                source_type = "Built-in" if p.__class__.__module__.startswith("aw_daily_reporter") else "User"
 
-                    response_list.append(
-                        {
-                            "plugin_id": p.plugin_id,
-                            "name": p.name,
-                            "type": p_type,
-                            "description": p.description,
-                            "source": source_type,
-                            "enabled": cfg_entry.get("enabled", True),
-                        }
-                    )
-                    # Remove from map to track what's left (plugins not in config yet)
-                    if plugin_id in plugin_map:
-                        del plugin_map[plugin_id]
+                response_list.append(
+                    {
+                        "plugin_id": p.plugin_id,
+                        "name": p.name,
+                        "type": p_type,
+                        "description": p.description,
+                        "source": source_type,
+                        "enabled": plugin_settings.get("enabled", True),
+                    }
+                )
+                # Remove from map to track what's left (plugins not in config yet)
+                del plugin_map[plugin_id]
 
         # 2. Append remaining plugins (defaults, not in config yet)
         # These are plugins that exist but haven't been explicitly configured/ordered by the user.
@@ -567,28 +572,35 @@ def handle_plugins():
         # Expected: [{"plugin_id": "...", "enabled": true, "name": "..."}]
         new_config = request.json
 
-        # Validate and clean config
-        cleaned_config = []
+        # Validate and update config
         for item in new_config:
             if "plugin_id" not in item:
                 logger.warning(f"Skipping config item due to missing 'plugin_id': {item}")
                 continue
 
+            plugin_id = item["plugin_id"]
+            enabled = item.get("enabled", True)
+
             # Verify plugin exists
-            if item["plugin_id"] not in plugin_map:
-                logger.warning(f"Trying to save config for unknown plugin: {item['plugin_id']}")
+            if plugin_id not in plugin_map:
+                logger.warning(f"Trying to save config for unknown plugin: {plugin_id}")
                 continue
 
-            plugin_map[item["plugin_id"]]
+            # プラグイン設定を取得または作成
+            if plugin_id in plugins_config:
+                plugin_settings = plugins_config[plugin_id]
+                if isinstance(plugin_settings, dict):
+                    plugin_settings["enabled"] = enabled
+                else:
+                    plugin_settings = {"enabled": enabled}
+            else:
+                plugin_settings = {"enabled": enabled}
 
-            cleaned_config.append({"plugin_id": item["plugin_id"], "enabled": item.get("enabled", True)})
+            # ConfigStore に反映
+            setattr(config_store.config.plugins, plugin_id, plugin_settings)
 
         try:
-            from aw_daily_reporter.plugins.config import save_plugin_config
-
-            save_plugin_config(cleaned_config)
-            # Update manager's in-memory config too
-            manager.plugin_config = cleaned_config
+            config_store.save()
             return jsonify({"status": "success"})
         except Exception as e:
             logger.error(f"Error saving plugin config: {e}")

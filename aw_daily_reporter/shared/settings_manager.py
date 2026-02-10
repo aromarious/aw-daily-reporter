@@ -107,6 +107,9 @@ class ConfigStore:
                     return self.config
                 raise e
 
+        # plugins.json からのマイグレーション
+        self._migrate_plugins_json()
+
         # Normalize/Migrate config immediately after load
         if self._cleanup_before_save():
             self.save()
@@ -208,6 +211,85 @@ class ConfigStore:
             logger.error(f"Failed to save default config.json: {e}")
 
         return app_config
+
+    def _migrate_plugins_json(self) -> None:
+        """plugins.json が存在する場合、config.json の plugins に統合します。"""
+        plugins_json_path = os.path.join(CONFIG_DIR, "plugins.json")
+
+        if not os.path.exists(plugins_json_path):
+            # plugins.json が存在しない場合でも、既存のプラグイン設定に enabled を追加
+            self._ensure_all_plugins_have_enabled()
+            return
+
+        try:
+            with open(plugins_json_path, encoding="utf-8") as f:
+                plugins_list = json.load(f)
+
+            if not isinstance(plugins_list, list):
+                logger.warning("plugins.json is not a list. Skipping migration.")
+                return
+
+            # config.json の plugins を dict として取得（Pydanticモデル経由）
+            plugins_dict = self.config.plugins.model_dump() if hasattr(self.config.plugins, "model_dump") else {}
+
+            migrated_count = 0
+            for plugin_entry in plugins_list:
+                if not isinstance(plugin_entry, dict):
+                    continue
+
+                plugin_id = plugin_entry.get("plugin_id")
+                enabled = plugin_entry.get("enabled", True)
+
+                if not plugin_id:
+                    continue
+
+                # プラグイン設定が既に存在する場合、enabled フィールドを追加
+                if plugin_id in plugins_dict:
+                    if not isinstance(plugins_dict[plugin_id], dict):
+                        plugins_dict[plugin_id] = {"enabled": enabled}
+                        migrated_count += 1
+                    elif "enabled" not in plugins_dict[plugin_id]:
+                        plugins_dict[plugin_id]["enabled"] = enabled
+                        migrated_count += 1
+                else:
+                    # プラグイン設定が存在しない場合、新規作成
+                    plugins_dict[plugin_id] = {"enabled": enabled}
+                    migrated_count += 1
+
+            if migrated_count > 0:
+                # 更新された plugins_dict を config に反映
+                # PluginsConfig は extra="allow" なので、任意のキーを設定可能
+                for key, value in plugins_dict.items():
+                    setattr(self.config.plugins, key, value)
+
+                logger.info(f"Migrated {migrated_count} plugins from plugins.json to config.json")
+
+                # plugins.json をバックアップとして保存
+                backup_path = plugins_json_path + ".backup"
+                shutil.copy(plugins_json_path, backup_path)
+                logger.info(f"Backed up plugins.json to {backup_path}")
+
+                # 元の plugins.json を削除
+                os.remove(plugins_json_path)
+                logger.info("Removed plugins.json after migration")
+
+        except Exception as e:
+            logger.error(f"Failed to migrate plugins.json: {e}")
+            # マイグレーションに失敗しても処理は続行
+
+    def _ensure_all_plugins_have_enabled(self) -> None:
+        """すべてのプラグイン設定に enabled フィールドがあることを確認します。"""
+        plugins_dict = self.config.plugins.model_dump() if hasattr(self.config.plugins, "model_dump") else {}
+        modified = False
+
+        for plugin_id, plugin_settings in plugins_dict.items():
+            if isinstance(plugin_settings, dict) and "enabled" not in plugin_settings:
+                plugin_settings["enabled"] = True
+                setattr(self.config.plugins, plugin_id, plugin_settings)
+                modified = True
+
+        if modified:
+            logger.info("Added enabled field to plugins missing it")
 
     def _cleanup_before_save(self) -> bool:
         """保存前に不要なキーや一時的なキーを削除・整理します。変更があった場合はTrueを返します。"""
