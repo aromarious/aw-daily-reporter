@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useSettingsState } from "@/hooks/useSettingsState"
 
 // Mock dependencies
@@ -35,14 +36,18 @@ import useSWR from "swr"
 
 describe("useSettingsState", () => {
   const mockConfig = {
-    system: { language: "en" },
+    system: {
+      language: "en",
+      category_list: ["Category A"],
+    },
+    plugins: {
+      [PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR]: {
+        project_extraction_patterns: ["^test"],
+      },
+    },
     rules: [{ keyword: "test", category: "Test", project: "TestProj" }],
     project_map: { "Old Project": "New Project" },
     client_map: { "New Project": "Client A" },
-    settings: {
-      project_extraction_patterns: ["^test"],
-      category_list: ["Category A"],
-    },
   }
 
   beforeEach(() => {
@@ -61,10 +66,11 @@ describe("useSettingsState", () => {
     expect(result.current.localProjectMap).toEqual(mockConfig.project_map)
     expect(result.current.localClientMap).toEqual(mockConfig.client_map)
     expect(result.current.localExtractionPatterns).toEqual(
-      mockConfig.settings.project_extraction_patterns,
+      mockConfig.plugins[PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR]
+        .project_extraction_patterns,
     )
     expect(result.current.localCategoryList).toEqual(
-      mockConfig.settings.category_list,
+      mockConfig.system.category_list,
     )
   })
 

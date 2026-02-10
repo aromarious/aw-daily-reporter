@@ -9,8 +9,8 @@ export function ConfigInitializer() {
   const { data: config } = useSWR("/api/settings", fetcher)
 
   useEffect(() => {
-    if (config?.settings?.category_colors) {
-      setCustomCategoryColors(config.settings.category_colors)
+    if (config?.system?.category_colors) {
+      setCustomCategoryColors(config.system.category_colors)
     }
   }, [config])
 

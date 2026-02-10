@@ -1,7 +1,31 @@
 {
   "system": {
     "language": "ja",
-    "day_start_source": "aw"
+    "day_start_source": "aw",
+    "default_renderer": null,
+    "category_list": [
+      "コーディング",
+      "ブラウジング",
+      "コミュニケーション",
+      "ミーティング",
+      "エンターテインメント",
+      "動画",
+      "ゲーム",
+      "AFK",
+      "執筆",
+      "デザイン",
+      "学習",
+      "調査",
+      "管理",
+      "その他"
+    ],
+    "category_colors": {},
+    "break_categories": [
+      "AFK",
+      "エンターテインメント",
+      "動画",
+      "ゲーム"
+    ]
   },
   "apps": {
     "editors": [
@@ -24,32 +48,15 @@
       "webex"
     ]
   },
-  "settings": {
-    "project_extraction_patterns": [
-      "^(?P<project>.+?)\\|"
-    ],
-    "break_categories": [
-      "AFK",
-      "エンターテインメント",
-      "動画",
-      "ゲーム"
-    ],
-    "category_list": [
-      "コーディング",
-      "ブラウジング",
-      "コミュニケーション",
-      "ミーティング",
-      "エンターテインメント",
-      "動画",
-      "ゲーム",
-      "AFK",
-      "執筆",
-      "デザイン",
-      "学習",
-      "調査",
-      "管理",
-      "その他"
-    ]
+  "plugins": {
+    "aw_daily_reporter.plugins.processor_project_extractor.ProjectExtractionProcessor": {
+      "project_extraction_patterns": [
+        "^(?P<project>.+?)\\|"
+      ]
+    },
+    "aw_daily_reporter.plugins.processor_afk.AFKProcessor": {
+      "afk_system_apps": []
+    }
   },
   "rules": [
     {

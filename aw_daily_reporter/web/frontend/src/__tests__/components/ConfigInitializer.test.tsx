@@ -23,7 +23,7 @@ describe("ConfigInitializer", () => {
   it("test_ConfigInitializer_ConfigWithColors_CallsSetColors", async () => {
     // Arrange
     const mockConfig = {
-      settings: {
+      system: {
         category_colors: { Category1: "#ffffff" },
       },
     }
@@ -41,7 +41,7 @@ describe("ConfigInitializer", () => {
     // Assert
     await waitFor(() => {
       expect(setCustomCategoryColors).toHaveBeenCalledWith(
-        mockConfig.settings.category_colors,
+        mockConfig.system.category_colors,
       )
     })
   })
@@ -77,9 +77,9 @@ describe("ConfigInitializer", () => {
   it("test_ConfigInitializer_ConfigWithoutColors_DoesNotCallSetColors", async () => {
     // Arrange
     const mockConfig = {
-      settings: {
+      system: {
         // category_colors missing
-        theme: "dark",
+        language: "ja",
       },
     }
 

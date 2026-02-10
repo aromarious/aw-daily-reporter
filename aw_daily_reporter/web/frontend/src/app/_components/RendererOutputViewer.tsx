@@ -21,7 +21,7 @@ export function RendererOutputViewer({
 
   // Define config type for SWR
   interface Config {
-    settings?: {
+    system?: {
       default_renderer?: string
     }
   }
@@ -32,10 +32,10 @@ export function RendererOutputViewer({
   // Load initial active key from settings or default to first available
   useEffect(() => {
     if (
-      config?.settings?.default_renderer &&
-      keys.includes(config.settings.default_renderer)
+      config?.system?.default_renderer &&
+      keys.includes(config.system.default_renderer)
     ) {
-      setActiveKey(config.settings.default_renderer)
+      setActiveKey(config.system.default_renderer)
     }
   }, [config, keys])
 
@@ -51,7 +51,7 @@ export function RendererOutputViewer({
     // Persist selection
     try {
       await api.patch("/api/settings", {
-        settings: {
+        system: {
           default_renderer: key,
         },
       })
@@ -61,8 +61,8 @@ export function RendererOutputViewer({
           "/api/settings",
           {
             ...config,
-            settings: {
-              ...config.settings,
+            system: {
+              ...config.system,
               default_renderer: key,
             },
           },

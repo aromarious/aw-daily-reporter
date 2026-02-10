@@ -49,7 +49,7 @@ class TimelineStatsCalculator:
         end = max(item.timestamp + timedelta(seconds=item.duration) for item in timeline)
         total_span = (end - start).total_seconds()
 
-        break_categories = config.get("settings", {}).get("break_categories", [])
+        break_categories = config.get("system", {}).get("break_categories", [])
 
         # 2. Filter out explicit AFK events to        # "Active Time" (events that are NOT AFK)
         # Note: Some active events might have category="AFK"

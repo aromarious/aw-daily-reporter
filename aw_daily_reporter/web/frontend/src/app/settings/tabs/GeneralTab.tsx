@@ -1,6 +1,7 @@
 "use client"
 
 import { Card } from "@/components/Card"
+import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useTranslation } from "@/contexts/I18nContext"
 import type { FullConfig, Rule } from "../types"
 
@@ -285,13 +286,16 @@ export default function GeneralTab({
           placeholder={t(
             "e.g., 'Focus on coding activities and provide a summary of the most used languages.'",
           )}
-          value={config.settings?.ai_prompt || ""}
+          value={config.plugins?.[PLUGIN_IDS.RENDERER_AI]?.ai_prompt || ""}
           onChange={(e) =>
             handleSaveConfig({
               ...config,
-              settings: {
-                ...config.settings,
-                ai_prompt: e.target.value,
+              plugins: {
+                ...config.plugins,
+                [PLUGIN_IDS.RENDERER_AI]: {
+                  ...config.plugins?.[PLUGIN_IDS.RENDERER_AI],
+                  ai_prompt: e.target.value,
+                },
               },
             })
           }

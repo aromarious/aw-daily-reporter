@@ -163,7 +163,7 @@ class TestTimelineGenerator(unittest.TestCase):
             self._create_item(0, 60),
             self._create_item(60, 30, category="Lunch"),
         ]
-        config = {"settings": {"break_categories": ["Lunch"]}}
+        config = {"system": {"break_categories": ["Lunch"]}}
 
         # Act
         stats = self.generator.analyze_working_hours(timeline, config)

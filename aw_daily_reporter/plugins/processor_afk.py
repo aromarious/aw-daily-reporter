@@ -45,7 +45,7 @@ class AFKProcessor(ProcessorPlugin):
 
     @property
     def required_settings(self) -> list[str]:
-        return ["settings"]
+        return ["plugins"]
 
     def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
@@ -54,7 +54,8 @@ class AFKProcessor(ProcessorPlugin):
 
         # Get system apps from config or use default
         system_apps = set(self.SYSTEM_APPS)
-        configured_apps = config.get("settings", {}).get("afk_system_apps", [])
+        plugin_config = config.get("plugins", {}).get(self.plugin_id, {})
+        configured_apps = plugin_config.get("afk_system_apps", [])
         if configured_apps:
             system_apps = {a.lower() for a in configured_apps}
 

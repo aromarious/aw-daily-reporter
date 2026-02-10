@@ -14,7 +14,7 @@ class TestAIRendererPlugin(unittest.TestCase):
 
     def setUp(self):
         self.renderer = AIRendererPlugin()
-        self.base_config = {"settings": {}}
+        self.base_config = {"plugins": {}}
         self.base_report_data = {
             "date": "2025-01-15",
             "work_stats": {"working_seconds": 3600},
@@ -36,17 +36,12 @@ class TestAIRendererPlugin(unittest.TestCase):
 
     def test_ai_prompt_included_when_configured(self):
         """ai_promptが設定されていれば出力に含まれる"""
-        config = {"settings": {"ai_prompt": "You are a helpful assistant."}}
+        plugin_id = self.renderer.plugin_id
+        config = {"plugins": {plugin_id: {"ai_prompt": "You are a helpful assistant."}}}
         result = self.renderer.render([], self.base_report_data, config)
         assert "You are a helpful assistant." in result
         assert "---" in result
         assert "Below is the activity log:" in result
-
-    def test_ai_prompt_fallback_from_root(self):
-        """settings.ai_promptがなくてもルートレベルのai_promptを使用"""
-        config = {"ai_prompt": "Root level prompt", "settings": {}}
-        result = self.renderer.render([], self.base_report_data, config)
-        assert "Root level prompt" in result
 
     def test_timeline_items_rendered(self):
         """タイムラインアイテムが正しく出力される"""

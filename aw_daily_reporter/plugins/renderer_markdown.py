@@ -30,7 +30,7 @@ class MarkdownRendererPlugin(RendererPlugin):
 
     @property
     def required_settings(self) -> list[str]:
-        return ["settings"]
+        return ["system"]
 
     def render(
         self,
@@ -74,7 +74,7 @@ class MarkdownRendererPlugin(RendererPlugin):
         if working_seconds > 0:
             time_dist_label = _("Time Distribution (Base: Working Hours)")
             p(f"\n⏱️  {time_dist_label}:")
-            break_cats = config.get("settings", {}).get("break_categories", [])
+            break_cats = config.get("system", {}).get("break_categories", [])
 
             # ソート: 未分類を最後に
             def sort_key(item):

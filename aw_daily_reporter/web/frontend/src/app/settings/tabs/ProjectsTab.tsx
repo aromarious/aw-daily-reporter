@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { Card } from "@/components/Card"
+import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useTranslation } from "@/contexts/I18nContext"
 import type { FullConfig } from "../types"
 
@@ -74,9 +75,14 @@ export default function ProjectsTab({
                   await handleSaveConfig(
                     {
                       ...config,
-                      settings: {
-                        ...config.settings,
-                        project_extraction_patterns: newPatterns,
+                      plugins: {
+                        ...config.plugins,
+                        [PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR]: {
+                          ...config.plugins?.[
+                            PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR
+                          ],
+                          project_extraction_patterns: newPatterns,
+                        },
                       },
                     },
                     true,

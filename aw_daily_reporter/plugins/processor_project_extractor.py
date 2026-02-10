@@ -35,7 +35,7 @@ class ProjectExtractionProcessor(ProcessorPlugin):
 
     @property
     def required_settings(self) -> list[str]:
-        return ["settings"]
+        return ["plugins"]
 
     def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
@@ -43,7 +43,9 @@ class ProjectExtractionProcessor(ProcessorPlugin):
         if df.empty:
             return df
 
-        extraction_patterns = config.get("settings", {}).get("project_extraction_patterns", [])
+        # プラグイン固有の設定を取得
+        plugin_config = config.get("plugins", {}).get(self.plugin_id, {})
+        extraction_patterns = plugin_config.get("project_extraction_patterns", [])
         if not extraction_patterns:
             # Fallback default if not in config? Use generic pipe pattern as a safe default
             extraction_patterns = [r"^(?P<project>.+?)\|"]

@@ -72,7 +72,7 @@ def cmd_report(args) -> None:
     from .shared.settings_manager import ConfigStore
 
     config = ConfigStore.get_instance().load()
-    default_renderer = config.plugin_params.default_renderer
+    default_renderer = config.system.default_renderer
 
     selected_output = None
 
