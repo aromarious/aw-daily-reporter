@@ -7,7 +7,7 @@
 
 import unittest
 
-from aw_daily_reporter.plugins.base import BasePlugin, ProcessorPlugin, RendererPlugin, ScannerPlugin
+from aw_daily_reporter.plugins.base import BasePlugin, ProcessorPlugin
 from aw_daily_reporter.plugins.processor_afk import AFKProcessor
 from aw_daily_reporter.plugins.processor_compression import CompressionProcessor
 from aw_daily_reporter.plugins.processor_project_extractor import ProjectExtractionProcessor
