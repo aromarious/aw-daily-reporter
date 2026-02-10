@@ -28,6 +28,10 @@ class MarkdownRendererPlugin(RendererPlugin):
     def description(self) -> str:
         return _("Renders the activity report in Markdown format to standard output.")
 
+    @property
+    def required_settings(self) -> list[str]:
+        return ["settings"]
+
     def render(
         self,
         timeline: List[TimelineItem],

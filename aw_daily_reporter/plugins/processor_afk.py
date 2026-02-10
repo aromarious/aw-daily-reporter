@@ -43,6 +43,10 @@ class AFKProcessor(ProcessorPlugin):
     def description(self) -> str:
         return _("Filters and processes AFK items to determine active time.")
 
+    @property
+    def required_settings(self) -> list[str]:
+        return ["settings"]
+
     def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
         if df.empty:

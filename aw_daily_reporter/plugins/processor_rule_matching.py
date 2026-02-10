@@ -45,6 +45,10 @@ class RuleMatchingProcessor(ProcessorPlugin):
     def description(self) -> str:
         return _("Assigns categories and projects based on keyword matching rules.")
 
+    @property
+    def required_settings(self) -> list[str]:
+        return ["rules"]
+
     def process(self, df: DataFrame[TimelineSchema], config: dict[str, Any]) -> DataFrame[TimelineSchema]:
         logger.info(f"[Plugin] Running: {self.name}")
 
