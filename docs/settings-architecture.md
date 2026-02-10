@@ -10,7 +10,7 @@
 |:-----|:-----------------|:-----|
 | **永続化** | `ConfigStore` | config.json の読み書き（シングルトン） |
 | **スキーマ定義** | `AppConfig` 他 | Pydantic モデルによるバリデーション |
-| **プラグイン連携** | `BasePlugin.required_settings` | プラグインが必要とする設定キーの宣言 |
+| **プラグイン管理** | `PluginsConfig` | プラグインIDをキーとしたプラグイン別設定の管理 |
 
 ## クラス構成
 
@@ -18,8 +18,19 @@
 ConfigStore (シングルトン)
  └── config: AppConfig
        ├── system: SystemConfig
-       │    └── activitywatch: AWPeerConfig
-       ├── plugin_params: PluginParams    ← JSON キーは "settings"
+       │    ├── language: str
+       │    ├── activitywatch: AWPeerConfig
+       │    ├── day_start_source: str
+       │    ├── start_of_day: str
+       │    ├── enabled_bucket_ids: List[str]
+       │    ├── default_renderer: Optional[str]
+       │    ├── category_list: List[str]
+       │    ├── category_colors: Dict[str, str]
+       │    └── break_categories: List[str]
+       ├── plugins: PluginsConfig
+       │    └── <plugin_id>: Dict[str, Any]
+       │         ├── enabled: bool
+       │         └── ...(プラグイン固有の設定)
        ├── rules: List[CategoryRule]
        ├── project_map: Dict[str, str]
        ├── client_map: Dict[str, str]
@@ -51,7 +62,7 @@ config = store.load()  # -> AppConfig
 ```python
 class AppConfig(BaseModel):
     system: SystemConfig                    # システム設定
-    plugin_params: PluginParams             # プラグイン用パラメータ (JSON: "settings")
+    plugins: PluginsConfig                  # プラグイン別設定（プラグインID: 設定）
     rules: List[CategoryRule]               # カテゴリ分類ルール
     project_map: Dict[str, str]             # プロジェクト名マッピング
     client_map: Dict[str, str]              # クライアントマッピング
@@ -59,9 +70,8 @@ class AppConfig(BaseModel):
     clients: Dict[str, Any]                 # クライアント定義
 ```
 
-> **JSON互換性**: `plugin_params` フィールドは `alias="settings"` で定義されており、
-> JSON シリアライズ時（`model_dump(by_alias=True)`）には `"settings"` キーで出力されます。
-> これにより、フロントエンドや既存の config.json との互換性が保たれます。
+> **プラグイン設定の構造**: `plugins` フィールドはプラグインIDをキーとして、各プラグインの設定を保持します。
+> 各プラグイン設定には必ず `enabled` フィールドが含まれ、プラグイン固有の設定も同じ辞書内に格納されます。
 
 ### SystemConfig
 
@@ -73,15 +83,40 @@ class AppConfig(BaseModel):
 | `activitywatch` | `AWPeerConfig` | `host=127.0.0.1, port=5600` | AW 接続先 |
 | `day_start_source` | `str` | `"manual"` | 日開始時刻の取得元（`"manual"` or `"aw"`） |
 | `start_of_day` | `str` | `"00:00"` | 手動指定の日開始時刻（HH:MM） |
-
-### PluginParams
-
-プラグインが参照する動的パラメータを格納するモデルです。`extra="allow"` により任意のキーを許容します。
-
-| フィールド | 型 | デフォルト | 説明 |
-|:-----------|:---|:-----------|:-----|
+| `enabled_bucket_ids` | `List[str]` | `[]` | 有効化するバケットIDのリスト（空の場合は全バケット） |
 | `default_renderer` | `Optional[str]` | `None` | デフォルトで使用するレンダラのプラグインID |
-| _(任意のキー)_ | `Any` | — | プラグインが定義するカスタムパラメータ（例: `ai_prompt`） |
+| `category_list` | `List[str]` | `[]` | カテゴリ一覧 |
+| `category_colors` | `Dict[str, str]` | `{}` | カテゴリごとの色定義 |
+| `break_categories` | `List[str]` | `[]` | 休憩として扱うカテゴリ |
+
+### PluginsConfig
+
+プラグインIDをキーとしてプラグイン別の設定を格納するモデルです。`extra="allow"` により任意のプラグインIDをキーとして許容します。
+
+各プラグイン設定は以下の構造を持ちます：
+
+```python
+{
+  "<plugin_id>": {
+    "enabled": bool,           # プラグインの有効/無効（必須）
+    ...                        # プラグイン固有の設定
+  }
+}
+```
+
+**例**:
+```python
+{
+  "aw_daily_reporter.plugins.renderer_ai.AIRendererPlugin": {
+    "enabled": true,
+    "ai_prompt": "..."
+  },
+  "aw_daily_reporter.plugins.processor_project_extractor.ProjectExtractionProcessor": {
+    "enabled": true,
+    "project_extraction_patterns": ["..."]
+  }
+}
+```
 
 ### CategoryRule
 
@@ -106,11 +141,25 @@ class AppConfig(BaseModel):
       "port": 5600
     },
     "day_start_source": "manual",
-    "start_of_day": "00:00"
-  },
-  "settings": {
+    "start_of_day": "00:00",
+    "enabled_bucket_ids": [],
     "default_renderer": null,
-    "ai_prompt": "..."
+    "category_list": [],
+    "category_colors": {},
+    "break_categories": []
+  },
+  "plugins": {
+    "aw_daily_reporter.plugins.renderer_ai.AIRendererPlugin": {
+      "enabled": true,
+      "ai_prompt": "..."
+    },
+    "aw_daily_reporter.plugins.processor_project_extractor.ProjectExtractionProcessor": {
+      "enabled": true,
+      "project_extraction_patterns": ["..."]
+    },
+    "aw_daily_reporter.plugins.processor_afk.AFKProcessor": {
+      "enabled": true
+    }
   },
   "rules": [
     { "keyword": "Code", "category": "コーディング" }
@@ -122,33 +171,36 @@ class AppConfig(BaseModel):
 }
 ```
 
-> **注意**: JSON 上のキー `"settings"` は Python 側では `AppConfig.plugin_params` フィールドに対応します。
-> これは `alias="settings"` によるマッピングです。
+> **プラグイン設定**: `plugins` キーの下に、プラグインIDをキーとして各プラグインの設定が格納されます。
+> 各プラグイン設定には `enabled` フィールドが必須で、プラグイン固有の設定も同じオブジェクト内に保存されます。
 
 ## プラグインと設定の紐付け
 
-各プラグインは `required_settings` プロパティで、自身が必要とする `AppConfig` のトップレベルキーを宣言します。
+プラグインは `config.plugins[plugin_id]` から自身の設定を取得します。各プラグイン設定には `enabled` フィールドが必須で含まれ、プラグイン固有の設定も同じ辞書内に格納されます。
+
+### プラグイン設定の取得例
 
 ```python
-class MyProcessor(ProcessorPlugin):
-    @property
-    def required_settings(self) -> list[str]:
-        return ["rules", "apps"]  # このプラグインは rules と apps を必要とする
+# プラグインIDベースで設定を取得
+plugin_id = "aw_daily_reporter.plugins.renderer_ai.AIRendererPlugin"
+plugin_config = config.plugins.get(plugin_id, {})
+enabled = plugin_config.get("enabled", False)
+ai_prompt = plugin_config.get("ai_prompt", "")
 ```
 
-### ビルトインプラグインの設定依存
+### ビルトインプラグインの設定キー
 
-| プラグイン | 種別 | required_settings | 説明 |
-|:-----------|:-----|:------------------|:-----|
-| `AFKProcessor` | Processor | `["settings"]` | 休憩カテゴリ設定を参照 |
-| `CompressionProcessor` | Processor | `["apps"]` | アプリ別圧縮設定を参照 |
-| `ProjectExtractionProcessor` | Processor | `["settings"]` | プロジェクト抽出設定を参照 |
-| `ProjectMappingProcessor` | Processor | `["project_map", "client_map", "clients"]` | マッピング定義を参照 |
-| `RuleMatchingProcessor` | Processor | `["rules"]` | カテゴリ分類ルールを参照 |
-| `GitScanner` | Scanner | `[]` | 設定不使用 |
-| `MarkdownRendererPlugin` | Renderer | `["settings"]` | 表示設定を参照 |
-| `JSONRendererPlugin` | Renderer | `[]` | 設定不使用 |
-| `AIRendererPlugin` | Renderer | `["settings"]` | AI プロンプト等を参照 |
+| プラグイン | 種別 | プラグイン設定キー | グローバル設定依存 |
+|:-----------|:-----|:-------------------|:-------------------|
+| `AFKProcessor` | Processor | なし | `system.break_categories` |
+| `CompressionProcessor` | Processor | なし | `apps` |
+| `ProjectExtractionProcessor` | Processor | `project_extraction_patterns` | `apps` |
+| `ProjectMappingProcessor` | Processor | なし | `project_map`, `client_map`, `clients` |
+| `RuleMatchingProcessor` | Processor | なし | `rules` |
+| `GitScanner` | Scanner | なし | なし |
+| `MarkdownRendererPlugin` | Renderer | なし | `system.break_categories`, `system.category_colors` |
+| `JSONRendererPlugin` | Renderer | なし | なし |
+| `AIRendererPlugin` | Renderer | `ai_prompt` | なし |
 
 ## 命名規則
 
@@ -156,11 +208,22 @@ class MyProcessor(ProcessorPlugin):
 
 | 用語 | 意味 | 例 |
 |:-----|:-----|:---|
-| `Config` | 構造化された設定スキーマ | `AppConfig`, `SystemConfig` |
+| `Config` | 構造化された設定スキーマ | `AppConfig`, `SystemConfig`, `PluginsConfig` |
 | `Store` | 永続化ストレージへのアクセス | `ConfigStore` |
-| `Params` | プラグイン等に渡すパラメータ | `PluginParams` |
 | `Rule` | ユーザー定義のルール | `CategoryRule` |
 
 > **背景**: 以前は `SettingsManager` / `SettingsConfig` という命名でしたが、
 > 「settings」と「config」が両方とも日本語で「設定」を意味し混乱を招くため、
 > 各クラスの責務に基づいた命名に変更しました。
+
+## 移行履歴
+
+### v0.2.1: プラグイン設定の統合
+
+- **変更内容**: `plugins.json` を廃止し、`config.json` の `plugins` キーにプラグイン設定を統合
+- **旧構造**: プラグインの有効/無効は `plugins.json` に、プラグイン固有設定は `config.json` の `settings` キーに分散
+- **新構造**: プラグインIDをキーとして、`enabled` フィールドとプラグイン固有設定を同じオブジェクトに統合
+- **マイグレーション**: 既存の `plugins.json` は自動的にバックアップされ、`config.json` に統合される
+- **影響範囲**:
+  - フロントエンドの設定UI: プラグインが無効な場合、関連する設定項目を非表示
+  - ダッシュボード: プラグインが無効な場合、依存するカードを非表示

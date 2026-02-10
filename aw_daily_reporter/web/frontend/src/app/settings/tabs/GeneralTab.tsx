@@ -1,8 +1,10 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card } from "@/components/Card"
 import { PLUGIN_IDS } from "@/constants/pluginIds"
 import { useTranslation } from "@/contexts/I18nContext"
+import { usePlugins } from "../hooks/usePlugins"
 import type { FullConfig, Rule } from "../types"
 
 interface GeneralTabProps {
@@ -29,6 +31,36 @@ export default function GeneralTab({
   mounted,
 }: GeneralTabProps) {
   const { t } = useTranslation()
+  const { isPluginEnabled } = usePlugins()
+
+  // AI Renderer プラグインの有効状態を確認
+  const isAIRendererEnabled = isPluginEnabled(PLUGIN_IDS.RENDERER_AI)
+
+  // ローカル state で入力値を管理（controlled component の問題を回避）
+  const [localTimezone, setLocalTimezone] = useState(
+    config.system?.timezone || "",
+  )
+  const [localHost, setLocalHost] = useState(
+    config.system?.activitywatch?.host || "",
+  )
+  const [localPort, setLocalPort] = useState(
+    config.system?.activitywatch?.port || 5600,
+  )
+  const [localDayStartHour, setLocalDayStartHour] = useState(
+    config.system?.day_start_hour ?? 4,
+  )
+  const [localReportDir, setLocalReportDir] = useState(
+    config.system?.report?.output_dir || "",
+  )
+
+  // config が変更されたらローカル state を同期
+  useEffect(() => {
+    setLocalTimezone(config.system?.timezone || "")
+    setLocalHost(config.system?.activitywatch?.host || "")
+    setLocalPort(config.system?.activitywatch?.port || 5600)
+    setLocalDayStartHour(config.system?.day_start_hour ?? 4)
+    setLocalReportDir(config.system?.report?.output_dir || "")
+  }, [config])
 
   if (!config.system) return null
 
@@ -103,10 +135,12 @@ export default function GeneralTab({
               id="sys-timezone"
               type="text"
               className="input input-bordered w-full"
-              value={config.system.timezone || ""}
-              onChange={(e) =>
+              value={localTimezone}
+              onChange={(e) => setLocalTimezone(e.target.value)}
+              onBlur={(e) =>
                 handleSaveConfig({
                   ...config,
+                  rules: localRules,
                   system: {
                     ...config.system,
                     timezone: e.target.value,
@@ -129,8 +163,9 @@ export default function GeneralTab({
                 type="text"
                 className="input input-bordered flex-1"
                 placeholder="localhost"
-                value={config.system.activitywatch?.host || ""}
-                onChange={(e) =>
+                value={localHost}
+                onChange={(e) => setLocalHost(e.target.value)}
+                onBlur={(e) =>
                   handleSaveConfig({
                     ...config,
                     system: {
@@ -147,8 +182,9 @@ export default function GeneralTab({
                 type="number"
                 className="input input-bordered w-32"
                 placeholder="5600"
-                value={config.system.activitywatch?.port || 5600}
-                onChange={(e) =>
+                value={localPort}
+                onChange={(e) => setLocalPort(Number(e.target.value))}
+                onBlur={(e) =>
                   handleSaveConfig({
                     ...config,
                     system: {
@@ -225,8 +261,9 @@ export default function GeneralTab({
               min={0}
               max={23}
               disabled={config.system.day_start_source === "aw"}
-              value={config.system.day_start_hour ?? 4}
-              onChange={(e) =>
+              value={localDayStartHour}
+              onChange={(e) => setLocalDayStartHour(Number(e.target.value))}
+              onBlur={(e) =>
                 handleSaveConfig({
                   ...config,
                   system: {
@@ -249,8 +286,9 @@ export default function GeneralTab({
               id="report-dir"
               type="text"
               className="input input-bordered w-full"
-              value={config.system.report?.output_dir || ""}
-              onChange={(e) =>
+              value={localReportDir}
+              onChange={(e) => setLocalReportDir(e.target.value)}
+              onBlur={(e) =>
                 handleSaveConfig({
                   ...config,
                   system: {
@@ -268,39 +306,41 @@ export default function GeneralTab({
       </Card>
 
       {/* AI Prompt Settings Block */}
-      <Card title={t("AI Report Settings")} className="mt-6">
-        <label
-          htmlFor="ai-prompt"
-          className="block text-sm font-medium text-base-content/80 mb-1"
-        >
-          {t("Custom Prompt")}
-        </label>
-        <p className="text-xs text-base-content/60 mb-2">
-          {t(
-            "Instructions for the AI when generating the daily report. You can define the tone, focus areas, or specific formatting requirements.",
-          )}
-        </p>
-        <textarea
-          id="ai-prompt"
-          className="textarea textarea-bordered w-full h-32 leading-relaxed"
-          placeholder={t(
-            "e.g., 'Focus on coding activities and provide a summary of the most used languages.'",
-          )}
-          value={config.plugins?.[PLUGIN_IDS.RENDERER_AI]?.ai_prompt || ""}
-          onChange={(e) =>
-            handleSaveConfig({
-              ...config,
-              plugins: {
-                ...config.plugins,
-                [PLUGIN_IDS.RENDERER_AI]: {
-                  ...config.plugins?.[PLUGIN_IDS.RENDERER_AI],
-                  ai_prompt: e.target.value,
+      {isAIRendererEnabled && (
+        <Card title={t("AI Report Settings")} className="mt-6">
+          <label
+            htmlFor="ai-prompt"
+            className="block text-sm font-medium text-base-content/80 mb-1"
+          >
+            {t("Custom Prompt")}
+          </label>
+          <p className="text-xs text-base-content/60 mb-2">
+            {t(
+              "Instructions for the AI when generating the daily report. You can define the tone, focus areas, or specific formatting requirements.",
+            )}
+          </p>
+          <textarea
+            id="ai-prompt"
+            className="textarea textarea-bordered w-full h-32 leading-relaxed"
+            placeholder={t(
+              "e.g., 'Focus on coding activities and provide a summary of the most used languages.'",
+            )}
+            value={config.plugins?.[PLUGIN_IDS.RENDERER_AI]?.ai_prompt || ""}
+            onChange={(e) =>
+              handleSaveConfig({
+                ...config,
+                plugins: {
+                  ...config.plugins,
+                  [PLUGIN_IDS.RENDERER_AI]: {
+                    ...config.plugins?.[PLUGIN_IDS.RENDERER_AI],
+                    ai_prompt: e.target.value,
+                  },
                 },
-              },
-            })
-          }
-        />
-      </Card>
+              })
+            }
+          />
+        </Card>
+      )}
     </div>
   )
 }

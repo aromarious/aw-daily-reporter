@@ -17,6 +17,8 @@ interface Entry {
 }
 
 const validatePattern = (pattern: string): string | undefined => {
+  // Type guard: ensure pattern is a string
+  if (typeof pattern !== "string") return undefined
   if (!pattern) return undefined
 
   // Check for required Python named group syntax first
@@ -46,10 +48,12 @@ export default function ExtractionPatternList({
   useEffect(() => {
     setEntries((prev) => {
       const existingMap = new Map(prev.map((e) => [e.value, e.id]))
-      return patterns.map((p) => {
-        const id = existingMap.get(p) || crypto.randomUUID()
-        return { id, value: p, error: validatePattern(p) }
-      })
+      return patterns
+        .filter((p): p is string => typeof p === "string")
+        .map((p) => {
+          const id = existingMap.get(p) || crypto.randomUUID()
+          return { id, value: p, error: validatePattern(p) }
+        })
     })
   }, [patterns])
 
