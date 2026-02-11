@@ -19,7 +19,7 @@ export default function PluginsTab() {
   useEffect(() => {
     fetch("/api/plugins")
       .then((r) => r.json())
-      .then((data) => setPlugins(data))
+      .then((data) => setPlugins(data.plugins || data))
       .catch(console.error)
   }, [])
 
