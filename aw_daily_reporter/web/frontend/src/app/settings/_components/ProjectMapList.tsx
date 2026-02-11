@@ -286,9 +286,9 @@ export default function ProjectMapList({
         type="button"
         onClick={handleAdd}
         disabled={disabled}
-        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 text-sm font-medium hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <Plus size={16} /> {t("Add Mapping")}
+        <Plus size={18} /> {t("Add Mapping")}
       </button>
     </div>
   )

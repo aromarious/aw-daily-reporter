@@ -265,26 +265,6 @@ export default function ExtractionPatternList({
 
               {/* アプリ名バッジ + 入力 */}
               <div className="w-48 flex flex-col gap-2">
-                {/* バッジ表示 */}
-                {entry.apps.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {entry.apps.map((app) => (
-                      <span
-                        key={app}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs border border-primary/20 rounded-md"
-                      >
-                        {app}
-                        <button
-                          type="button"
-                          onClick={() => removeApp(entry.id, app)}
-                          className="text-primary/60 hover:text-primary rounded hover:bg-primary/20 p-0.5"
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
                 {/* 新規追加入力 */}
                 <div className="flex flex-col gap-1">
                   <input
@@ -314,6 +294,26 @@ export default function ExtractionPatternList({
                     {t("(e.g. vscode, chrome)")}
                   </div>
                 </div>
+                {/* バッジ表示 */}
+                {entry.apps.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {entry.apps.map((app) => (
+                      <span
+                        key={app}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs border border-primary/20 rounded-md"
+                      >
+                        {app}
+                        <button
+                          type="button"
+                          onClick={() => removeApp(entry.id, app)}
+                          className="text-primary/60 hover:text-primary rounded hover:bg-primary/20 p-0.5"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* パターン入力 */}
@@ -362,9 +362,9 @@ export default function ExtractionPatternList({
         type="button"
         onClick={handleAdd}
         disabled={disabled}
-        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <Plus size={16} /> {t("Add Pattern")}
+        <Plus size={18} /> {t("Add Pattern")}
       </button>
     </div>
   )
