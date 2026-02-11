@@ -184,5 +184,6 @@
   "Data source settings saved successfully. Reloading...": "データソース設定を保存しました。再読み込み中...",
   "Failed to save data source settings": "データソース設定の保存に失敗しました",
   "Save Configuration": "設定を保存",
-  "No project-related plugins are enabled. Enable them in the Plugins tab to configure project settings.": "プロジェクト関連のプラグインが有効になっていません。プラグインタブで有効にすると、プロジェクト設定を行えます。"
+  "No project-related plugins are enabled. Enable them in the Plugins tab to configure project settings.": "プロジェクト関連のプラグインが有効になっていません。プラグインタブで有効にすると、プロジェクト設定を行えます。",
+  "No plugins requiring categorization rules are enabled. Enable them in the Plugins tab to configure rules.": "分類ルールを必要とするプラグインが有効になっていません。プラグインタブで有効にすると、ルール設定を行えます。"
 }
