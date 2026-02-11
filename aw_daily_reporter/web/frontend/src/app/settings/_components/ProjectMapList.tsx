@@ -7,11 +7,13 @@ import { useTranslation } from "@/contexts/I18nContext"
 
 interface ProjectMapListProps {
   projectMap: Record<string, string>
+  projectMapOrder?: string[] // プロジェクトマップのキー順序
   clientMap: Record<string, string>
   clients: Record<string, { name: string; rate: number }>
   onUpdate: (
     newMap: Record<string, string>,
     newClientMap: Record<string, string>,
+    newMapOrder: string[], // 順序を追加
   ) => void
 }
 interface Entry {
@@ -23,6 +25,7 @@ interface Entry {
 
 export default function ProjectMapList({
   projectMap,
+  projectMapOrder,
   clientMap,
   clients,
   onUpdate,
@@ -34,13 +37,38 @@ export default function ProjectMapList({
   useEffect(() => {
     setEntries((prev) => {
       const existingMap = new Map(prev.map((e) => [e.key, e.id]))
+
+      // 順序が指定されている場合は、その順序に従う
+      if (projectMapOrder && projectMapOrder.length > 0) {
+        const ordered = projectMapOrder
+          .filter((k) => k in projectMap) // 存在するキーのみ
+          .map((k) => {
+            const id = existingMap.get(k) || crypto.randomUUID()
+            const client = clientMap[k]
+            return { id, key: k, value: projectMap[k], client }
+          })
+
+        // 順序リストにないキーを追加
+        const remainingKeys = Object.keys(projectMap).filter(
+          (k) => !projectMapOrder.includes(k),
+        )
+        const remaining = remainingKeys.map((k) => {
+          const id = existingMap.get(k) || crypto.randomUUID()
+          const client = clientMap[k]
+          return { id, key: k, value: projectMap[k], client }
+        })
+
+        return [...ordered, ...remaining]
+      }
+
+      // 順序が指定されていない場合は、オブジェクトの順序をそのまま使用
       return Object.entries(projectMap || {}).map(([k, v]) => {
         const id = existingMap.get(k) || crypto.randomUUID()
         const client = clientMap[k]
         return { id, key: k, value: v, client }
       })
     })
-  }, [projectMap, clientMap])
+  }, [projectMap, projectMapOrder, clientMap])
 
   const handleUpdate = (
     id: string,
@@ -80,17 +108,20 @@ export default function ProjectMapList({
   const notifyChange = (currentEntries: Entry[]) => {
     const newMap: Record<string, string> = {}
     const newClientMap: Record<string, string> = {}
+    const newMapOrder: string[] = []
 
     for (const e of currentEntries) {
       if (e.key.trim()) {
-        newMap[e.key.trim()] = e.value // Store empty string if value is empty
+        const key = e.key.trim()
+        newMap[key] = e.value // Store empty string if value is empty
+        newMapOrder.push(key) // 順序を保存
         if (e.client) {
-          newClientMap[e.key.trim()] = e.client
+          newClientMap[key] = e.client
         }
       }
     }
     // Batch updates
-    onUpdate(newMap, newClientMap)
+    onUpdate(newMap, newClientMap, newMapOrder)
   }
 
   const handleDragStart = (e: React.DragEvent, index: number) => {

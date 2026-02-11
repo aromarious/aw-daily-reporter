@@ -62,6 +62,7 @@ class AppConfig(BaseModel):
     plugin_order: List[str] = Field(default_factory=list)  # プラグインIDの順序リスト
     rules: List[CategoryRule] = Field(default_factory=list)
     project_map: Dict[str, str] = Field(default_factory=dict)
+    project_map_order: List[str] = Field(default_factory=list)  # プロジェクトマップのキー順序リスト
     client_map: Dict[str, str] = Field(default_factory=dict)
     apps: Dict[str, Any] = Field(default_factory=dict)
     clients: Dict[str, Any] = Field(default_factory=dict)

@@ -76,10 +76,12 @@ export interface SettingsConfig {
 export interface FullConfig {
   system: SystemConfig
   plugins: PluginConfig
+  plugin_order?: string[] // プラグインの表示順序
   settings?: SettingsConfig // 後方互換性のため残す
   rules: Rule[]
   categories: Record<string, string>
   project_map: Record<string, string>
+  project_map_order?: string[] // プロジェクトマップのキー順序
   client_map?: Record<string, string> // Regex -> ClientID
   clients?: Record<string, { name: string; rate: number }>
   project_metadata?: Record<string, { client: string }>

@@ -145,9 +145,10 @@ export default function ProjectsTab({
                 </p>
                 <ProjectMapList
                   projectMap={localProjectMap}
+                  projectMapOrder={config?.project_map_order}
                   clientMap={localClientMap}
                   clients={config?.clients || {}}
-                  onUpdate={async (newMap, newClientMap) => {
+                  onUpdate={async (newMap, newClientMap, newMapOrder) => {
                     setLocalProjectMap(newMap)
                     setLocalClientMap(newClientMap)
                     if (config) {
@@ -155,6 +156,7 @@ export default function ProjectsTab({
                         {
                           ...config,
                           project_map: newMap,
+                          project_map_order: newMapOrder,
                           client_map: newClientMap,
                         },
                         true,
