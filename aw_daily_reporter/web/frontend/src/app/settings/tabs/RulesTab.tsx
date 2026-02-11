@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus } from "lucide-react"
+import { Info, Plus } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useState } from "react"
 import { Card } from "@/components/Card"
@@ -136,59 +136,59 @@ export default function RulesTab({
     <>
       <Card title={t("Categorization Rules")} className="flex-1 w-full min-h-0">
         <div className="flex-1 overflow-y-auto pr-2 mt-2 custom-scrollbar min-h-125">
-          {!isRulesEnabled ? (
-            <div className="text-center py-12 text-base-content/40">
-              <p className="text-sm">
-                {t(
-                  "No plugins requiring categorization rules are enabled. Enable them in the Plugins tab to configure rules.",
-                )}
-              </p>
+          {!isRulesEnabled && (
+            <div className="alert mb-4 text-sm py-3 bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400">
+              <Info size={16} className="shrink-0" />
+              <span>
+                {t("Categorization Rules plugin is disabled.")}{" "}
+                {t("Enable it in the Plugins tab to use this feature.")}
+              </span>
             </div>
-          ) : (
-            <>
-              <p className="text-sm text-base-content/60 mb-4 px-1">
-                {t("Manage categorization rules")}
-                <br />
-                {t("Used by:")}{" "}
-                <span className="font-medium">{t("Categorization Rules")}</span>
-              </p>
-              {/* Action Bar: Add + Toggle All */}
-              <div className="flex gap-3 mb-4">
-                <button
-                  type="button"
-                  onClick={handleAddRule}
-                  className="flex-1 py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2"
-                >
-                  <Plus size={18} /> {t("Add New Rule")}
-                </button>
-                {/* Toggle All Button */}
-                {localRules.length > 0 && (
-                  <label className="flex items-center gap-2 cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      className="toggle toggle-sm border-base-content/20 bg-base-300 text-white checked:border-primary checked:bg-indigo-400 checked:text-white"
-                      checked={allRulesEnabled}
-                      onChange={() => handleToggleAllRules(!allRulesEnabled)}
-                    />
-                    <span className="text-sm text-base-content/70 font-medium">
-                      {allRulesEnabled ? t("All On") : t("All Off")}
-                    </span>
-                  </label>
-                )}
-              </div>
-              <RuleList
-                rules={localRules}
-                onEdit={handleEditRule}
-                onDelete={handleDeleteRule}
-                onToggle={handleToggleRule}
-                onDragStart={handleRuleDragStart}
-                onDragOver={handleRuleDragOver}
-                onDrop={handleRuleDrop}
-                onDragEnd={handleRuleDragEnd}
-                draggedIndex={draggedRuleIndex}
-              />
-            </>
           )}
+          <p className="text-sm text-base-content/60 mb-4 px-1">
+            {t("Manage categorization rules")}
+            <br />
+            {t("Used by:")}{" "}
+            <span className="font-medium">{t("Categorization Rules")}</span>
+          </p>
+          {/* Action Bar: Add + Toggle All */}
+          <div className="flex gap-3 mb-4">
+            <button
+              type="button"
+              onClick={handleAddRule}
+              disabled={!isRulesEnabled}
+              className="flex-1 py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus size={18} /> {t("Add New Rule")}
+            </button>
+            {/* Toggle All Button */}
+            {localRules.length > 0 && (
+              <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-sm border-base-content/20 bg-base-300 text-white checked:border-primary checked:bg-indigo-400 checked:text-white"
+                  checked={allRulesEnabled}
+                  onChange={() => handleToggleAllRules(!allRulesEnabled)}
+                  disabled={!isRulesEnabled}
+                />
+                <span className="text-sm text-base-content/70 font-medium">
+                  {allRulesEnabled ? t("All On") : t("All Off")}
+                </span>
+              </label>
+            )}
+          </div>
+          <RuleList
+            rules={localRules}
+            onEdit={handleEditRule}
+            onDelete={handleDeleteRule}
+            onToggle={handleToggleRule}
+            onDragStart={handleRuleDragStart}
+            onDragOver={handleRuleDragOver}
+            onDrop={handleRuleDrop}
+            onDragEnd={handleRuleDragEnd}
+            draggedIndex={draggedRuleIndex}
+            disabled={!isRulesEnabled}
+          />
         </div>
       </Card>
 

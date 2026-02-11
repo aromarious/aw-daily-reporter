@@ -15,6 +15,7 @@ interface ProjectMapListProps {
     newClientMap: Record<string, string>,
     newMapOrder: string[], // 順序を追加
   ) => void
+  disabled?: boolean
 }
 interface Entry {
   id: string
@@ -29,6 +30,7 @@ export default function ProjectMapList({
   clientMap,
   clients,
   onUpdate,
+  disabled = false,
 }: ProjectMapListProps) {
   const { t } = useTranslation()
   const [entries, setEntries] = useState<Entry[]>([])
@@ -157,7 +159,7 @@ export default function ProjectMapList({
   }))
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={clsx("flex flex-col gap-2", disabled && "opacity-50")}>
       <div className="flex items-center p-1 mb-1 gap-2">
         <div className="w-6 shrink-0" />
         <div className="flex-1 min-w-0 px-3 py-2 border border-transparent text-xs font-semibold text-base-content/40 uppercase tracking-wider">
@@ -187,15 +189,16 @@ export default function ProjectMapList({
           return (
             <li
               key={entry.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, index)}
-              onDragEnd={handleDragEnd}
+              draggable={!disabled}
+              onDragStart={(e) => !disabled && handleDragStart(e, index)}
+              onDragOver={!disabled ? handleDragOver : undefined}
+              onDrop={(e) => !disabled && handleDrop(e, index)}
+              onDragEnd={!disabled ? handleDragEnd : undefined}
               className={clsx(
                 "flex gap-2 items-center transition-all p-1 rounded-md border border-transparent hover:border-base-content/20 hover:bg-base-200 list-none",
                 isDragged &&
                   "opacity-50 border-dashed border-primary/50 bg-primary/10",
+                disabled && "cursor-not-allowed",
               )}
             >
               <div
@@ -219,6 +222,7 @@ export default function ProjectMapList({
                   )
                 }
                 onBlur={handleBlur}
+                disabled={disabled}
               />
               <div className="w-5 text-center shrink-0 text-base-content/20">
                 →
@@ -238,6 +242,7 @@ export default function ProjectMapList({
                   )
                 }
                 onBlur={handleBlur}
+                disabled={disabled}
               />
               <div className="w-5 text-center shrink-0 text-base-content/20">
                 @
@@ -254,6 +259,7 @@ export default function ProjectMapList({
                     true,
                   )
                 }
+                disabled={disabled}
               >
                 <option value="">{t("(No Client)")}</option>
                 {clientOptions.map((c) => (
@@ -265,7 +271,8 @@ export default function ProjectMapList({
               <button
                 type="button"
                 onClick={() => handleDelete(entry.id)}
-                className="w-8 flex items-center justify-center shrink-0 h-8 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors"
+                disabled={disabled}
+                className="w-8 flex items-center justify-center shrink-0 h-8 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 title="Delete"
               >
                 <Trash2 size={16} />
@@ -278,7 +285,8 @@ export default function ProjectMapList({
       <button
         type="button"
         onClick={handleAdd}
-        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 text-sm font-medium hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+        disabled={disabled}
+        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 text-sm font-medium hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Plus size={16} /> {t("Add Mapping")}
       </button>

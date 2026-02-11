@@ -8,6 +8,7 @@ import { useTranslation } from "@/contexts/I18nContext"
 interface ExtractionPatternListProps {
   patterns: Record<string, string[]>
   onUpdate: (newPatterns: Record<string, string[]>) => void
+  disabled?: boolean
 }
 
 interface Entry {
@@ -55,6 +56,7 @@ const validatePattern = (pattern: string): string | undefined => {
 export default function ExtractionPatternList({
   patterns,
   onUpdate,
+  disabled = false,
 }: ExtractionPatternListProps) {
   const { t } = useTranslation()
   const [entries, setEntries] = useState<Entry[]>([])
@@ -215,7 +217,7 @@ export default function ExtractionPatternList({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={clsx("flex flex-col gap-2", disabled && "opacity-50")}>
       {/* ヘッダー */}
       <div className="flex items-center p-1 mb-1 gap-2">
         <div className="w-6 shrink-0" />
@@ -241,15 +243,16 @@ export default function ExtractionPatternList({
           return (
             <li
               key={entry.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, index)}
-              onDragEnd={handleDragEnd}
+              draggable={!disabled}
+              onDragStart={(e) => !disabled && handleDragStart(e, index)}
+              onDragOver={!disabled ? handleDragOver : undefined}
+              onDrop={(e) => !disabled && handleDrop(e, index)}
+              onDragEnd={!disabled ? handleDragEnd : undefined}
               className={clsx(
                 "flex gap-2 items-start transition-all p-1 rounded-md border border-transparent hover:border-base-content/20 hover:bg-base-200 list-none",
                 isDragged &&
                   "opacity-50 border-dashed border-primary/50 bg-primary/10",
+                disabled && "cursor-not-allowed",
               )}
             >
               {/* ドラッグハンドル */}
@@ -305,6 +308,7 @@ export default function ExtractionPatternList({
                         addApp(entry.id)
                       }
                     }}
+                    disabled={disabled}
                   />
                   <div className="text-[10px] text-base-content/40 px-1">
                     {t("(e.g. vscode, chrome)")}
@@ -328,6 +332,7 @@ export default function ExtractionPatternList({
                     handleUpdatePattern(entry.id, e.target.value)
                   }
                   onBlur={handleBlur}
+                  disabled={disabled}
                 />
                 {entry.error && (
                   <div className="flex items-center gap-1 text-xs text-error px-1">
@@ -341,7 +346,8 @@ export default function ExtractionPatternList({
               <button
                 type="button"
                 onClick={() => handleDelete(entry.id)}
-                className="w-8 flex justify-center shrink-0 h-8 mt-1 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors"
+                disabled={disabled}
+                className="w-8 flex justify-center shrink-0 h-8 mt-1 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 title="Delete"
               >
                 <Trash2 size={16} />
@@ -355,7 +361,8 @@ export default function ExtractionPatternList({
       <button
         type="button"
         onClick={handleAdd}
-        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2"
+        disabled={disabled}
+        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Plus size={16} /> {t("Add Pattern")}
       </button>

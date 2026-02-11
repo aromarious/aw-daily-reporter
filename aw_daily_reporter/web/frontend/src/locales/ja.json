@@ -185,5 +185,14 @@
   "Failed to save data source settings": "データソース設定の保存に失敗しました",
   "Save Configuration": "設定を保存",
   "No project-related plugins are enabled. Enable them in the Plugins tab to configure project settings.": "プロジェクト関連のプラグインが有効になっていません。プラグインタブで有効にすると、プロジェクト設定を行えます。",
-  "No plugins requiring categorization rules are enabled. Enable them in the Plugins tab to configure rules.": "分類ルールを必要とするプラグインが有効になっていません。プラグインタブで有効にすると、ルール設定を行えます。"
+  "No plugins requiring categorization rules are enabled. Enable them in the Plugins tab to configure rules.": "分類ルールを必要とするプラグインが有効になっていません。プラグインタブで有効にすると、ルール設定を行えます。",
+  "Enable 'Categorization Rules' plugin in the Plugins tab to use this feature.": "この機能を使用するには、プラグインタブで「分類ルール」プラグインを有効にしてください。",
+  "Enable 'Project Extraction' plugin in the Plugins tab to use this feature.": "この機能を使用するには、プラグインタブで「プロジェクト抽出」プラグインを有効にしてください。",
+  "Enable 'Project Mapping' plugin in the Plugins tab to use this feature.": "この機能を使用するには、プラグインタブで「プロジェクトマッピング」プラグインを有効にしてください。",
+  "Project Extraction": "プロジェクト抽出",
+  "All Off": "全オフ",
+  "Categorization Rules plugin is disabled.": "分類ルールプラグインが無効になっています。",
+  "Enable it in the Plugins tab to use this feature.": "この機能を使用するには、プラグインタブで有効にしてください。",
+  "Project Extraction plugin is disabled.": "プロジェクト抽出プラグインが無効になっています。",
+  "Project Mapping plugin is disabled.": "プロジェクトマッピングプラグインが無効になっています。"
 }
