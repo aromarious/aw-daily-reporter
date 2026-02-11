@@ -76,10 +76,15 @@ class ProjectMappingProcessor(ProcessorPlugin):
             target_client_id = client_map.get(pattern, "")
             try:
                 compiled_rules.append((re.compile(pattern, re.IGNORECASE), target_project, target_client_id))
-            except re.error:
+                logger.debug(
+                    f"[Plugin] Compiled pattern: {pattern} -> project={target_project}, client={target_client_id}"
+                )
+            except re.error as e:
+                logger.warning(f"[Plugin] Invalid regex pattern: {pattern} - {e}")
                 continue
 
         # projectが設定されている行のみ処理
+        matched_count = 0
         for idx in df.index:
             project = df.at[idx, "project"]
             if not project or pd.isna(project):
@@ -89,6 +94,7 @@ class ProjectMappingProcessor(ProcessorPlugin):
                 if regex.search(project):
                     # 1. Project Renaming
                     if target_project:
+                        logger.debug(f"[Plugin] Renaming project: {project} -> {target_project}")
                         df.at[idx, "project"] = target_project
 
                     # 2. Client Assignment
@@ -96,6 +102,7 @@ class ProjectMappingProcessor(ProcessorPlugin):
                         metadata = df.at[idx, "metadata"] or {}
                         metadata["client"] = target_client_id
                         df.at[idx, "metadata"] = metadata
+                        matched_count += 1
 
                         # Add to context
                         client_name = clients[target_client_id].get("name", target_client_id)
@@ -104,8 +111,11 @@ class ProjectMappingProcessor(ProcessorPlugin):
                             context = []
                         context = list(context) + [f"Client: {client_name}"]
                         df.at[idx, "context"] = context
+                        logger.debug(f"[Plugin] Assigned client '{client_name}' to project '{project}'")
 
                     # 最初のマッチで終了
                     break
+
+        logger.info(f"[Plugin] Assigned clients to {matched_count} items")
 
         return df
