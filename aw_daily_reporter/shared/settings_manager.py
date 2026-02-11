@@ -53,6 +53,7 @@ class CategoryRule(BaseModel):
     project: Optional[str] = None
     app: Optional[str] = None
     target: Optional[str] = None  # "app", "title", "url", or None (any)
+    enabled: bool = True  # ルールの有効/無効
     model_config = ConfigDict(extra="ignore")
 
 
