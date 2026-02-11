@@ -20,7 +20,7 @@ export function usePlugins() {
     fetch("/api/plugins")
       .then((r) => r.json())
       .then((data) => {
-        setPlugins(data)
+        setPlugins(data.plugins || data)
         setLoading(false)
       })
       .catch((err) => {

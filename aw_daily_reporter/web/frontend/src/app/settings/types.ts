@@ -24,6 +24,12 @@ export interface Plugin {
   type?: string
   description?: string
   source?: "Built-in" | "User" | "Unknown"
+  required_settings?: string[]
+}
+
+export interface PluginsApiResponse {
+  plugins: Plugin[]
+  active_required_settings: string[]
 }
 
 export interface SystemConfig {

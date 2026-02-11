@@ -532,6 +532,7 @@ def handle_plugins():
                     "description": p.description,
                     "source": source_type,
                     "enabled": plugin_settings.get("enabled", True) if isinstance(plugin_settings, dict) else True,
+                    "required_settings": p.required_settings,
                 }
             )
             # Remove from map to track what's left
@@ -562,10 +563,20 @@ def handle_plugins():
                     "description": p.description,
                     "source": source_type,
                     "enabled": plugin_settings.get("enabled", True) if isinstance(plugin_settings, dict) else True,
+                    "required_settings": p.required_settings,
                 }
             )
 
-        return jsonify(response_list)
+        # 有効なプラグインの required_settings を集約
+        active_required_settings = []
+        for item in response_list:
+            if item.get("enabled", False):
+                active_required_settings.extend(item.get("required_settings", []))
+
+        # 重複を除去してソート
+        active_required_settings = sorted(set(active_required_settings))
+
+        return jsonify({"plugins": response_list, "active_required_settings": active_required_settings})
 
     elif request.method == "POST":
         # Save plugin config (ordering and enabled state)
