@@ -12,6 +12,7 @@ interface Client {
 interface ClientListProps {
   clients: Record<string, Client>
   onChange: (newClients: Record<string, Client>) => void
+  disabled?: boolean
 }
 
 interface Entry {
@@ -21,7 +22,11 @@ interface Entry {
   rate: string // allow string for input handling
 }
 
-export default function ClientList({ clients, onChange }: ClientListProps) {
+export default function ClientList({
+  clients,
+  onChange,
+  disabled = false,
+}: ClientListProps) {
   const { t } = useTranslation()
   const [entries, setEntries] = useState<Entry[]>([])
 
@@ -119,7 +124,10 @@ export default function ClientList({ clients, onChange }: ClientListProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className="flex flex-col gap-2"
+      style={disabled ? { opacity: 0.5 } : undefined}
+    >
       <div className="flex items-center text-xs font-semibold text-base-content/40 uppercase tracking-wider px-3 mb-1 gap-2">
         <span className="flex-1">{t("Client Name")}</span>
         <span className="w-4 text-center"></span>
@@ -137,7 +145,7 @@ export default function ClientList({ clients, onChange }: ClientListProps) {
         {entries.map((entry) => (
           <li
             key={entry.id}
-            className="flex gap-2 items-center transition-all p-1 rounded-md border border-transparent hover:border-base-content/20 hover:bg-base-200 list-none"
+            className={`flex gap-2 items-center transition-all p-1 rounded-md border border-transparent hover:border-base-content/20 hover:bg-base-200 list-none ${disabled ? "cursor-not-allowed" : ""}`}
           >
             <input
               type="text"
@@ -145,6 +153,7 @@ export default function ClientList({ clients, onChange }: ClientListProps) {
               placeholder={t("Client Name (e.g. Personal Project)")}
               value={entry.name}
               onChange={(e) => handleUpdate(entry.id, "name", e.target.value)}
+              disabled={disabled}
             />
             <div className="text-base-content/20">@</div>
             <div className="relative w-24">
@@ -157,12 +166,14 @@ export default function ClientList({ clients, onChange }: ClientListProps) {
                 placeholder="0"
                 value={entry.rate}
                 onChange={(e) => handleUpdate(entry.id, "rate", e.target.value)}
+                disabled={disabled}
               />
             </div>
             <button
               type="button"
               onClick={() => handleDelete(entry.id)}
-              className="p-2 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors"
+              disabled={disabled}
+              className="p-2 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               title="Delete"
             >
               <Trash2 size={16} />
@@ -174,9 +185,10 @@ export default function ClientList({ clients, onChange }: ClientListProps) {
       <button
         type="button"
         onClick={handleAdd}
-        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2"
+        disabled={disabled}
+        className="mt-2 w-full py-2 border-2 border-dashed border-base-content/20 rounded-lg text-base-content/60 font-medium hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <Plus size={16} /> {t("Add Client")}
+        <Plus size={18} /> {t("Add Client")}
       </button>
     </div>
   )

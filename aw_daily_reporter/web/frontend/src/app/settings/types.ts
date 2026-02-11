@@ -6,7 +6,6 @@ export type Tab =
   | "apps"
   | "plugins"
   | "datasources"
-  | "advanced"
 
 export interface Rule {
   keyword: string | string[]
@@ -49,9 +48,6 @@ export interface SystemConfig {
   category_list?: string[]
   category_colors?: Record<string, string>
   break_categories?: string[]
-  report?: {
-    output_dir?: string
-  }
 }
 
 // プラグイン設定のコンテナ型（プラグインID: 設定オブジェクト）

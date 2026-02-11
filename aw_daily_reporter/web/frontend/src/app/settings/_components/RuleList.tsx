@@ -30,6 +30,7 @@ interface RuleListProps {
   onDrop: (event: React.DragEvent, index: number) => void
   onDragEnd: () => void
   draggedIndex: number | null
+  disabled?: boolean
 }
 
 export default function RuleList({
@@ -42,6 +43,7 @@ export default function RuleList({
   onDrop,
   onDragEnd,
   draggedIndex,
+  disabled = false,
 }: RuleListProps) {
   if (!rules || rules.length === 0) {
     return (
@@ -52,22 +54,23 @@ export default function RuleList({
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className={clsx("flex flex-col gap-2", disabled && "opacity-50")}>
       {rules.map((rule, index) => {
         const isDragged = draggedIndex === index
         return (
           <li
             key={`${rule.keyword}-${rule.category}-${index}`}
-            draggable
-            onDragStart={(e) => onDragStart(e, index)}
-            onDragOver={onDragOver}
-            onDrop={(e) => onDrop(e, index)}
-            onDragEnd={onDragEnd}
+            draggable={!disabled}
+            onDragStart={(e) => !disabled && onDragStart(e, index)}
+            onDragOver={!disabled ? onDragOver : undefined}
+            onDrop={(e) => !disabled && onDrop(e, index)}
+            onDragEnd={!disabled ? onDragEnd : undefined}
             className={clsx(
               "group flex gap-3 p-3 rounded-lg border transition-all text-left w-full list-none",
               isDragged
                 ? "opacity-50 border-dashed border-primary bg-base-200"
                 : "border-base-content/10 bg-base-100 hover:bg-base-200 hover:border-primary/30",
+              disabled && "cursor-not-allowed",
             )}
           >
             {/* Enable/Disable Toggle */}
@@ -79,6 +82,7 @@ export default function RuleList({
                 e.stopPropagation()
                 onToggle(index)
               }}
+              disabled={disabled}
               title={rule.enabled !== false ? "Enabled" : "Disabled"}
             />
 
@@ -138,7 +142,8 @@ export default function RuleList({
                   e.stopPropagation()
                   onEdit(index)
                 }}
-                className="p-1.5 text-base-content/40 hover:text-primary hover:bg-primary/10 rounded transition-colors"
+                disabled={disabled}
+                className="p-1.5 text-base-content/40 hover:text-primary hover:bg-primary/10 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 title="Edit"
               >
                 <Edit size={16} />
@@ -149,7 +154,8 @@ export default function RuleList({
                   e.stopPropagation()
                   onDelete(index)
                 }}
-                className="p-1.5 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors"
+                disabled={disabled}
+                className="p-1.5 text-base-content/40 hover:text-error hover:bg-error/10 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 title="Delete"
               >
                 <Trash2 size={16} />

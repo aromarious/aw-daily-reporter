@@ -49,9 +49,6 @@ export default function GeneralTab({
   const [localDayStartHour, setLocalDayStartHour] = useState(
     config.system?.day_start_hour ?? 4,
   )
-  const [localReportDir, setLocalReportDir] = useState(
-    config.system?.report?.output_dir || "",
-  )
 
   // config が変更されたらローカル state を同期
   useEffect(() => {
@@ -59,7 +56,6 @@ export default function GeneralTab({
     setLocalHost(config.system?.activitywatch?.host || "")
     setLocalPort(config.system?.activitywatch?.port || 5600)
     setLocalDayStartHour(config.system?.day_start_hour ?? 4)
-    setLocalReportDir(config.system?.report?.output_dir || "")
   }, [config])
 
   if (!config.system) return null
@@ -269,34 +265,6 @@ export default function GeneralTab({
                   system: {
                     ...config.system,
                     day_start_hour: Number(e.target.value),
-                  },
-                })
-              }
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="report-dir"
-              className="block text-sm font-medium text-base-content/80 mb-1"
-            >
-              Report Output Directory
-            </label>
-            <input
-              id="report-dir"
-              type="text"
-              className="input input-bordered w-full"
-              value={localReportDir}
-              onChange={(e) => setLocalReportDir(e.target.value)}
-              onBlur={(e) =>
-                handleSaveConfig({
-                  ...config,
-                  system: {
-                    ...config.system,
-                    report: {
-                      ...config.system.report,
-                      output_dir: e.target.value,
-                    },
                   },
                 })
               }

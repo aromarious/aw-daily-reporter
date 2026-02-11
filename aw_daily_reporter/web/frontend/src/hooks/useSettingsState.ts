@@ -92,7 +92,6 @@ export function useSettingsState() {
       "rules",
       "plugins",
       "datasources",
-      "advanced",
     ]
     return VALID_TABS.includes(hash as Tab) ? (hash as Tab) : "general"
   }, [])

@@ -4,7 +4,6 @@ import clsx from "clsx"
 import {
   Cpu,
   Database,
-  FileJson,
   FolderGit2,
   ListFilter,
   Settings,
@@ -15,7 +14,6 @@ import { useTheme } from "next-themes"
 import { NoSSR } from "@/app/settings/_components/NoSSR"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useSettingsState } from "@/hooks/useSettingsState"
-import AdvancedTab from "./tabs/AdvancedTab"
 import CategoriesTab from "./tabs/CategoriesTab"
 import DataSourcesTab from "./tabs/DataSourcesTab"
 import GeneralTab from "./tabs/GeneralTab"
@@ -130,14 +128,6 @@ export default function SettingsPage() {
               activeTab={activeTab}
               onClick={setActiveTab}
             />
-            <div className="flex-1" />
-            <TabButton
-              id="advanced"
-              icon={FileJson}
-              label={t("Advanced Editor")}
-              activeTab={activeTab}
-              onClick={setActiveTab}
-            />
           </div>
 
           {/* Main Content Area */}
@@ -190,13 +180,6 @@ export default function SettingsPage() {
 
             {activeTab === "datasources" && (
               <DataSourcesTab
-                config={config}
-                handleSaveConfig={handleSaveConfig}
-              />
-            )}
-
-            {activeTab === "advanced" && (
-              <AdvancedTab
                 config={config}
                 handleSaveConfig={handleSaveConfig}
               />
