@@ -53,6 +53,14 @@ export interface PluginConfig {
   [pluginId: string]: any
 }
 
+// プロジェクト抽出パターンの型
+export type ExtractionPatterns = Record<string, string[]> | string[]
+
+// プロジェクト抽出プラグインの設定型
+export interface ProjectExtractorConfig {
+  project_extraction_patterns?: ExtractionPatterns
+}
+
 // 後方互換性のため SettingsConfig を残すが、使用は非推奨
 /** @deprecated Use system.* or plugins[pluginId].* instead */
 export interface SettingsConfig {
@@ -68,10 +76,12 @@ export interface SettingsConfig {
 export interface FullConfig {
   system: SystemConfig
   plugins: PluginConfig
+  plugin_order?: string[] // プラグインの表示順序
   settings?: SettingsConfig // 後方互換性のため残す
   rules: Rule[]
   categories: Record<string, string>
   project_map: Record<string, string>
+  project_map_order?: string[] // プロジェクトマップのキー順序
   client_map?: Record<string, string> // Regex -> ClientID
   clients?: Record<string, { name: string; rate: number }>
   project_metadata?: Record<string, { client: string }>

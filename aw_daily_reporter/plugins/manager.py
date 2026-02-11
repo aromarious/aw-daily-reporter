@@ -41,17 +41,23 @@ class PluginManager:
         plugins_model = self.config_store.config.plugins
         plugins_config = plugins_model.model_dump() if hasattr(plugins_model, "model_dump") else {}
 
-        # プラグインIDをキーとしたマップを作成（enabled 状態と順序を保持）
+        # プラグインIDをキーとしたマップを作成（enabled 状態を保持）
         config_map = {}
-        plugin_order = []  # 設定での順序を保持
-
         for plugin_id, plugin_settings in plugins_config.items():
             if isinstance(plugin_settings, dict):
                 config_map[plugin_id] = plugin_settings
-                plugin_order.append(plugin_id)
             else:
                 # 古い形式（dictでない場合）はスキップ
                 logger.warning(f"Invalid plugin settings for {plugin_id}: {plugin_settings}")
+
+        # 明示的な plugin_order があればそれを使用、なければ plugins の辞書順を使用
+        explicit_order = self.config_store.config.plugin_order
+        if explicit_order:
+            plugin_order = list(explicit_order)  # コピーを作成
+            logger.debug(f"[Plugin] Using explicit plugin_order: {plugin_order}")
+        else:
+            plugin_order = list(config_map.keys())
+            logger.debug("[Plugin] No explicit plugin_order found, using config_map order")
 
         ordered_plugins = []
 
@@ -113,8 +119,11 @@ class PluginManager:
                 for plugin_id, settings in plugins_config.items():
                     setattr(self.config_store.config.plugins, plugin_id, settings)
 
+                # plugin_order も保存
+                self.config_store.config.plugin_order = plugin_order
+
                 self.config_store.save()
-                logger.info("Updated plugin settings in config.json")
+                logger.info("Updated plugin settings and plugin_order in config.json")
             except Exception as e:
                 logger.error(f"Failed to auto-update plugin config: {e}")
 

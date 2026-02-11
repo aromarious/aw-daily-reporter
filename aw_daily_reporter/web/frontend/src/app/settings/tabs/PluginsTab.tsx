@@ -1,6 +1,7 @@
 "use client"
 
-import { Cpu, GripVertical } from "lucide-react"
+import * as LucideIcons from "lucide-react"
+import { GripVertical } from "lucide-react"
 import type React from "react"
 import { useEffect, useState } from "react"
 import { Card } from "@/components/Card"
@@ -77,6 +78,20 @@ export default function PluginsTab() {
     setDraggedPluginIndex(null)
   }
 
+  // 種別ごとのアイコンと色を取得するヘルパー関数
+  const getPluginStyle = (type?: string) => {
+    switch (type) {
+      case "processor":
+        return { Icon: LucideIcons.Settings, color: "text-blue-500" }
+      case "scanner":
+        return { Icon: LucideIcons.ScanSearch, color: "text-green-500" }
+      case "renderer":
+        return { Icon: LucideIcons.FileText, color: "text-purple-500" }
+      default:
+        return { Icon: LucideIcons.Cpu, color: "text-primary/70" }
+    }
+  }
+
   return (
     <Card title={t("Plugins")} className="flex-1 w-full min-h-0">
       <div className="flex-1 overflow-y-auto pr-2 mt-2 custom-scrollbar min-h-125">
@@ -106,7 +121,12 @@ export default function PluginsTab() {
                   </div>
                   <div className="min-w-0">
                     <div className="font-medium flex items-center gap-2 truncate">
-                      <Cpu size={16} className="text-primary/70 shrink-0" />
+                      {(() => {
+                        const { Icon, color } = getPluginStyle(p.type)
+                        return (
+                          <Icon size={16} className={`${color} shrink-0`} />
+                        )
+                      })()}
                       <span className="truncate" title={p.plugin_id}>
                         {p.name || p.plugin_id}
                       </span>

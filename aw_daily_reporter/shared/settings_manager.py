@@ -53,14 +53,17 @@ class CategoryRule(BaseModel):
     project: Optional[str] = None
     app: Optional[str] = None
     target: Optional[str] = None  # "app", "title", "url", or None (any)
+    enabled: bool = True  # ルールの有効/無効
     model_config = ConfigDict(extra="ignore")
 
 
 class AppConfig(BaseModel):
     system: SystemConfig = Field(default_factory=SystemConfig)
     plugins: PluginsConfig = Field(default_factory=PluginsConfig)
+    plugin_order: List[str] = Field(default_factory=list)  # プラグインIDの順序リスト
     rules: List[CategoryRule] = Field(default_factory=list)
     project_map: Dict[str, str] = Field(default_factory=dict)
+    project_map_order: List[str] = Field(default_factory=list)  # プロジェクトマップのキー順序リスト
     client_map: Dict[str, str] = Field(default_factory=dict)
     apps: Dict[str, Any] = Field(default_factory=dict)
     clients: Dict[str, Any] = Field(default_factory=dict)

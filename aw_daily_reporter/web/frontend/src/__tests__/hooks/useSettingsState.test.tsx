@@ -42,7 +42,7 @@ describe("useSettingsState", () => {
     },
     plugins: {
       [PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR]: {
-        project_extraction_patterns: ["^test"],
+        project_extraction_patterns: { "*": ["^test"] },
       },
     },
     rules: [{ keyword: "test", category: "Test", project: "TestProj" }],

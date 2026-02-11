@@ -503,46 +503,16 @@ def handle_plugins():
 
     if request.method == "GET":
         response_list = []
+        plugin_order = config_store.config.plugin_order or []
 
-        # 1. Add plugins based on config order
-        # This ensures the order from the config is respected
-        for plugin_id, plugin_settings in plugins_config.items():
-            if not isinstance(plugin_settings, dict):
+        # 1. Add plugins based on saved order
+        for plugin_id in plugin_order:
+            if plugin_id not in plugin_map:
                 continue
 
-            if plugin_id in plugin_map:
-                p = plugin_map[plugin_id]
+            p = plugin_map[plugin_id]
+            plugin_settings = plugins_config.get(plugin_id, {})
 
-                # Determine plugin type
-                p_type = "unknown"
-                if p in manager.processors:
-                    p_type = "processor"
-                elif p in manager.scanners:
-                    p_type = "scanner"
-                elif p in manager.renderers:
-                    p_type = "renderer"
-
-                source_type = "Built-in" if p.__class__.__module__.startswith("aw_daily_reporter") else "User"
-
-                response_list.append(
-                    {
-                        "plugin_id": p.plugin_id,
-                        "name": p.name,
-                        "type": p_type,
-                        "description": p.description,
-                        "source": source_type,
-                        "enabled": plugin_settings.get("enabled", True),
-                    }
-                )
-                # Remove from map to track what's left (plugins not in config yet)
-                del plugin_map[plugin_id]
-
-        # 2. Append remaining plugins (defaults, not in config yet)
-        # These are plugins that exist but haven't been explicitly configured/ordered by the user.
-        # We add them at the end, typically enabled by default.
-        remaining_plugins = sorted(plugin_map.values(), key=lambda x: x.name)
-
-        for p in remaining_plugins:
             # Determine plugin type
             p_type = "unknown"
             if p in manager.processors:
@@ -561,7 +531,37 @@ def handle_plugins():
                     "type": p_type,
                     "description": p.description,
                     "source": source_type,
-                    "enabled": True,  # Default enabled for new plugins
+                    "enabled": plugin_settings.get("enabled", True) if isinstance(plugin_settings, dict) else True,
+                }
+            )
+            # Remove from map to track what's left
+            del plugin_map[plugin_id]
+
+        # 2. Append remaining plugins (not in order list yet)
+        remaining_plugins = sorted(plugin_map.values(), key=lambda x: x.name)
+
+        for p in remaining_plugins:
+            plugin_settings = plugins_config.get(p.plugin_id, {})
+
+            # Determine plugin type
+            p_type = "unknown"
+            if p in manager.processors:
+                p_type = "processor"
+            elif p in manager.scanners:
+                p_type = "scanner"
+            elif p in manager.renderers:
+                p_type = "renderer"
+
+            source_type = "Built-in" if p.__class__.__module__.startswith("aw_daily_reporter") else "User"
+
+            response_list.append(
+                {
+                    "plugin_id": p.plugin_id,
+                    "name": p.name,
+                    "type": p_type,
+                    "description": p.description,
+                    "source": source_type,
+                    "enabled": plugin_settings.get("enabled", True) if isinstance(plugin_settings, dict) else True,
                 }
             )
 
@@ -572,6 +572,9 @@ def handle_plugins():
         # Expected: [{"plugin_id": "...", "enabled": true, "name": "..."}]
         new_config = request.json
 
+        # プラグインの順序を保存
+        plugin_order = []
+
         # Validate and update config
         for item in new_config:
             if "plugin_id" not in item:
@@ -580,6 +583,9 @@ def handle_plugins():
 
             plugin_id = item["plugin_id"]
             enabled = item.get("enabled", True)
+
+            # 順序リストに追加
+            plugin_order.append(plugin_id)
 
             # Verify plugin exists
             if plugin_id not in plugin_map:
@@ -598,6 +604,9 @@ def handle_plugins():
 
             # ConfigStore に反映
             setattr(config_store.config.plugins, plugin_id, plugin_settings)
+
+        # 順序リストを保存
+        config_store.config.plugin_order = plugin_order
 
         try:
             config_store.save()

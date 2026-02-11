@@ -27,8 +27,8 @@ const ClientList = dynamic(
 
 interface ProjectsTabProps {
   config: FullConfig | undefined
-  localExtractionPatterns: string[]
-  setLocalExtractionPatterns: (patterns: string[]) => void
+  localExtractionPatterns: Record<string, string[]>
+  setLocalExtractionPatterns: (patterns: Record<string, string[]>) => void
   localProjectMap: Record<string, string>
   setLocalProjectMap: (map: Record<string, string>) => void
   localClientMap: Record<string, string>
@@ -72,11 +72,9 @@ export default function ProjectsTab({
                   {t("Extraction Rules")}
                 </h3>
                 <p className="text-sm text-base-content/60 mb-4 px-1">
-                  {t(
-                    "Default rules to extract project names from window titles.",
-                  )}
+                  {t("Configure extraction patterns per application.")}
                   <br />
-                  {t("Only applied for")} <strong>{t("Editor")}</strong>
+                  {t("Leave app name empty to apply to all apps.")}
                   <br />
                   {t("Used by:")}{" "}
                   <span className="font-medium">{t("Project Extraction")}</span>
@@ -147,9 +145,10 @@ export default function ProjectsTab({
                 </p>
                 <ProjectMapList
                   projectMap={localProjectMap}
+                  projectMapOrder={config?.project_map_order}
                   clientMap={localClientMap}
                   clients={config?.clients || {}}
-                  onUpdate={async (newMap, newClientMap) => {
+                  onUpdate={async (newMap, newClientMap, newMapOrder) => {
                     setLocalProjectMap(newMap)
                     setLocalClientMap(newClientMap)
                     if (config) {
@@ -157,6 +156,7 @@ export default function ProjectsTab({
                         {
                           ...config,
                           project_map: newMap,
+                          project_map_order: newMapOrder,
                           client_map: newClientMap,
                         },
                         true,

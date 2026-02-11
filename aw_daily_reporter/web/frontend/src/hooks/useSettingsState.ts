@@ -28,7 +28,7 @@ export function useSettingsState() {
     rules: [] as Rule[],
     projectMap: {} as Record<string, string>,
     clientMap: {} as Record<string, string>,
-    extractionPatterns: [] as string[],
+    extractionPatterns: {} as Record<string, string[]>,
     categoryList: [] as string[],
   })
 
@@ -39,8 +39,9 @@ export function useSettingsState() {
     setLocalConfig((prev) => ({ ...prev, projectMap }))
   const setLocalClientMap = (clientMap: Record<string, string>) =>
     setLocalConfig((prev) => ({ ...prev, clientMap }))
-  const setLocalExtractionPatterns = (extractionPatterns: string[]) =>
-    setLocalConfig((prev) => ({ ...prev, extractionPatterns }))
+  const setLocalExtractionPatterns = (
+    extractionPatterns: Record<string, string[]>,
+  ) => setLocalConfig((prev) => ({ ...prev, extractionPatterns }))
   const setLocalCategoryList = (categoryList: string[]) =>
     setLocalConfig((prev) => ({ ...prev, categoryList }))
 
@@ -58,13 +59,23 @@ export function useSettingsState() {
   // Initialize local states from config
   useEffect(() => {
     if (config) {
+      const rawPatterns =
+        config.plugins?.[PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR]
+          ?.project_extraction_patterns || []
+
+      // 後方互換性: string[] を Record<string, string[]> に変換
+      let normalizedPatterns: Record<string, string[]>
+      if (Array.isArray(rawPatterns)) {
+        normalizedPatterns = { "*": rawPatterns }
+      } else {
+        normalizedPatterns = rawPatterns as Record<string, string[]>
+      }
+
       setLocalConfig({
         rules: config.rules || [],
         projectMap: config.project_map || {},
         clientMap: config.client_map || {},
-        extractionPatterns:
-          config.plugins?.[PLUGIN_IDS.PROCESSOR_PROJECT_EXTRACTOR]
-            ?.project_extraction_patterns || [],
+        extractionPatterns: normalizedPatterns,
         categoryList: config.system?.category_list || [],
       })
     }
