@@ -27,7 +27,7 @@ toml = "*"
 flask = "<4.0.0"
 waitress = "*"
 importlib-resources = {version = "*", python = "<3.9"}
-pandera = "^0.29.0"
+pandera = ">=0.29,<0.32"
 pydantic = "^2.12.5"
 
 [tool.poetry.scripts]
